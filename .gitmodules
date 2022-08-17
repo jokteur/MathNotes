@@ -1,0 +1,3 @@
+[submodule "external/TempoApp"]
+	path = external/TempoApp
+	url = git@github.com:jokteur/TempoApp.git
