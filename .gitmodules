@@ -1,3 +1,6 @@
 [submodule "external/TempoApp"]
 	path = external/TempoApp
 	url = git@github.com:jokteur/TempoApp.git
+[submodule "external/microtex/microtex"]
+	path = external/microtex/microtex
+	url = https://github.com/NanoMichael/MicroTeX.git
