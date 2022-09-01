@@ -13,6 +13,8 @@ include_directories(external/microtex)
 # include_directories()
 
 # ---- Tempo app ----
+# ImGui config
+add_compile_definitions(IMGUI_USE_WCHAR32)
 add_subdirectory(external/TempoApp)
 include_directories(external/TempoApp/include)
 include_directories(external/TempoApp/external/imgui/imgui)

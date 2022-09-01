@@ -1,17 +1,38 @@
+#include <codecvt>
+#include <locale>
+#include <vector>
 #include "graphic_abstract.h"
 
 namespace microtex {
+    class LatexFontManager {
+    private:
+
+    public:
+        LatexFontManager() {}
+        ~LatexFontManager() {}
+
+    };
+
     class ImGui_Painter : public Painter {
     private:
         color m_color;
         Stroke m_stroke;
         std::vector<float> m_dash;
+        bool m_is_prev_font = false;
+        std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> m_converter;
 
-        float m_sx, m_sy;
+        std::unordered_map<std::string, Tempo::FontID> m_fonts;
+
+        float m_sx = 1.f;
+        float m_sy = 1.f;
 
     public:
         ImGui_Painter() {}
         ~ImGui_Painter() {}
+
+        void setOrigin(float x, float y);
+
+        void setFontInfos(const FontInfos& font_infos);
 
         virtual void setColor(color c) override;
 
@@ -35,7 +56,7 @@ namespace microtex {
 
         virtual void reset() override;
 
-        void drawGlyph(u16 glyph, float x, float y) override;
+        void drawGlyph(u32 glyph, float x, float y) override;
 
         void beginPath(i32 id) override;
 
@@ -63,5 +84,7 @@ namespace microtex {
         virtual void drawRoundRect(float x, float y, float w, float h, float rx, float ry) override;
 
         virtual void fillRoundRect(float x, float y, float w, float h, float rx, float ry) override;
+
+        virtual void finish() override;
     };
 }

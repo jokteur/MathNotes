@@ -3,4 +3,4 @@
 	url = git@github.com:jokteur/TempoApp.git
 [submodule "external/microtex/microtex"]
 	path = external/microtex/microtex
-	url = https://github.com/NanoMichael/MicroTeX.git
+	url = git@github.com:jokteur/MicroTeX
