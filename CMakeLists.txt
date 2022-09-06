@@ -19,14 +19,28 @@ add_subdirectory(external/TempoApp)
 include_directories(external/TempoApp/include)
 include_directories(external/TempoApp/external/imgui/imgui)
 
+# ---------------
+# STB image write
+# ---------------
+include_directories(external/stb_image)
+
+# ------
+# OpenCV
+# ------
+set(BUILD_SHARED_LIBS OFF)
+find_package(OpenCV 4.5.5 REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+set(OpenCV_LIBS opencv_core opencv_imgproc opencv_imgcodecs)
+
 # Sources of program
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/*.cpp
+    src/core/*.cpp
     src/latex/*.cpp
 )
 add_executable(${PROJECT_NAME} ${source_list})
-target_link_libraries(${PROJECT_NAME} PRIVATE microtex-imgui)
+target_link_libraries(${PROJECT_NAME} PRIVATE microtex-imgui ${OpenCV_LIBS})
 
 # Copy the data (such as fonts) in build directory
 add_custom_command(TARGET MathNotes PRE_BUILD

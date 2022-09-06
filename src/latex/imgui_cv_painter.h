@@ -1,9 +1,15 @@
 #include <codecvt>
 #include <locale>
 #include <vector>
+
+#include <opencv2/core/mat.hpp>
+
+#include "core/image.h"
 #include "graphic_abstract.h"
 
+
 namespace microtex {
+
     class LatexFontManager {
     private:
 
@@ -13,26 +19,48 @@ namespace microtex {
 
     };
 
-    class ImGui_Painter : public Painter {
+    class ImGuiCV_Painter : public Painter {
     private:
         color m_color;
         Stroke m_stroke;
         std::vector<float> m_dash;
-        bool m_is_prev_font = false;
-        std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> m_converter;
 
-        std::unordered_map<std::string, Tempo::FontID> m_fonts;
+        ImVec2 m_offset, m_scale, m_dimensions;
+
+        float m_dx = 0.f;
+        float m_dy = 0.f;
 
         float m_sx = 1.f;
         float m_sy = 1.f;
 
+        bool m_fill_path = false;
+        bool m_prev_path = false;
+
+        float m_oversampling = 2.f;
+
+        ImDrawList* m_draw_list;
+        Image m_image;
+        cv::Mat m_canvas;
+
+        inline ImVec2 getRealPos(float x, float y);
+        void finishPath();
     public:
-        ImGui_Painter() {}
-        ~ImGui_Painter() {}
+        ImGuiCV_Painter() {}
+        ~ImGuiCV_Painter() {}
 
-        void setOrigin(float x, float y);
+        /**
+         * @brief The painter uses draw list for the convenient bezier implementations
+         * But in the end, only a rasterized image is drawn to ImGui
+         *
+         * @param draw_list
+         */
+        void setPhantomDrawList(ImDrawList* draw_list) { m_draw_list = draw_list; }
 
-        void setFontInfos(const FontInfos& font_infos);
+        /**
+         * @brief Draws the resulting image to draw_list
+         *
+         */
+        void draw(ImDrawList* draw_list);
 
         virtual void setColor(color c) override;
 
@@ -56,7 +84,7 @@ namespace microtex {
 
         virtual void reset() override;
 
-        void drawGlyph(u32 glyph, float x, float y) override;
+        void drawGlyph(u16 glyph, float x, float y) override;
 
         void beginPath(i32 id) override;
 
@@ -84,6 +112,8 @@ namespace microtex {
         virtual void drawRoundRect(float x, float y, float w, float h, float rx, float ry) override;
 
         virtual void fillRoundRect(float x, float y, float w, float h, float rx, float ry) override;
+
+        virtual void start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale = ImVec2(1.f, 1.f), float oversampling = 8.f) override;
 
         virtual void finish() override;
     };
