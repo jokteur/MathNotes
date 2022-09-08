@@ -5,12 +5,17 @@ set(CMAKE_CXX_STANDARD 17)
 # Set project name
 project(MathNotes)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # ---- MicroTex ----
 add_subdirectory(external/microtex)
 include_directories(external/microtex)
 
-# include_directories()
+# ---- Cairo ----
+find_package(Cairo)
+include_directories(${CAIRO_INCLUDE_DIRS})
 
 # ---- Tempo app ----
 # ImGui config
@@ -40,7 +45,7 @@ file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/latex/*.cpp
 )
 add_executable(${PROJECT_NAME} ${source_list})
-target_link_libraries(${PROJECT_NAME} PRIVATE microtex-imgui ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} PRIVATE microtex-imgui ${OpenCV_LIBS} ${CAIRO_LIBRARIES})
 
 # Copy the data (such as fonts) in build directory
 add_custom_command(TARGET MathNotes PRE_BUILD

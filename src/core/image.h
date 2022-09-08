@@ -9,13 +9,14 @@
 class Image {
 public:
     enum Filtering { FILTER_NEAREST, FILTER_BILINEAR };
+    enum Format { RGBA, ARGB };
 private:
     GLuint texture_ = -1;
-    int width_ = 0;
+    int m_width = 0;
     int height_ = 0;
-    int samples_ = 4;
+    int m_samples = 4;
 
-    bool success_ = false;
+    bool m_success = false;
 
     void load_texture(unsigned char* data, int width, int height, Filtering filtering);
     void load_texture_from_file(const char* filename, Filtering filtering);
@@ -37,7 +38,7 @@ public:
      * @param data RGB array
      * @return if successful or not
      */
-    bool setImage(unsigned char* data, int width, int height, Filtering filtering = FILTER_NEAREST);
+    bool setImage(unsigned char* data, int width, int height, Filtering filtering = FILTER_NEAREST, Format format = ARGB);
 
     /**
      * Erases any content in the image
@@ -48,12 +49,12 @@ public:
     /**
      * @return if the image has been successfully loaded in mage
      */
-    bool isImageSet() const { return success_; }
+    bool isImageSet() const { return m_success; }
 
     /**
      * @return width of image as stored in memory
      */
-    int width() const { return width_; }
+    int width() const { return m_width; }
     /**
      * @return height of image as stored in memory
      */

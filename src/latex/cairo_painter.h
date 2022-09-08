@@ -1,31 +1,21 @@
-#include <codecvt>
-#include <locale>
-#include <vector>
+#include "cairo.h"
 
-#include <opencv2/core/mat.hpp>
-
-#include "core/image.h"
 #include "graphic_abstract.h"
+#include "core/image.h"
+
 
 
 namespace microtex {
-
-    class LatexFontManager {
+    class Cairo_Painter : public Painter {
     private:
+        cairo_t* m_context = nullptr;
+        cairo_surface_t* m_surface = nullptr;
 
-    public:
-        LatexFontManager() {}
-        ~LatexFontManager() {}
+        ImVec2 m_offset, m_scale, m_dimensions;
 
-    };
-
-    class ImGuiCV_Painter : public Painter {
-    private:
         color m_color;
         Stroke m_stroke;
         std::vector<float> m_dash;
-
-        ImVec2 m_offset, m_scale, m_dimensions;
 
         float m_dx = 0.f;
         float m_dy = 0.f;
@@ -33,28 +23,15 @@ namespace microtex {
         float m_sx = 1.f;
         float m_sy = 1.f;
 
-        bool m_fill_path = false;
-        bool m_prev_path = false;
-
-        float m_oversampling = 2.f;
-
-        ImDrawList* m_draw_list;
         Image m_image;
-        cv::Mat m_canvas;
 
         inline ImVec2 getRealPos(float x, float y);
-        void finishPath();
-    public:
-        ImGuiCV_Painter() {}
-        ~ImGuiCV_Painter() {}
 
-        /**
-         * @brief The painter uses draw list for the convenient bezier implementations
-         * But in the end, only a rasterized image is drawn to ImGui
-         *
-         * @param draw_list
-         */
-        void setPhantomDrawList(ImDrawList* draw_list) { m_draw_list = draw_list; }
+        void roundRect(float x, float y, float w, float h, float rx, float ry);
+        void destroy();
+    public:
+        Cairo_Painter();
+        ~Cairo_Painter();
 
         /**
          * @brief Draws the resulting image to draw_list

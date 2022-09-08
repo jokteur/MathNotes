@@ -9,22 +9,26 @@ void ImGuiCV_Painter::finishPath() {
     if (m_draw_list->_Path.empty())
         return;
     std::vector<cv::Point> positions;
-    for (auto pt : m_draw_list->_Path) {
+    std::cout << "Path" << std::endl;
+    for (int i = m_draw_list->_Path.Size - 1;i >= 0;i--) {
+        auto pt = m_draw_list->_Path.Data[i];
+        std::cout << pt.x << " " << pt.y << std::endl;
         positions.push_back(cv::Point(pt.x, pt.y));
     }
 
     ImVec4 color = ImGui::ColorConvertU32ToFloat4(m_color);
     auto col = cv::Scalar((int)(color.x * 255), (int)(color.y * 255), (int)(color.z * 255), (int)(color.w * 255));
 
-    if (m_fill_path) {
-        // positions.push_back(positions[0]);
-        positions.pop_back();
-        cv::fillPoly(m_canvas, positions, col);
-    }
-    else {
-        cv::polylines(m_canvas, positions, false, col, m_stroke.lineWidth * m_sx * m_scale.x, cv::LINE_AA);
-    }
-    m_draw_list->PathClear();
+    // if (m_fill_path) {
+    //     // positions.push_back(positions[0]);
+    //     // positions.pop_back();
+    //     cv::fillPoly(m_canvas, positions, col);
+    // }
+    // else {
+    cv::polylines(m_canvas, positions, false, col, m_stroke.lineWidth * m_sx * m_scale.x, cv::LINE_AA);
+    // }
+    // m_draw_list->PathClear();
+    m_draw_list->_Path.clear();
 }
 
 ImVec2 ImGuiCV_Painter::getRealPos(float x, float y) {
@@ -92,11 +96,15 @@ void ImGuiCV_Painter::beginPath(i32 id) {
     if (m_prev_path) {
         finishPath();
     }
+    // m_draw_list->PathClear();
+    m_draw_list->_Path.clear();
     m_fill_path = false;
-    m_prev_path = true;
-    m_draw_list->PathClear();
 }
 void ImGuiCV_Painter::moveTo(float x, float y) {
+    if (m_prev_path) {
+        finishPath();
+    }
+    m_prev_path = true;
     ImVec2 to = getRealPos(x, y);
     m_draw_list->PathLineTo(to);
 }
@@ -108,18 +116,18 @@ void ImGuiCV_Painter::cubicTo(float x1, float y1, float x2, float y2, float x3, 
     ImVec2 p2 = getRealPos(x1, y1);
     ImVec2 p3 = getRealPos(x2, y2);
     ImVec2 p4 = getRealPos(x3, y3);
-    m_draw_list->PathBezierCubicCurveTo(p2, p3, p4, 20);
+    m_draw_list->PathBezierCubicCurveTo(p2, p3, p4);
 }
 void ImGuiCV_Painter::quadTo(float x1, float y1, float x2, float y2) {
     ImVec2 p2 = getRealPos(x1, y1);
     ImVec2 p3 = getRealPos(x2, y2);
-    m_draw_list->PathBezierQuadraticCurveTo(p2, p3, 20);
+    m_draw_list->PathBezierQuadraticCurveTo(p2, p3);
 }
 void ImGuiCV_Painter::closePath() {
     // Path is closed in fillPath or beginPath/finish because microtex
     // closePath before fillPath if it needs to be filled
 }
-void ImGuiCV_Painter::fillPath() {
+void ImGuiCV_Painter::fillPath(i32 id) {
     m_fill_path = true;
     finishPath();
 }
