@@ -6,8 +6,8 @@
 #include <iostream>
 #include <exception>
 
+#include "misc/cpp/imgui_stdlib.h"
 #include "graphic_abstract.h"
-#include "latex/imgui_cv_painter.h"
 #include "latex/cairo_painter.h"
 
 #include <chrono>

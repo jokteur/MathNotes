@@ -1,5 +1,5 @@
 # Set C++ 17 compiler flags
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.21)
 set(CMAKE_CXX_STANDARD 17)
 
 # Set project name
@@ -8,6 +8,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(INSTALL_DIR "0.1")
 
 # ---- MicroTex ----
 add_subdirectory(external/microtex)
@@ -29,14 +30,6 @@ include_directories(external/TempoApp/external/imgui/imgui)
 # ---------------
 include_directories(external/stb_image)
 
-# ------
-# OpenCV
-# ------
-set(BUILD_SHARED_LIBS OFF)
-find_package(OpenCV 4.5.5 REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-set(OpenCV_LIBS opencv_core opencv_imgproc opencv_imgcodecs)
-
 # Sources of program
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -45,12 +38,18 @@ file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/latex/*.cpp
 )
 add_executable(${PROJECT_NAME} ${source_list})
-target_link_libraries(${PROJECT_NAME} PRIVATE microtex-imgui ${OpenCV_LIBS} ${CAIRO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE microtex-imgui ${CAIRO_LIBRARIES})
 
 # Copy the data (such as fonts) in build directory
 add_custom_command(TARGET MathNotes PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/data/ $<TARGET_FILE_DIR:MathNotes>/data)
+
+# CMake 3.21 is for this functionnality
+add_custom_command(TARGET MathNotes POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:MathNotes> $<TARGET_FILE_DIR:MathNotes>
+    COMMAND_EXPAND_LISTS
+)
 
 # Set compiler options
 if(MSVC)
