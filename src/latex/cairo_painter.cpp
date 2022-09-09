@@ -16,16 +16,22 @@ inline float min(float a, float b) {
 
 void Cairo_Painter::destroy() {
     if (m_surface != nullptr) {
-        m_image.reset();
         cairo_surface_destroy(m_surface);
         cairo_destroy(m_context);
+        m_image_data = std::make_shared<ARGB_Image>();
     }
 }
 
-void Cairo_Painter::start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale, float oversampling) {
+void Cairo_Painter::start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale, ImVec2 inner_padding) {
     destroy();
+    m_painting = true;
 
-    m_dimensions = ImVec2(bottom_right.x - top_left.x, bottom_right.y - top_left.y);
+    m_dimensions = ImVec2(
+        int(scale.x * (bottom_right.x - top_left.x + 2 * inner_padding.x)),
+        int(scale.y * (bottom_right.y - top_left.y + 2 * inner_padding.y))
+    );
+    m_scale = scale;
+    m_offset = inner_padding;
     m_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, m_dimensions.x, m_dimensions.y);
     m_context = cairo_create(m_surface);
 
@@ -33,16 +39,19 @@ void Cairo_Painter::start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale, fl
     setStroke(Stroke());
 }
 void Cairo_Painter::finish() {
-    unsigned char* data = cairo_image_surface_get_data(m_surface);
-    m_image.setImage(data, m_dimensions.x, m_dimensions.y, Image::FILTER_BILINEAR, Image::ARGB);
+    if (m_dimensions.x > 0 && m_dimensions.y > 0 && m_painting) {
+        unsigned char* data = cairo_image_surface_get_data(m_surface);
+        // data is a borrowed pointer, its creation / destruction is managed by cairo
+        // this is why we copy
+        m_image_data = std::make_shared<ARGB_Image>();
+        m_image_data->resize(m_dimensions.x * m_dimensions.y * 4);
+        memcpy(&(*m_image_data)[0], data, sizeof(unsigned char) * m_dimensions.x * m_dimensions.y * 4);
+        m_painting = false;
+    }
 }
 
-
-void Cairo_Painter::draw(ImDrawList* draw_list) {
-    ImVec2 pos = ImGui::GetCursorScreenPos();
-    int width = (float)((int)m_image.width() / 1);
-    int height = (float)((int)m_image.height() / 1);
-    draw_list->AddImage(m_image.texture(), pos, ImVec2(pos.x + width, pos.y + height));
+ImVec2 Cairo_Painter::getRealPos(float x, float y) {
+    return ImVec2(m_scale.x * (x + m_sx * m_offset.x), m_scale.y * (y + m_sy * m_offset.y));
 }
 
 Cairo_Painter::Cairo_Painter() {
@@ -63,7 +72,7 @@ void Cairo_Painter::setColor(color c) {
 
 void Cairo_Painter::setStroke(const Stroke& s) {
     m_stroke = s;
-    cairo_set_line_width(m_context, (double)s.lineWidth);
+    cairo_set_line_width(m_context, (double)s.lineWidth * m_scale.x);
 
     // convert abstract line cap to platform line cap
     cairo_line_cap_t c;
@@ -100,7 +109,7 @@ void Cairo_Painter::setStroke(const Stroke& s) {
 
 void Cairo_Painter::setStrokeWidth(float w) {
     m_stroke.lineWidth = w;
-    cairo_set_line_width(m_context, (double)w);
+    cairo_set_line_width(m_context, (double)w * m_scale.x);
 }
 
 void Cairo_Painter::setDash(const std::vector<float>& dash) {
@@ -121,7 +130,8 @@ void Cairo_Painter::setFontSize(float) {
 }
 
 void Cairo_Painter::translate(float dx, float dy) {
-    cairo_translate(m_context, (double)dx, (double)dy);
+    ImVec2 pos = getRealPos(dx, dy);
+    cairo_translate(m_context, (double)pos.x, (double)pos.y);
 }
 
 void Cairo_Painter::scale(float sx, float sy) {
@@ -135,9 +145,10 @@ void Cairo_Painter::rotate(float angle) {
 }
 
 void Cairo_Painter::rotate(float angle, float px, float py) {
-    cairo_translate(m_context, (double)px, (double)py);
+    ImVec2 pos = getRealPos(px, py);
+    cairo_translate(m_context, (double)pos.x, (double)pos.y);
     cairo_rotate(m_context, (double)angle);
-    cairo_translate(m_context, (double)-px, (double)-py);
+    cairo_translate(m_context, (double)-pos.x, (double)-pos.y);
 }
 
 void Cairo_Painter::reset() {
@@ -153,15 +164,20 @@ void Cairo_Painter::beginPath(i32 id) {
 }
 
 void Cairo_Painter::moveTo(float x, float y) {
-    cairo_move_to(m_context, (double)x, (double)y);
+    ImVec2 pos = getRealPos(x, y);
+    cairo_move_to(m_context, (double)pos.x, (double)pos.y);
 }
 
 void Cairo_Painter::lineTo(float x, float y) {
-    cairo_line_to(m_context, x, y);
+    ImVec2 pos = getRealPos(x, y);
+    cairo_line_to(m_context, pos.x, pos.y);
 }
 
 void Cairo_Painter::cubicTo(float x1, float y1, float x2, float y2, float x3, float y3) {
-    cairo_curve_to(m_context, x1, y1, x2, y2, x3, y3);
+    ImVec2 p1 = getRealPos(x1, y1);
+    ImVec2 p2 = getRealPos(x2, y2);
+    ImVec2 p3 = getRealPos(x3, y3);
+    cairo_curve_to(m_context, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
 }
 
 void Cairo_Painter::quadTo(float x1, float y1, float x2, float y2) {
@@ -170,12 +186,14 @@ void Cairo_Painter::quadTo(float x1, float y1, float x2, float y2) {
     // for details
     double x0, y0;
     cairo_get_current_point(m_context, &x0, &y0);
+    ImVec2 p1 = getRealPos(x1, y1);
+    ImVec2 p2 = getRealPos(x2, y2);
     cairo_curve_to(
         m_context,
-        2.0 / 3.0 * x1 + 1.0 / 3.0 * x0,
-        2.0 / 3.0 * y1 + 1.0 / 3.0 * y0,
-        2.0 / 3.0 * x1 + 1.0 / 3.0 * x2,
-        2.0 / 3.0 * y1 + 1.0 / 3.0 * y2,
+        2.0 / 3.0 * p1.x + 1.0 / 3.0 * x0,
+        2.0 / 3.0 * p1.y + 1.0 / 3.0 * y0,
+        2.0 / 3.0 * p1.x + 1.0 / 3.0 * p2.x,
+        2.0 / 3.0 * p1.y + 1.0 / 3.0 * p2.y,
         y1, y2
     );
 }
@@ -189,29 +207,36 @@ void Cairo_Painter::fillPath(i32 id) {
 }
 
 void Cairo_Painter::drawLine(float x1, float y1, float x2, float y2) {
-    cairo_move_to(m_context, x1, y1);
-    cairo_line_to(m_context, x2, y2);
+    ImVec2 p1 = getRealPos(x1, y1);
+    ImVec2 p2 = getRealPos(x2, y2);
+    cairo_move_to(m_context, p1.x, p1.y);
+    cairo_line_to(m_context, p2.x, p2.y);
     cairo_stroke(m_context);
 }
 
 void Cairo_Painter::drawRect(float x, float y, float w, float h) {
-    cairo_rectangle(m_context, x, y, w, h);
+    ImVec2 p1 = getRealPos(x, y);
+    cairo_rectangle(m_context, p1.x, p1.y, w * m_scale.x, h * m_scale.y);
     cairo_stroke(m_context);
 }
 
 void Cairo_Painter::fillRect(float x, float y, float w, float h) {
-    cairo_rectangle(m_context, x, y, w, h);
+    ImVec2 p1 = getRealPos(x, y);
+    cairo_rectangle(m_context, p1.x, p1.y, w * m_scale.x, h * m_scale.y);
     cairo_fill(m_context);
 }
 
 void Cairo_Painter::roundRect(float x, float y, float w, float h, float rx, float ry) {
+    rx *= m_scale.x;
+    ry *= m_scale.y;
     double r = max(rx, ry);
     double d = 3.1415926535f / 180.;
     cairo_new_sub_path(m_context);
-    cairo_arc(m_context, x + r, y + r, r, 180 * d, 270 * d);
-    cairo_arc(m_context, x + w - r, y + r, r, -90 * d, 0);
-    cairo_arc(m_context, x + w - r, y + h - r, r, 0, 90 * d);
-    cairo_arc(m_context, x + r, y + h - r, r, 90 * d, 180 * d);
+    ImVec2 p = getRealPos(x, y);
+    cairo_arc(m_context, p.x + r, p.y + r, r, 180 * d, 270 * d);
+    cairo_arc(m_context, p.x + w - r, p.y + r, r, -90 * d, 0);
+    cairo_arc(m_context, p.x + w - r, p.y + h - r, r, 0, 90 * d);
+    cairo_arc(m_context, p.x + r, p.y + h - r, r, 90 * d, 180 * d);
     cairo_close_path(m_context);
 }
 

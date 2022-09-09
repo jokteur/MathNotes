@@ -21,8 +21,15 @@ private:
     Tempo::FontID m_font_italic;
     Tempo::FontID m_font_bold;
 
+    std::string m_text;
+    std::string m_err;
+    std::string m_prev_text;
+
+    float m_scale = 1.f;
+
     Render* m_render = nullptr;
     Graphics2D_abstract m_graphics;
+    Image m_image;
     Cairo_Painter m_painter;
     //bool m_open = true;
 public:
@@ -65,75 +72,45 @@ public:
     void FrameUpdate() override {
         ImGui::Begin("My window");
 
-        if (ImGui::Button("Click me")) {
-            m_graphics.resetCallList();
-            auto start0 = high_resolution_clock::now();
+        ImGui::InputTextMultiline("Latex input", &m_text);
 
-            m_render = MicroTeX::parse(
-                "\\definecolor{gris}{gray}{0.9}"
-                "\\definecolor{noir}{rgb}{0,0,0}"
-                "\\definecolor{bleu}{rgb}{0,0,1}"
-                "\\fatalIfCmdConflict{false}"
-                "\\newcommand{\\pa}{\\left|}"
-                "\\begin{array}{c}"
-                "  \\LaTeX\\\\"
-                "  \\begin{split}"
-                "      &Тепловой\\ поток\\ \\mathrm{Тепловой\\ поток}\\ \\mathtt{Тепловой\\ поток}\\\\"
-                "      &\\boldsymbol{\\mathrm{Тепловой\\ поток}}\\ \\mathsf{Тепловой\\ поток}\\\\"
-                "      |I_2| &= \\pa\\int_0^T\\psi(t)\\left\\{ u(a,t)-\\int_{\\gamma(t)}^a \\frac{d\\theta}{k} (\\theta,t) \\int_a^\\theta c(\\xi) "
-                "          u_t (\\xi,t)\\,d\\xi\\right\\}dt\\right|\\\\"
-                "      &\\le C_6 \\Bigg|\\pa f \\int_\\Omega \\pa\\widetilde{S}^{-1,0}_{a,-}"
-                "          W_2(\\Omega, \\Gamma_1)\\right|\\ \\right|\\left| |u|\\overset{\\circ}{\\to} W_2^{\\widetilde{A}}(\\Omega\\Gamma_r,T)\\right|\\Bigg|\\\\"
-                "      &\\\\"
-                "      &\\begin{pmatrix}"
-                "          \\alpha&\\beta&\\gamma&\\delta\\\\"
-                "          \\aleph&\\beth&\\gimel&\\daleth\\\\"
-                "          \\mathfrak{A}&\\mathfrak{B}&\\mathfrak{C}&\\mathfrak{D}\\\\"
-                "          \\boldsymbol{\\mathfrak{a}}&\\boldsymbol{\\mathfrak{b}}&\\boldsymbol{\\mathfrak{c}}&\\boldsymbol{\\mathfrak{d}}"
-                "      \\end{pmatrix}"
-                "      \\quad{(a+b)}^{\\frac{n}{2}}=\\sqrt{\\sum_{k=0}^n\\tbinom{n}{k}a^kb^{n-k}}\\quad "
-                "          \\Biggl(\\biggl(\\Bigl(\\bigl(()\\bigr)\\Bigr)\\biggr)\\Biggr)\\\\"
-                "      &\\forall\\varepsilon\\in\\mathbb{R}_+^*\\ \\exists\\eta>0\\ |x-x_0|\\leq\\eta\\Longrightarrow|f(x)-f(x_0)|\\leq\\varepsilon\\\\"
-                "      &\\det"
-                "      \\begin{bmatrix}"
-                "          a_{11}&a_{12}&\\cdots&a_{1n}\\\\"
-                "          a_{21}&\\ddots&&\\vdots\\\\"
-                "          \\vdots&&\\ddots&\\vdots\\\\"
-                "          a_{n1}&\\cdots&\\cdots&a_{nn}"
-                "      \\end{bmatrix}"
-                "      \\overset{\\mathrm{def}}{=}\\sum_{\\sigma\\in\\mathfrak{S}_n}\\varepsilon(\\sigma)\\prod_{k=1}^n a_{k\\sigma(k)}\\\\"
-                "      &\\Delta f(x,y)=\\frac{\\partial^2f}{\\partial x^2}+\\frac{\\partial^2f}{\\partial y^2}\\qquad\\qquad \\fcolorbox{noir}{gris}"
-                "          {n!\\underset{n\\rightarrow+\\infty}{\\sim} {\\left(\\frac{n}{e}\\right)}^n\\sqrt{2\\pi n}}\\\\"
-                "      &\\sideset{_\\alpha^\\beta}{_\\gamma^\\delta}{"
-                "      \\begin{pmatrix}"
-                "          a&b\\\\"
-                "          c&d"
-                "      \\end{pmatrix}}"
-                "      \\xrightarrow[T]{n\\pm i-j}\\sideset{^t}{}A\\xleftarrow{\\overrightarrow{u}\\wedge\\overrightarrow{v}}"
-                "          \\underleftrightarrow{\\iint_{\\mathds{R}^2}e^{-\\left(x^2+y^2\\right)}\\,\\mathrm{d}x\\mathrm{d}y}"
-                "  \\end{split}\\\\"
-                "  \\rotatebox{30}{\\sum_{n=1}^{+\\infty}}\\quad\\mbox{Mirror rorriM}\\reflectbox{\\mbox{Mirror rorriM}}"
-                "\\end{array}",
-                500.f, 20.f, 7.f, BLACK, false, "XITS Math", "XITS"
-            );
-            auto stop0 = high_resolution_clock::now();
-            auto duration0 = duration_cast<microseconds>(stop0 - start0);
-            std::cout << "Parse: " << duration0.count() << std::endl;
+        if (m_text != m_prev_text) {
+            m_prev_text = m_text;
 
-            auto start1 = high_resolution_clock::now();
-            m_render->draw(m_graphics, 0.f, 0.f);
+            if (!m_text.empty()) {
+                m_graphics.resetCallList();
+                auto start0 = high_resolution_clock::now();
 
-            m_painter.start(m_graphics.getScaledMin(), m_graphics.getScaledMax());
-            m_graphics.distributeCallList(&m_painter);
-            m_painter.finish();
+                try {
+                    m_render = MicroTeX::parse(
+                        m_text,
+                        500.f, 40.f, 7.f, BLACK, false, "XITS Math", "XITS"
+                    );
+                    auto stop0 = high_resolution_clock::now();
+                    auto duration0 = duration_cast<microseconds>(stop0 - start0);
+                    std::cout << "Parse: " << duration0.count() << std::endl;
 
-            auto stop1 = high_resolution_clock::now();
-            auto duration1 = duration_cast<microseconds>(stop1 - start1);
-            std::cout << "Draw: " << duration1.count() << std::endl;
+                    auto start1 = high_resolution_clock::now();
+                    m_render->draw(m_graphics, 0.f, 0.f);
+
+                    m_painter.start(m_graphics.getScaledMin(), m_graphics.getScaledMax());
+                    m_graphics.distributeCallList(&m_painter);
+                    m_painter.finish();
+
+                    auto stop1 = high_resolution_clock::now();
+                    auto duration1 = duration_cast<microseconds>(stop1 - start1);
+                    std::cout << "Draw: " << duration1.count() << std::endl;
+                    m_err = "";
+                    m_image.setImage(m_painter.getImageDataPtr(), m_painter.getImageDimensions().x, m_painter.getImageDimensions().y, Image::FILTER_BILINEAR);
+                }
+                catch (std::exception& e) {
+                    m_err = e.what();
+                }
+            }
         }
-        ImGui::End();
-
-        ImGui::Begin("Draw Window");
+        if (!m_err.empty()) {
+            ImGui::Text(m_err.c_str());
+        }
         ImGui::Text("my latex:\n");
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1, 0, 0, 0.1));
@@ -141,8 +118,28 @@ public:
         ImGui::BeginChild("testt");
 
         if (m_render != nullptr) {
-            m_painter.draw(ImGui::GetWindowDrawList());
+
+            auto& io = ImGui::GetIO();
+            float mouse_wheel = io.MouseWheel;
+            if (mouse_wheel != 0.f) {
+                if (mouse_wheel < 0.f) {
+                    m_scale *= 0.99;
+                }
+                else {
+                    m_scale *= 1.01;
+                }
+                if (m_scale >= 5.f)
+                    m_scale = 5.f;
+                if (m_scale <= 0.5)
+                    m_scale = 0.5;
+                m_painter.start(m_graphics.getScaledMin(), m_graphics.getScaledMax(), ImVec2(m_scale, m_scale));
+                m_graphics.distributeCallList(&m_painter);
+                m_painter.finish();
+                m_image.setImage(m_painter.getImageDataPtr(), m_painter.getImageDimensions().x, m_painter.getImageDimensions().y, Image::FILTER_BILINEAR);
+            }
+            ImGui::Image(m_image.texture(), ImVec2(m_image.width(), m_image.height()));
         }
+
 
         // ImGui::Text("Test");
         ImGui::EndChild();

@@ -1,8 +1,10 @@
 #pragma once
 
+#include <vector>
 #include <tempo.h>
 
-
+using ARGB_Image = std::vector<unsigned char>;
+using ARGB_Imageptr = std::shared_ptr<ARGB_Image>;
 /**
  * Image class for holding images in memory to be drawn to Dear ImGui
  */
@@ -13,12 +15,14 @@ public:
 private:
     GLuint texture_ = -1;
     int m_width = 0;
-    int height_ = 0;
+    int m_height = 0;
     int m_samples = 4;
 
     bool m_success = false;
 
-    void load_texture(unsigned char* data, int width, int height, Filtering filtering);
+    ARGB_Imageptr m_data;
+
+    void load_texture(Filtering filtering);
     void load_texture_from_file(const char* filename, Filtering filtering);
     void load_texture_from_memory(unsigned char* data, int width, int height, Filtering filtering);
 public:
@@ -34,11 +38,18 @@ public:
 
 
     /**
-     * Set image from memory
-     * @param data RGB array
+     * Set image from memory (makes a local copy of data)
+     * @param data ARGB array
      * @return if successful or not
      */
     bool setImage(unsigned char* data, int width, int height, Filtering filtering = FILTER_NEAREST, Format format = ARGB);
+
+    /**
+     * Set image from memory (makes no copy)
+     * @param data ARGB array
+     * @return if successful or not
+     */
+    bool setImage(ARGB_Imageptr data_ptr, int width, int height, Filtering filtering = FILTER_NEAREST, Format format = ARGB);
 
     /**
      * Erases any content in the image
@@ -58,7 +69,7 @@ public:
     /**
      * @return height of image as stored in memory
      */
-    int height() const { return height_; }
+    int height() const { return m_height; }
     /**
      * @return GL texture of image
      */

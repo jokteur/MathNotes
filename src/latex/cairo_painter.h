@@ -3,8 +3,6 @@
 #include "graphic_abstract.h"
 #include "core/image.h"
 
-
-
 namespace microtex {
     class Cairo_Painter : public Painter {
     private:
@@ -17,13 +15,15 @@ namespace microtex {
         Stroke m_stroke;
         std::vector<float> m_dash;
 
+        bool m_painting = false;
+
+        ARGB_Imageptr m_image_data;
+
         float m_dx = 0.f;
         float m_dy = 0.f;
 
         float m_sx = 1.f;
         float m_sy = 1.f;
-
-        Image m_image;
 
         inline ImVec2 getRealPos(float x, float y);
 
@@ -33,11 +33,9 @@ namespace microtex {
         Cairo_Painter();
         ~Cairo_Painter();
 
-        /**
-         * @brief Draws the resulting image to draw_list
-         *
-         */
-        void draw(ImDrawList* draw_list);
+        ARGB_Imageptr getImageDataPtr() { return m_image_data; }
+
+        ImVec2 getImageDimensions() { return m_dimensions; }
 
         virtual void setColor(color c) override;
 
@@ -90,7 +88,7 @@ namespace microtex {
 
         virtual void fillRoundRect(float x, float y, float w, float h, float rx, float ry) override;
 
-        virtual void start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale = ImVec2(1.f, 1.f), float oversampling = 8.f) override;
+        virtual void start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale = ImVec2(1.f, 1.f), ImVec2 inner_padding = ImVec2(20.f, 20.f)) override;
 
         virtual void finish() override;
     };
