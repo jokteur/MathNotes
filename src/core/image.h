@@ -20,7 +20,7 @@ private:
 
     bool m_success = false;
 
-    ARGB_Imageptr m_data;
+    ARGB_Imageptr m_data = nullptr;
 
     void load_texture(Filtering filtering);
     void load_texture_from_file(const char* filename, Filtering filtering);
@@ -58,7 +58,7 @@ public:
     void reset();
 
     /**
-     * @return if the image has been successfully loaded in mage
+     * @return if the image has been successfully loaded in memory
      */
     bool isImageSet() const { return m_success; }
 
@@ -72,6 +72,7 @@ public:
     int height() const { return m_height; }
     /**
      * @return GL texture of image
+     * This function is not safe. Always check if image is set with isImageSet()
      */
     void* texture() const { return (void*)(intptr_t)texture_; }
 

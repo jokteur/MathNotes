@@ -7,13 +7,10 @@
 #include <exception>
 
 #include "misc/cpp/imgui_stdlib.h"
-#include "graphic_abstract.h"
-#include "latex/cairo_painter.h"
+#include "latex/latex.h"
 
 #include <chrono>
 using namespace std::chrono;
-
-using namespace microtex;
 
 class MainApp : public Tempo::App {
 private:
@@ -27,10 +24,8 @@ private:
 
     float m_scale = 1.f;
 
-    Render* m_render = nullptr;
-    Graphics2D_abstract m_graphics;
-    Image m_image;
-    Cairo_Painter m_painter;
+    std::shared_ptr <Latex::LatexImage> m_latex;
+    std::string m_latex_err;
     //bool m_open = true;
 public:
     virtual ~MainApp() {}
@@ -40,33 +35,7 @@ public:
         // m_font_italic = Tempo::AddFontFromFileTTF("data/fonts/Roboto/Roboto-Italic.ttf", 16).value();
         // m_font_bold = Tempo::AddFontFromFileTTF("data/fonts/Roboto/Roboto-Bold.ttf", 16).value();
 
-        try {
-            // const FontSrcFile math_regular("data/lm-math/latinmodern-math.clm2", "data/lm-math/latinmodern-math.otf");
-            // MicroTeX::init(math_regular);
-            const FontSrcFile math_regular("data/xits/XITSMath-Regular.clm2", "data/xits/XITSMath-Regular.otf");
-            // const FontSrcFile math_bold("data/xits/XITSMath-Bold.clm2", "data/xits/XITSMath-Bold.otf");
-            const FontSrcFile xits_boldItalic("data/xits/XITS-BoldItalic.clm2", "data/xits/XITS-BoldItalic.otf");
-            const FontSrcFile xits_regular("data/xits/XITS-Regular.clm2", "data/xits/XITS-Regular.otf");
-            const FontSrcFile xits_bold("data/xits/XITS-Bold.clm2", "data/xits/XITS-Bold.otf");
-            const FontSrcFile xits_talic("data/xits/XITS-Italic.clm2", "data/xits/XITS-Italic.otf");
-            MicroTeX::init(math_regular);
-            // MicroTeX::addFont(math_bold);
-            MicroTeX::addFont(xits_boldItalic);
-            MicroTeX::addFont(xits_regular);
-            MicroTeX::addFont(xits_bold);
-            MicroTeX::addFont(xits_talic);
-            MicroTeX::setDefaultMainFont("XITS");
-
-            auto a = MicroTeX::mainFontFamilies();
-            auto b = MicroTeX::mathFontNames();
-
-            PlatformFactory::registerFactory("abstract", std::make_unique<PlatformFactory_abstract>());
-            PlatformFactory::activate("abstract");
-        }
-        catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            // TODO: quit
-        }
+        Latex::init();
     }
 
     void FrameUpdate() override {
@@ -78,67 +47,46 @@ public:
             m_prev_text = m_text;
 
             if (!m_text.empty()) {
-                m_graphics.resetCallList();
-                auto start0 = high_resolution_clock::now();
-
-                try {
-                    m_render = MicroTeX::parse(
-                        m_text,
-                        500.f, 40.f, 7.f, BLACK, false, "XITS Math", "XITS"
-                    );
-                    auto stop0 = high_resolution_clock::now();
-                    auto duration0 = duration_cast<microseconds>(stop0 - start0);
-                    std::cout << "Parse: " << duration0.count() << std::endl;
-
-                    auto start1 = high_resolution_clock::now();
-                    m_render->draw(m_graphics, 0.f, 0.f);
-
-                    m_painter.start(m_graphics.getScaledMin(), m_graphics.getScaledMax());
-                    m_graphics.distributeCallList(&m_painter);
-                    m_painter.finish();
-
-                    auto stop1 = high_resolution_clock::now();
-                    auto duration1 = duration_cast<microseconds>(stop1 - start1);
-                    std::cout << "Draw: " << duration1.count() << std::endl;
-                    m_err = "";
-                    m_image.setImage(m_painter.getImageDataPtr(), m_painter.getImageDimensions().x, m_painter.getImageDimensions().y, Image::FILTER_BILINEAR);
-                }
-                catch (std::exception& e) {
-                    m_err = e.what();
-                }
+                m_latex = std::make_shared<Latex::LatexImage>(m_text, 20.f, 7.f, microtex::BLACK, ImVec2(m_scale, m_scale));
             }
         }
-        if (!m_err.empty()) {
-            ImGui::Text(m_err.c_str());
-        }
+
         ImGui::Text("my latex:\n");
+
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1, 0, 0, 0.1));
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(1, 1, 1, 0.8));
         ImGui::BeginChild("testt");
+        if (!m_text.empty()) {
+            if (m_latex->getLatexErrorMsg().empty()) {
+                auto& io = ImGui::GetIO();
+                float mouse_wheel = io.MouseWheel;
+                if (mouse_wheel != 0.f) {
+                    if (mouse_wheel < 0.f) {
+                        m_scale *= 0.99;
+                    }
+                    else {
+                        m_scale *= 1.01;
+                    }
+                    if (m_scale >= 5.f)
+                        m_scale = 5.f;
+                    if (m_scale <= 0.5)
+                        m_scale = 0.5;
 
-        if (m_render != nullptr) {
-
-            auto& io = ImGui::GetIO();
-            float mouse_wheel = io.MouseWheel;
-            if (mouse_wheel != 0.f) {
-                if (mouse_wheel < 0.f) {
-                    m_scale *= 0.99;
+                    m_latex->redraw(ImVec2(m_scale, m_scale));
                 }
-                else {
-                    m_scale *= 1.01;
-                }
-                if (m_scale >= 5.f)
-                    m_scale = 5.f;
-                if (m_scale <= 0.5)
-                    m_scale = 0.5;
-                m_painter.start(m_graphics.getScaledMin(), m_graphics.getScaledMax(), ImVec2(m_scale, m_scale));
-                m_graphics.distributeCallList(&m_painter);
-                m_painter.finish();
-                m_image.setImage(m_painter.getImageDataPtr(), m_painter.getImageDimensions().x, m_painter.getImageDimensions().y, Image::FILTER_BILINEAR);
+                ImGui::Image(
+                    m_latex->getImage()->texture(),
+                    m_latex->getDimensions()
+                );
             }
-            ImGui::Image(m_image.texture(), ImVec2(m_image.width(), m_image.height()));
+            else {
+                ImGui::PushStyleColor(ImGuiCol_Text, microtex::BLACK);
+                ImGui::Text(m_latex->getLatexErrorMsg().c_str());
+                ImGui::PopStyleColor();
+            }
         }
+
 
 
         // ImGui::Text("Test");
@@ -152,7 +100,7 @@ public:
 };
 
 int main() {
-    MicroTeX::setRenderGlyphUsePath(true);
+    std::string err = Latex::init();
     Tempo::Config config;
     config.app_name = "TestApp";
     config.app_title = "Hello world";

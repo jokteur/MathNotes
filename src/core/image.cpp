@@ -17,6 +17,8 @@ Image::~Image() {
     reset();
 }
 void Image::load_texture(Filtering filtering) {
+    if (m_data == nullptr || m_data->empty())
+        return;
     // Create a OpenGL texture identifier
     GLuint image_texture;
     glGenTextures(1, &image_texture);

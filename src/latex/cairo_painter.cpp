@@ -18,8 +18,8 @@ void Cairo_Painter::destroy() {
     if (m_surface != nullptr) {
         cairo_surface_destroy(m_surface);
         cairo_destroy(m_context);
-        m_image_data = std::make_shared<ARGB_Image>();
     }
+    m_image_data = std::make_shared<ARGB_Image>();
 }
 
 void Cairo_Painter::start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale, ImVec2 inner_padding) {
