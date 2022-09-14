@@ -7,10 +7,41 @@
 #include <exception>
 
 #include "misc/cpp/imgui_stdlib.h"
+#include "rich_text/wrapper.h"
 #include "latex/latex.h"
 
 #include <chrono>
 using namespace std::chrono;
+using namespace RichText;
+struct CharText : public Character {
+public:
+    char c;
+    void draw(ImDrawList*) override {
+        if (c != '\n')
+            std::cout << c;
+    }
+};
+
+void draw(const std::vector<CharPtr> string, std::set<int> line_positions) {
+
+}
+
+CharText toChar(char t) {
+    CharText c;
+    c.c = t;
+    c.advance = 1.0;
+    c.bearing = ImVec2(0.2f, 0.2f);
+    c.dimensions = ImVec2(0.8f, 0.8f);
+    c.is_linebreak = false;
+    c.breakable = false;
+    if (t == '\n') {
+        c.is_linebreak = true;
+    }
+    if (t == ' ') {
+        c.breakable = true;
+    }
+    return c;
+}
 
 class MainApp : public Tempo::App {
 private:
@@ -18,14 +49,11 @@ private:
     Tempo::FontID m_font_italic;
     Tempo::FontID m_font_bold;
 
-    std::string m_text;
-    std::string m_err;
-    std::string m_prev_text;
+    float text_size = 10.f;
+    float prev_size = 0.f;
 
-    float m_scale = 1.f;
-
-    std::shared_ptr <Latex::LatexImage> m_latex;
-    std::string m_latex_err;
+    std::vector<CharPtr> m_text;
+    TextWrapper wrapper;
     //bool m_open = true;
 public:
     virtual ~MainApp() {}
@@ -36,62 +64,38 @@ public:
         // m_font_bold = Tempo::AddFontFromFileTTF("data/fonts/Roboto/Roboto-Bold.ttf", 16).value();
 
         Latex::init();
+
+        std::string text = "a     abcdefghijklmnopqrstuvwxyz0123456789.";
+
+        for (auto s : text) {
+            m_text.push_back(std::make_shared<CharText>(toChar(s)));
+        }
+        wrapper.insertAt(m_text, 0);
     }
 
     void FrameUpdate() override {
         ImGui::Begin("My window");
 
-        ImGui::InputTextMultiline("Latex input", &m_text);
+        ImGui::DragFloat("text_size", &text_size, 0.5f, 0.f, 20.f);
+        if (ImGui::Button("draw")) {
+            wrapper.setWidth(text_size);
+            auto& lines = wrapper.getLines();
+            int line_idx = 0;
+            int i = 0;
 
-        if (m_text != m_prev_text) {
-            m_prev_text = m_text;
-
-            if (!m_text.empty()) {
-                m_latex = std::make_shared<Latex::LatexImage>(m_text, 20.f, 7.f, microtex::BLACK, ImVec2(m_scale, m_scale));
-            }
-        }
-
-        ImGui::Text("my latex:\n");
-
-
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1, 0, 0, 0.1));
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(1, 1, 1, 0.8));
-        ImGui::BeginChild("testt");
-        if (!m_text.empty()) {
-            if (m_latex->getLatexErrorMsg().empty()) {
-                auto& io = ImGui::GetIO();
-                float mouse_wheel = io.MouseWheel;
-                if (mouse_wheel != 0.f) {
-                    if (mouse_wheel < 0.f) {
-                        m_scale *= 0.99;
-                    }
-                    else {
-                        m_scale *= 1.01;
-                    }
-                    if (m_scale >= 5.f)
-                        m_scale = 5.f;
-                    if (m_scale <= 0.5)
-                        m_scale = 0.5;
-
-                    m_latex->redraw(ImVec2(m_scale, m_scale));
+            std::cout << "Start text" << std::endl;
+            for (auto c : m_text) {
+                if (line_idx < lines.size() && lines[line_idx].start == i) {
+                    line_idx++;
+                    if (line_idx > 0)
+                        std::cout << std::endl;
                 }
-                ImGui::Image(
-                    m_latex->getImage()->texture(),
-                    m_latex->getDimensions()
-                );
+
+                c->draw(ImGui::GetWindowDrawList());
+                i++;
             }
-            else {
-                ImGui::PushStyleColor(ImGuiCol_Text, microtex::BLACK);
-                ImGui::Text(m_latex->getLatexErrorMsg().c_str());
-                ImGui::PopStyleColor();
-            }
+            std::cout << "End text" << std::endl;
         }
-
-
-
-        // ImGui::Text("Test");
-        ImGui::EndChild();
-        ImGui::PopStyleColor(2);
         ImGui::End();
         ImGui::ShowDemoWindow();
 
@@ -104,8 +108,8 @@ int main() {
     Tempo::Config config;
     config.app_name = "TestApp";
     config.app_title = "Hello world";
-    config.default_window_height = 1000;
-    config.default_window_width = 1650;
+    config.default_window_width = 1200;
+    config.default_window_height = 700;
 
     MainApp* app = new MainApp();
     Tempo::Run(app, config);
