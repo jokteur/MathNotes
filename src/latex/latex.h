@@ -33,6 +33,8 @@ namespace Latex {
         microtex::Graphics2D_abstract m_graphics;
         std::shared_ptr<Image> m_image;
         microtex::Cairo_Painter m_painter;
+        float m_ascent;
+        float m_descent;
 
         std::string m_latex_error_msg;
 
@@ -75,6 +77,9 @@ namespace Latex {
          */
         std::string getLatexErrorMsg() { return m_latex_error_msg; }
 
+        float getAscent() { return m_ascent; }
+        float getDescent() { return m_descent; }
+
         /**
          * @brief Removes from memory the generated image
          * getImage will return an empty image
@@ -91,4 +96,6 @@ namespace Latex {
          */
         void redraw(ImVec2 scale = ImVec2(1.f, 1.f), ImVec2 inner_padding = ImVec2(20.f, 20.f));
     };
+
+    using LatexImagePtr = std::shared_ptr<LatexImage>;
 }

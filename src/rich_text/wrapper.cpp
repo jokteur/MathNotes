@@ -14,10 +14,9 @@ namespace RichText {
         return b;
     }
 
-    TextWrapper::TextWrapper(float width, float line_space, float defaut_line_height) {
+    TextWrapper::TextWrapper(float width, float line_space) {
         m_width = width;
         m_line_space = line_space;
-        m_default_line_height = defaut_line_height;
 
         m_lines.push_back(Line{ 0, 0.f });
         m_line_positions.insert(0);
@@ -167,19 +166,20 @@ namespace RichText {
 
                 for (int j = line->start;j < line_end_pos;j++) {
                     CharPtr c = m_text[j];
-                    c->dimensions.y = cursor_y_coord + max_ascent - c->bearing.y;
+                    c->_calculated_position.y = cursor_y_coord + max_ascent - c->bearing.y;
                 }
 
                 line->height = max_ascent + max_descent;
-                cursor_y_coord += line->height;
+                cursor_y_coord += line->height * (1.f + m_line_space);
             }
         }
     }
 
     void TextWrapper::insertAt(const std::vector<CharPtr> string, int position) {
-        for (auto c : string) {
-            m_text.push_back(c);
-        }
+        // for (auto c : string) {
+        //     m_text.push_back(c);
+        // }
+        m_text = string;
         // recalculate();
     }
     void TextWrapper::setWidth(float width) {

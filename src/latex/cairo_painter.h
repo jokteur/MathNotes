@@ -88,7 +88,7 @@ namespace microtex {
 
         virtual void fillRoundRect(float x, float y, float w, float h, float rx, float ry) override;
 
-        virtual void start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale = ImVec2(1.f, 1.f), ImVec2 inner_padding = ImVec2(20.f, 20.f)) override;
+        virtual void start(ImVec2 dimensions, ImVec2 scale = ImVec2(1.f, 1.f), ImVec2 inner_padding = ImVec2(20.f, 20.f)) override;
 
         virtual void finish() override;
     };

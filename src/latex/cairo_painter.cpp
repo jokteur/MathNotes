@@ -22,13 +22,13 @@ void Cairo_Painter::destroy() {
     m_image_data = std::make_shared<ARGB_Image>();
 }
 
-void Cairo_Painter::start(ImVec2 top_left, ImVec2 bottom_right, ImVec2 scale, ImVec2 inner_padding) {
+void Cairo_Painter::start(ImVec2 dimensions, ImVec2 scale, ImVec2 inner_padding) {
     destroy();
     m_painting = true;
 
     m_dimensions = ImVec2(
-        int(scale.x * (bottom_right.x - top_left.x + 2 * inner_padding.x)),
-        int(scale.y * (bottom_right.y - top_left.y + 2 * inner_padding.y))
+        int(scale.x * (dimensions.x + 2 * inner_padding.x)),
+        int(scale.y * (dimensions.y + 2 * inner_padding.y))
     );
     m_scale = scale;
     m_offset = inner_padding;

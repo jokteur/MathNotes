@@ -29,12 +29,12 @@ namespace RichText {
     struct Character {
     public:
 
-        float advance;
-        ImVec2 bearing;
-        ImVec2 dimensions;
-        bool is_linebreak;
-        bool breakable; // If true, means that this char can be used to breakup for a new line
-        Alignement alignement; // Tries to align the character (possible if no_char_before/after are true)
+        float advance = 0.f;
+        ImVec2 bearing = ImVec2(0.f, 0.f);
+        ImVec2 dimensions = ImVec2(0.f, 0.f);
+        bool is_linebreak = false;
+        bool breakable = false; // If true, means that this char can be used to breakup for a new line
+        Alignement alignement = LEFT; // Tries to align the character (possible if no_char_before/after are true)
 
         // This should be only modified by Textwrapper
         ImVec2 _calculated_position;
@@ -77,7 +77,6 @@ namespace RichText {
 
         float m_width;
         float m_line_space;
-        float m_default_line_height;
 
         /**
          * @brief Returns the index of the line which contains pos
@@ -89,7 +88,13 @@ namespace RichText {
 
         void recalculate(int from = 0);
     public:
-        TextWrapper(float width = 20.f, float line_space = 0.3, float default_line_height = 20.f);
+        /**
+         * @brief Construct a new Text Wrapper object
+         *
+         * @param width width (in px) of the box
+         * @param line_space relative line space: space between lines is calculated as line_height * line_space
+         */
+        TextWrapper(float width = 100.f, float line_space = 0.3);
         ~TextWrapper();
 
         void setWidth(float width);

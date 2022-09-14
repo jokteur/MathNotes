@@ -40,7 +40,7 @@ namespace Latex {
     }
 
     void LatexImage::render(ImVec2 scale, ImVec2 inner_padding) {
-        m_painter.start(m_graphics.getScaledMin(), m_graphics.getScaledMax(), scale, inner_padding);
+        m_painter.start(ImVec2(m_render->getWidth(), m_render->getHeight()), scale, inner_padding);
         m_graphics.distributeCallList(&m_painter);
         m_painter.finish();
         if (!m_painter.getImageDataPtr()->empty())
@@ -60,7 +60,12 @@ namespace Latex {
                 latex_src,
                 2000.f, font_size, line_space, BLACK, false, "XITS Math", "XITS"
             );
+            const int height = m_render->getHeight(); // total height of the box = ascent + descent
+            m_descent = m_render->getDepth();   // depth = descent
+            m_ascent = height - m_descent;
+
             m_render->draw(m_graphics, 0.f, 0.f);
+
         }
         catch (std::exception& e) {
             m_latex_error_msg = e.what();
