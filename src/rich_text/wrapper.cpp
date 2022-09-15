@@ -65,24 +65,6 @@ namespace RichText {
             float word_x_coord = 0.f;
             float word_with_whitespace_x_coord = 0.f;
 
-            // First, find the last breakable character from current position
-            // TODO FIX ME for from > 0 
-            // for (int i = from;i > 0;i--) {
-            //     auto& c = m_text[i];
-            //     if (c->breakable) {
-            //         // Fetch next possible character position
-            //         word_pos = i + 1;
-            //         word_x_coord = c->_calculated_position.x - c->bearing.x + c->advance;
-            //         break;
-            //     }
-            // }
-            // if (word_pos < current_line->start) {
-            //     word_pos = current_line->start;
-            //     word_x_coord = 0.f;
-            // }
-
-            bool is_last_char_whitespace = false;
-
             // Determining the line break, char by char
             for (int cursor_pos = from;cursor_pos < m_text.size();cursor_pos++) {
                 CharPtr c = m_text[cursor_pos];
@@ -92,21 +74,11 @@ namespace RichText {
                 if (c->breakable) {
                     word_pos = cursor_pos + 1;
                     word_x_coord = cursor_x_coord + c->advance;
-                    if (!is_last_char_whitespace) {
-                        word_with_whitespace_pos = word_pos;
-                        word_with_whitespace_x_coord = word_x_coord;
-                    }
-                    is_last_char_whitespace = true;
                 }
-                else {
-                    is_last_char_whitespace = false;
-                }
-
                 if (c->is_linebreak) {
                     current_line = push_new_line(cursor_pos + 1, &cursor_x_coord);
                     word_pos = cursor_pos + 1;
                     word_x_coord = 0.f;
-                    is_last_char_whitespace = true;
                     continue;
                 }
 
@@ -124,12 +96,17 @@ namespace RichText {
                     if (char_width + word_width > m_width) {
                         push_char_on_line(c, &cursor_x_coord);
                     }
+                    // Push every single character onto the next line (with the current one)
                     else {
-                        // Push every single character onto the next line (with the current one)
+                        // Edge case where a breakable char gets left on the line
+                        if (word_pos == cursor_pos + 1) {
+                            word_pos = cursor_pos;
+                        }
                         float tmp_cursor_pos = 0.f;
                         for (int j = word_pos;j <= cursor_pos;j++) {
                             CharPtr tmp_c = m_text[j];
-                            push_char_on_line(tmp_c, &tmp_cursor_pos);
+                            if (!tmp_c->is_whitespace)
+                                push_char_on_line(tmp_c, &tmp_cursor_pos);
                         }
                         current_line->start = word_pos;
                         cursor_x_coord = tmp_cursor_pos;

@@ -3,7 +3,7 @@
 #include "imgui_internal.h"
 
 namespace RichText {
-    ImChar::ImChar(Tempo::SafeImFontPtr font, ImWchar c, float font_size, ImU32 color, bool force_blank) {
+    ImChar::ImChar(Tempo::SafeImFontPtr font, ImWchar c, float font_size, ImU32 color, bool force_breakable) {
         m_font = font;
         m_font_size = font_size;
         m_color = color;
@@ -21,9 +21,11 @@ namespace RichText {
             is_linebreak = true;
 
 
-        if (ImCharIsBlankW(c))
+        if (ImCharIsBlankW(c)) {
             breakable = true;
-        if (force_blank)
+            is_whitespace = true;
+        }
+        if (force_breakable)
             breakable = true;
 
         float scale = (font_size >= 0.0f) ? (font_size / font->im_font->FontSize) : 1.0f;
@@ -61,10 +63,10 @@ namespace RichText {
                 if (c == 0) // Malformed UTF-8?
                     break;
             }
-            bool force_blank = false;
+            bool force_breakable = false;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
-                force_blank = true;
-            out_string.push_back(std::make_shared<ImChar>(font, (ImWchar)c, font_size, color, force_blank));
+                force_breakable = true;
+            out_string.push_back(std::make_shared<ImChar>(font, (ImWchar)c, font_size, color, force_breakable));
             i++;
 
         }

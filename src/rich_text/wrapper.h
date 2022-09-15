@@ -36,6 +36,7 @@ namespace RichText {
         ImVec2 dimensions = ImVec2(0.f, 0.f);
         bool is_linebreak = false;
         bool breakable = false; // If true, means that this char can be used to breakup for a new line
+        bool is_whitespace = false; // If true, the char won't be pushed onto the next line 
         Alignement alignement = LEFT; // Tries to align the character (possible if no_char_before/after are true)
 
         // This should be only modified by Textwrapper
