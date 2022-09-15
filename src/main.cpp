@@ -28,7 +28,7 @@ private:
     float prev_size = 0.f;
 
     std::vector<CharPtr> m_text;
-    std::string m_in_text = "$$ \\beta$$ $$ \\eta$$ $$\\int_a^b$$";
+    std::string m_in_text = "$$ \\beta$$ ";
     std::string m_prev_text = "";
     float m_current_width = 0.f;
     float m_font_size = 32.f;

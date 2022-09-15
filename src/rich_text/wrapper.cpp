@@ -169,7 +169,6 @@ namespace RichText {
                     CharPtr c = m_text[j];
                     c->_calculated_position.y = cursor_y_coord + max_ascent - c->ascent + c->offset.y;
                 }
-
                 line->height = max_ascent + max_descent;
                 cursor_y_coord += line->height * (1.f + m_line_space);
             }

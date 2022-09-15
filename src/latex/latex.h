@@ -35,6 +35,7 @@ namespace Latex {
         microtex::Cairo_Painter m_painter;
         float m_ascent;
         float m_descent;
+        float m_baseline;
 
         std::string m_latex_error_msg;
 

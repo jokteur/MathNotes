@@ -40,7 +40,7 @@ namespace Latex {
     }
 
     void LatexImage::render(ImVec2 scale, ImVec2 inner_padding) {
-        m_painter.start(ImVec2(m_render->getWidth(), m_render->getHeight()), scale, inner_padding);
+        m_painter.start(ImVec2(round(m_render->getWidth()), round(m_render->getHeight())), scale, inner_padding);
         m_graphics.distributeCallList(&m_painter);
         m_painter.finish();
         if (!m_painter.getImageDataPtr()->empty())
@@ -58,9 +58,9 @@ namespace Latex {
             // Default width large enough
             m_render = MicroTeX::parse(
                 latex_src,
-                2000.f, font_size, line_space, BLACK, false, "XITS Math", "XITS"
+                2000.f, font_size, line_space, text_color
             );
-            const int height = m_render->getHeight(); // total height of the box = ascent + descent
+            float height = m_render->getHeight(); // total height of the box = ascent + descent
             m_descent = m_render->getDepth();   // depth = descent
             m_ascent = height - m_descent;
 
