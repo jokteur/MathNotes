@@ -1,4 +1,5 @@
 #include "wrapper.h"
+#include <iomanip>
 
 namespace RichText {
     template<typename T>
@@ -30,7 +31,7 @@ namespace RichText {
         return 0;
     }
     inline void TextWrapper::push_char_on_line(CharPtr c, float* cursor_x_coord) {
-        c->_calculated_position.x = *cursor_x_coord + c->bearing.x;
+        c->_calculated_position.x = *cursor_x_coord + c->offset.x;
         *cursor_x_coord += c->advance;
     }
     inline Line* TextWrapper::push_new_line(int cursor_pos, float* cursor_x_coord) {
@@ -109,7 +110,7 @@ namespace RichText {
                     continue;
                 }
 
-                float char_width = c->dimensions.x + c->bearing.x;
+                float char_width = c->dimensions.x + c->offset.x;
 
                 if (char_width + cursor_x_coord > m_width) {
                     // Current word width: a word width is counted from the last breakable character
@@ -160,13 +161,13 @@ namespace RichText {
                 float max_descent = 0.f;
                 for (int j = line->start;j < line_end_pos;j++) {
                     CharPtr c = m_text[j];
-                    max_ascent = max<float>(max_ascent, c->bearing.y);
-                    max_descent = max<float>(max_descent, c->dimensions.y - c->bearing.y);
+                    max_ascent = max<float>(max_ascent, c->ascent);
+                    max_descent = max<float>(max_descent, c->descent);
                 }
 
                 for (int j = line->start;j < line_end_pos;j++) {
                     CharPtr c = m_text[j];
-                    c->_calculated_position.y = cursor_y_coord + max_ascent - c->bearing.y;
+                    c->_calculated_position.y = cursor_y_coord + max_ascent - c->ascent + c->offset.y;
                 }
 
                 line->height = max_ascent + max_descent;

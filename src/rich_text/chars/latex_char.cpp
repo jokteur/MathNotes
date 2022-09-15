@@ -10,16 +10,20 @@ namespace RichText {
 
         dimensions = m_latex_image->getDimensions();
         advance = dimensions.x;
-        bearing.y = m_latex_image->getAscent();
+        ascent = m_latex_image->getAscent();
+        descent = m_latex_image->getDescent();
     }
 
 
     void LatexChar::draw(ImDrawList* draw_list) {
         auto& cursor_pos = ImGui::GetCursorScreenPos();
+        auto& final_pos = cursor_pos + _calculated_position;
+        final_pos.x = IM_ROUND(final_pos.x);
+        final_pos.y = IM_ROUND(final_pos.y);
         draw_list->AddImage(
             m_latex_image->getImage()->texture(),
-            cursor_pos + _calculated_position,
-            cursor_pos + _calculated_position + dimensions
+            final_pos,
+            final_pos + dimensions
         );
     }
 

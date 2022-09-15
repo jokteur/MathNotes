@@ -9,7 +9,7 @@ namespace RichText {
         m_color = color;
         m_char = c;
 
-        if (m_font == nullptr)
+        if (m_font->im_font == nullptr)
             return;
 
         const ImFontGlyph* glyph = font->im_font->FindGlyph(c);
@@ -29,18 +29,20 @@ namespace RichText {
         float scale = (font_size >= 0.0f) ? (font_size / font->im_font->FontSize) : 1.0f;
         dimensions = ImVec2(scale * (glyph->X1 - glyph->X0), scale * (glyph->Y1 - glyph->Y0));
 
-        bearing = ImVec2(scale * glyph->X0, scale * (font->im_font->Ascent - glyph->Y0));
+        ascent = scale * font->im_font->Ascent;
+        descent = scale * font->im_font->Descent;
+        offset = ImVec2(scale * glyph->X0, scale * glyph->Y0);
         advance = scale * glyph->AdvanceX;
-        m_y_offset = scale * glyph->Y0;
     }
 
     void ImChar::draw(ImDrawList* draw_list) {
         if (m_font->im_font == nullptr)
             return;
         auto& cursor_pos = ImGui::GetCursorScreenPos();
+
         if (!is_linebreak) {
-            ImVec2 position = _calculated_position + cursor_pos;
-            position.y -= m_y_offset;
+            // ImGui RenderChar takes offset into account, this is why it is substracted
+            ImVec2 position = _calculated_position + cursor_pos - offset;
             m_font->im_font->RenderChar(draw_list,
                 m_font_size,
                 position,

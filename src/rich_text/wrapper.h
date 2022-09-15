@@ -11,26 +11,28 @@ namespace RichText {
      * @brief A character can be anything that needs to be
      * displayed to the screen in a text-like widget.
      *
-     * The different properties of this struct (advance, bearing, ...)
+     * The different properties of this struct (advance, offset, ...)
      * determine how the character will be displayed along the other characters.
      *
      *     <-------advance------>
      *
-     *        + is bearing (x,y)
-     *
-     *           +     *                 \
-     *               * *                 |
-     *             *   *                 | height
-     *     0     *  *  *  *     0        |
-     *  origin         *     next char   |
-     *                 *      origin     /
+     *     0 →                  0                   ▴
+     *   origin                next char            |
+     *     ↓     x     *       origin    ▴          |   ascent
+     *       offset  * *                 |          |
+     *             *   *                 | height   ▾
+     *           *  *  *  *              |          ▴
+     *                 *                 |          |   descent
+     *                 *                 ▾          ▾
      *           <--width->
      */
     struct Character {
     public:
 
         float advance = 0.f;
-        ImVec2 bearing = ImVec2(0.f, 0.f);
+        ImVec2 offset = ImVec2(0.f, 0.f);
+        float ascent = 0.f; // Max ascent of char family
+        float descent = 0.f; // Max descent of char family
         ImVec2 dimensions = ImVec2(0.f, 0.f);
         bool is_linebreak = false;
         bool breakable = false; // If true, means that this char can be used to breakup for a new line
