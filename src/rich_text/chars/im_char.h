@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../wrapper.h"
+#include "drawable_char.h"
 
 namespace RichText {
     /**
      * @brief Character for ImFont
      *
      */
-    struct ImChar : public Character {
+    struct ImChar : public DrawableChar {
         Tempo::SafeImFontPtr m_font;
         float m_font_size;
         ImU32 m_color;
@@ -19,5 +19,5 @@ namespace RichText {
         void draw(ImDrawList* draw_list) override;
     };
 
-    std::vector<CharPtr> Utf8StrToImCharStr(const std::string& str, Tempo::SafeImFontPtr font, float font_size, ImU32 color);
+    std::vector<DrawableCharPtr> Utf8StrToImCharStr(const std::string& str, Tempo::SafeImFontPtr font, float font_size, ImU32 color);
 }

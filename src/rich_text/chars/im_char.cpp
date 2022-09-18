@@ -41,6 +41,7 @@ namespace RichText {
         if (m_font->im_font == nullptr)
             return;
         auto& cursor_pos = ImGui::GetCursorScreenPos();
+        cursor_pos += _scroll_offset;
 
         if (!is_linebreak) {
             // ImGui RenderChar takes offset into account, this is why it is substracted
@@ -52,8 +53,8 @@ namespace RichText {
         }
     }
 
-    std::vector<CharPtr> Utf8StrToImCharStr(const std::string& str, Tempo::SafeImFontPtr font, float font_size, ImU32 color) {
-        std::vector<CharPtr> out_string;
+    std::vector<DrawableCharPtr> Utf8StrToImCharStr(const std::string& str, Tempo::SafeImFontPtr font, float font_size, ImU32 color) {
+        std::vector<DrawableCharPtr> out_string;
 
         int i = 0;
         for (auto s : str) {

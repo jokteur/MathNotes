@@ -3,6 +3,7 @@
 #include <tempo.h>
 #include <string>
 
+#include <chrono>
 #include <iostream>
 #include <exception>
 
@@ -27,20 +28,20 @@ private:
     float text_size = 300.f;
     float prev_size = 0.f;
 
-    std::vector<CharPtr> m_text;
-    std::string m_in_text = "";
+    std::vector<DrawableCharPtr> m_text;
+    std::string m_in_text = "ab ";
     std::string m_prev_text = "";
     float m_current_width = 0.f;
     float m_font_size = 32.f;
     float m_zoom = 1.f;
     float m_prev_zoom = 1.f;
     float m_scaling = 1.f;
-    TextWrapper wrapper;
-    bool m_delay_update = false;
-    float m_direction = -1.f;
+    WrapAlgorithm wrapper;
+    int m_text_size = 1000;
     //bool m_open = true;
 public:
     virtual ~MainApp() {}
+    MainApp() : wrapper(0.f, 500.f) {}
 
     void InitializationBeforeLoop() override {
         m_font_regular = Tempo::AddFontFromFileTTF("data/fonts/Roboto/Roboto-Regular.ttf", 16).value();
@@ -87,61 +88,82 @@ public:
         }
     }
 
+    void insertBigString() {
+        m_in_text.clear();
+        for (int i = 0;i < m_text_size;i++) {
+            m_in_text += 32 + i % 90;
+        }
+        auto res = Utf8StrToImCharStr(
+            m_in_text,
+            Tempo::GetImFont(m_font_regular32),
+            m_font_size * m_zoom * Tempo::GetScaling(),
+            microtex::BLACK
+        );
+        wrapper.clear();
+    }
     void FrameUpdate() override {
         ImGui::Begin("My window");
         ImGui::InputTextMultiline("input", &m_in_text);
         ImGui::SliderFloat("Zoom", &m_zoom, 0.2f, 1.f, "%.2f");
+        ImGui::SliderInt("Size", &m_text_size, 100, 1000000);
+        if (ImGui::Button("Insert")) {
+            insertBigString();
+        }
         ImGui::End();
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("Second window");
         float width = ImGui::GetWindowContentRegionWidth();
-        if (m_current_width != width) {
-            m_current_width = width;
-            wrapper.setWidth(m_current_width);
-        }
-        if (!m_text.empty())
+
+        if (!m_text.empty()) {
+            auto draw_list = ImGui::GetWindowDrawList();
             for (auto c : m_text) {
-                c->draw(ImGui::GetWindowDrawList());
+                c->draw(draw_list);
             }
+        }
         ImGui::End();
         ImGui::PopStyleColor();
-        if (m_zoom)
-
-            if ((m_in_text != m_prev_text || m_zoom != m_prev_zoom || Tempo::GetScaling() != m_scaling)
-                && Tempo::GetImFont(m_font_regular32) != nullptr || m_delay_update) {
-                // if (m_zoom != m_prev_zoom) {
-                //     m_prev_zoom = m_zoom;
-                //     updateFontSize(m_font_size * m_zoom);
-                // }
-                m_delay_update = false;
-                m_prev_text = m_in_text;
-                m_prev_zoom = m_zoom;
-                m_scaling = Tempo::GetScaling();
-                m_text.clear();
-                bool capture_latex = false;
-                bool is_prev_dollar = false;
-                std::string tmp_text, tmp_latex;
-                for (auto s : m_in_text) {
-                    if (s == '$') {
-                        if (is_prev_dollar) {
-                            update_text(capture_latex, tmp_text, tmp_latex);
-                        }
-
-                        is_prev_dollar = true;
+        if (m_in_text != m_prev_text) {
+            m_text.clear();
+            bool capture_latex = false;
+            bool is_prev_dollar = false;
+            std::string tmp_text, tmp_latex;
+            for (auto s : m_in_text) {
+                if (s == '$') {
+                    if (is_prev_dollar) {
+                        update_text(capture_latex, tmp_text, tmp_latex);
                     }
-                    if (s != '$') {
-                        is_prev_dollar = false;
-                        if (capture_latex)
-                            tmp_latex.push_back(s);
-                        else
-                            tmp_text.push_back(s);
-                    }
+                    is_prev_dollar = true;
                 }
-                update_text(capture_latex, tmp_text, tmp_latex);
-                wrapper.insertAt(m_text, 0);
-                wrapper.setWidth(m_current_width);
-
+                if (s != '$') {
+                    is_prev_dollar = false;
+                    if (capture_latex)
+                        tmp_latex.push_back(s);
+                    else
+                        tmp_text.push_back(s);
+                }
             }
+            update_text(capture_latex, tmp_text, tmp_latex);
+            std::vector<WrapCharPtr> str;
+            for (auto c : m_text) {
+                str.push_back(static_cast<WrapCharPtr>(c));
+            }
+            wrapper.setString(str);
+        }
+        if ((m_zoom != m_prev_zoom ||
+            Tempo::GetScaling() != m_scaling ||
+            m_current_width != width
+            )
+            && Tempo::GetImFont(m_font_regular32) != nullptr
+            ) {
+            m_current_width = width;
+            m_prev_text = m_in_text;
+            m_prev_zoom = m_zoom;
+            m_scaling = Tempo::GetScaling();
+            auto t = std::chrono::high_resolution_clock::now();
+            wrapper.setWidth(m_current_width);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - t).count() << std::endl;
+        }
         // ImGui::ShowDemoWindow();
     }
     void BeforeFrameUpdate() override {}

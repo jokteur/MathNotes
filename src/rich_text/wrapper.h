@@ -26,7 +26,7 @@ namespace RichText {
      *                 *                 ▾          ▾
      *           <--width->
      */
-    struct Character {
+    struct WrapCharacter {
     public:
 
         float advance = 0.f;
@@ -39,15 +39,13 @@ namespace RichText {
         bool is_whitespace = false; // If true, the char won't be pushed onto the next line 
         Alignement alignement = LEFT; // Tries to align the character (possible if no_char_before/after are true)
 
-        // This should be only modified by Textwrapper
+        // This should be only modified by WrapAlgorithm
         ImVec2 _calculated_position;
-
-        virtual void draw(ImDrawList* im_draw_list) = 0;
-
-        friend class TextWrapper;
+        ImVec2 _scroll_offset;
+        bool _is_visible;
     };
 
-    using CharPtr = std::shared_ptr<Character>;
+    using WrapCharPtr = std::shared_ptr<WrapCharacter>;
 
     /**
      * @brief The convention for line positions is as follow:
@@ -67,46 +65,56 @@ namespace RichText {
      */
     struct Line {
         int start;
-        // float line_coord_Y0;
+        float line_pos_y;
         float height;
     };
 
-    class TextWrapper {
+    /**
+     * @brief Only handles wrapping and scrolling
+     */
+    class WrapAlgorithm {
     private:
-        std::vector<CharPtr> m_text;
+        std::vector<WrapCharPtr> m_string;
 
-        std::vector<Line> m_lines;
+        // Calculated quantities
+        std::list<Line> m_lines;
         std::set<int> m_line_positions;
+        float m_total_height;
 
+        // User set quantities
         float m_width;
+        float m_height;
         float m_line_space;
 
         /**
          * @brief Returns the index of the line which contains pos
          */
         inline int find_line_idx(int cursor_pos);
+        inline int find_next_line_break(int cursor_pos);
 
-        inline void push_char_on_line(CharPtr c, float* cursor_x_coord);
-        inline Line* push_new_line(int cursor_pos, float* cursor_x_coord);
+        inline void push_char_on_line(WrapCharPtr c, float* cursor_x_coord);
+        inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
-        void recalculate(int from = 0);
+        void recalculate(int from = 0, int to = -1);
     public:
         /**
          * @brief Construct a new Text Wrapper object
          *
          * @param width width (in px) of the box
+         * @param height height (in px) of the box
          * @param line_space relative line space: space between lines is calculated as line_height * line_space
          */
-        TextWrapper(float width = 100.f, float line_space = 0.3);
-        ~TextWrapper();
+        WrapAlgorithm(float width, float height, float line_space = 0.3);
+        ~WrapAlgorithm();
+
+        void setString(const std::vector<WrapCharPtr>& string);
+        void insertAt(const std::vector<WrapCharPtr>& string, int position = -1);
+        void insertAt(WrapCharPtr& c, int position = -1);
+        void deleteAt(int start, int end = -1);
+        void clear();
 
         void setWidth(float width);
+        void setHeight(float height);
         void setLineSpace(float line_space);
-
-        std::vector<Line> getLines() { return m_lines; }
-
-        void deleteAt(int start, int end = -1);
-        void insertAt(const std::vector<CharPtr> string, int position = -1);
-        void insertAt(CharPtr& c, int position = -1);
     };
 }

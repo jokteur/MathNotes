@@ -1,55 +1,83 @@
 #include "wrapper.h"
 #include <iomanip>
 
-namespace RichText {
-    template<typename T>
-    inline T max(T a, T b) {
-        if (a < b)
-            return b;
-        return a;
-    }
-    template<typename T>
-    inline T min(T a, T b) {
-        if (a < b)
-            return a;
-        return b;
-    }
+#define min(X, Y)  ((X) < (Y) ? (X) : (Y))
+#define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
-    TextWrapper::TextWrapper(float width, float line_space) {
+namespace RichText {
+    WrapAlgorithm::WrapAlgorithm(float width, float height, float line_space) {
         m_width = width;
+        m_height = height;
         m_line_space = line_space;
 
         m_lines.push_back(Line{ 0, 0.f });
         m_line_positions.insert(0);
     }
-    TextWrapper::~TextWrapper() {
+    WrapAlgorithm::~WrapAlgorithm() {
 
     }
 
-    inline int TextWrapper::find_line_idx(int cursor_pos) {
+    inline int WrapAlgorithm::find_line_idx(int cursor_pos) {
         // m_line_positions.find(cursor_pos);
         return 0;
     }
-    inline void TextWrapper::push_char_on_line(CharPtr c, float* cursor_x_coord) {
-        c->_calculated_position.x = *cursor_x_coord + c->offset.x;
-        *cursor_x_coord += c->advance;
+    inline int WrapAlgorithm::find_next_line_break(int cursor_pos) {
+        return 0;
     }
-    inline Line* TextWrapper::push_new_line(int cursor_pos, float* cursor_x_coord) {
-        m_lines.push_back(Line{ cursor_pos, 0.f });
-        *cursor_x_coord = 0.f;
-        m_line_positions.insert(cursor_pos);
-        return &(m_lines.back());
+    inline void WrapAlgorithm::push_char_on_line(WrapCharPtr c, float* cursor_pos_x) {
+        c->_calculated_position.x = *cursor_pos_x + c->offset.x;
+        *cursor_pos_x += c->advance;
     }
-    void TextWrapper::recalculate(int from) {
-        int line_idx = find_line_idx(from);
+    inline void WrapAlgorithm::push_new_line(std::list<Line>::iterator& line_it, int cursor_idx, float* cursor_pos_x) {
+        m_lines.insert(std::next(line_it), Line{ cursor_idx, 0.f });
+        line_it++;
+        *cursor_pos_x = 0.f;
+    }
+    void WrapAlgorithm::recalculate(int start, int end) {
+        // abreviations used in this function:
+        // it for iterator, pos for position, idx for index
 
-        // Delete all lines after the current one
-        if (m_lines.size() > 1 && line_idx + 1 < m_lines.size()) {
-            for (int i = line_idx + 1;i < m_lines.size();i++) {
-                m_line_positions.erase(m_lines[i].start);
-            }
-            m_lines.erase(m_lines.begin() + line_idx + 1, m_lines.end());
+        if (end == -1) {
+            if (m_string.empty())
+                end = 0;
+            else
+                end = m_string.size() - 1;
         }
+
+        // ==== SECTION 1 ====
+        // We need to figure out which lines are modified from start to end
+        // This part is in O(# lines), but usually we have that # lines << # chars
+
+        // Find the line that contains start position
+        auto line_it_start = m_lines.begin();
+        while (line_it_start != m_lines.end()) {
+            auto next_it = std::next(line_it_start);
+            if (next_it != m_lines.end() && next_it->start > start) {
+                break;
+            }
+            line_it_start++;
+        }
+        if (line_it_start == m_lines.end()) {
+            line_it_start = m_lines.begin();
+        }
+        // Find the line that contains end position
+        std::list<Line>::iterator line_it_end = line_it_start;
+        while (line_it_end != m_lines.end()) {
+            auto next_it = std::next(line_it_end);
+            if (next_it != m_lines.end() && next_it->start > end) {
+                break;
+            }
+            line_it_end++;
+        }
+        // All lines from start (not included) to end are invalid
+        // Remove them
+        if (line_it_start != line_it_end) {
+            m_lines.erase(std::next(line_it_start), line_it_end);
+        }
+
+
+        // ==== SECTION 2 ====
+        // Calculation of char and horizontal positions
 
         // The calculation of the chars coordinates must be done in two passes:
         // First horizontal position to determine the line breaks
@@ -57,110 +85,162 @@ namespace RichText {
 
         // Calculate line breaks
         {
-            float cursor_x_coord = 0.f;
-            Line* current_line = &m_lines[line_idx];
+            float cursor_pos_x = 0.f;
+            auto current_line_it = line_it_start;
 
-            int word_pos = 0;
-            int word_with_whitespace_pos = 0;
-            float word_x_coord = 0.f;
-            float word_with_whitespace_x_coord = 0.f;
+            int word_idx = 0;
+            float word_pos_x = 0.f;
 
             // Determining the line break, char by char
-            for (int cursor_pos = from;cursor_pos < m_text.size();cursor_pos++) {
-                CharPtr c = m_text[cursor_pos];
+            for (int cursor_idx = line_it_start->start;cursor_idx < m_string.size();cursor_idx++) {
+                WrapCharPtr c = m_string[cursor_idx];
 
                 // If a breakable char follows a white space (break line or breakable)
                 // then it should not considered as a breakable char
                 if (c->breakable) {
-                    word_pos = cursor_pos + 1;
-                    word_x_coord = cursor_x_coord + c->advance;
+                    word_idx = cursor_idx + 1;
+                    word_pos_x = cursor_pos_x + c->advance;
                 }
                 if (c->is_linebreak) {
-                    current_line = push_new_line(cursor_pos + 1, &cursor_x_coord);
-                    word_pos = cursor_pos + 1;
-                    word_x_coord = 0.f;
+                    push_new_line(current_line_it, cursor_idx + 1, &cursor_pos_x);
+                    word_idx = cursor_idx + 1;
+                    word_pos_x = 0.f;
                     continue;
                 }
 
                 float char_width = c->dimensions.x + c->offset.x;
 
-                if (char_width + cursor_x_coord > m_width) {
+                if (char_width + cursor_pos_x > m_width) {
                     // Current word width: a word width is counted from the last breakable character
                     // or the last line break (position 0), which ever came last
-                    float word_width = cursor_x_coord - word_x_coord;
+                    float word_width = cursor_pos_x - word_pos_x;
 
-                    current_line = push_new_line(cursor_pos, &cursor_x_coord);
+                    push_new_line(current_line_it, cursor_idx, &cursor_pos_x);
 
                     // In this case, only the char is pushed to the next
                     // line because char + word can't fit on the whole width
                     if (char_width + word_width > m_width) {
-                        push_char_on_line(c, &cursor_x_coord);
+                        push_char_on_line(c, &cursor_pos_x);
                     }
                     // Push every single character onto the next line (with the current one)
                     else {
                         // Edge case where a breakable char gets left on the line
-                        if (word_pos == cursor_pos + 1) {
-                            word_pos = cursor_pos;
+                        if (word_idx == cursor_idx + 1) {
+                            word_idx = cursor_idx;
                         }
-                        float tmp_cursor_pos = 0.f;
-                        for (int j = word_pos;j <= cursor_pos;j++) {
-                            CharPtr tmp_c = m_text[j];
+                        float tmp_cursor_idx = 0.f;
+                        for (int j = word_idx;j <= cursor_idx;j++) {
+                            WrapCharPtr tmp_c = m_string[j];
                             if (!tmp_c->is_whitespace)
-                                push_char_on_line(tmp_c, &tmp_cursor_pos);
+                                push_char_on_line(tmp_c, &tmp_cursor_idx);
                         }
-                        current_line->start = word_pos;
-                        cursor_x_coord = tmp_cursor_pos;
+                        current_line_it->start = word_idx;
+                        cursor_pos_x = tmp_cursor_idx;
                     }
                     // Have to update word_xxx after manipulations with current word have been made
-                    word_pos = current_line->start;
-                    word_x_coord = 0.f;
+                    word_idx = current_line_it->start;
+                    word_pos_x = 0.f;
                 }
                 else {
-                    push_char_on_line(c, &cursor_x_coord);
+                    push_char_on_line(c, &cursor_pos_x);
                 }
             }
         }
+        // ==== SECTION 3 ====
+        // Calculation of char vertical positions
+
         // Calculate vertical chars positions
-        {
-            float cursor_y_coord = 0.f;
+        float cursor_pos_y = line_it_start->line_pos_y;
+        for (auto current_line_it = line_it_start;current_line_it != line_it_end;current_line_it++) {
+            auto next_it = std::next(current_line_it);
+            current_line_it->line_pos_y = cursor_pos_y;
+            int line_end_idx = m_string.size();
+            if (next_it != line_it_end) {
+                line_end_idx = next_it->start;
+            }
 
-            for (int line_idx = 0;line_idx < m_lines.size();line_idx++) {
-                Line* line = &m_lines[line_idx];
-                int line_end_pos = m_text.size();
-                if (line_idx < m_lines.size() - 1) {
-                    line_end_pos = m_lines[line_idx + 1].start;
-                }
+            // Find max char height relative to cursor pos
+            // ascent is the distance from origin to bearing
+            // descent is the distance from origin to bottom of char
+            float max_ascent = 0.f;
+            float max_descent = 0.f;
+            for (int j = current_line_it->start;j < line_end_idx;j++) {
+                WrapCharPtr c = m_string[j];
+                max_ascent = max(max_ascent, c->ascent);
+                max_descent = max(max_descent, c->descent);
+            }
 
-                // Find max char height relative to cursor pos
-                // ascent is the distance from origin to bearing
-                // descent is the distance from origin to bottom of char
-                float max_ascent = 0.f;
-                float max_descent = 0.f;
-                for (int j = line->start;j < line_end_pos;j++) {
-                    CharPtr c = m_text[j];
-                    max_ascent = max<float>(max_ascent, c->ascent);
-                    max_descent = max<float>(max_descent, c->descent);
-                }
+            for (int j = current_line_it->start;j < line_end_idx;j++) {
+                WrapCharPtr c = m_string[j];
+                c->_calculated_position.y = cursor_pos_y + max_ascent - c->ascent + c->offset.y;
+            }
+            current_line_it->height = max_ascent + max_descent;
+            cursor_pos_y += current_line_it->height * (1.f + m_line_space);
+        }
 
-                for (int j = line->start;j < line_end_pos;j++) {
-                    CharPtr c = m_text[j];
-                    c->_calculated_position.y = cursor_y_coord + max_ascent - c->ascent + c->offset.y;
+        // ==== SECTION 4 ====
+        // Update all subsequent lines and chars in their respective y position by
+        // the y amount that may have been added in between start and end 
+        float y_diff = cursor_pos_y - line_it_start->line_pos_y;
+        if (y_diff > 0.f) {
+            for (auto current_line_it = line_it_end;current_line_it != m_lines.end();current_line_it++) {
+                current_line_it->line_pos_y += y_diff;
+                auto next_it = std::next(current_line_it);
+                int line_end_idx = m_string.size();
+                if (next_it != m_lines.end()) {
+                    line_end_idx = next_it->start;
                 }
-                line->height = max_ascent + max_descent;
-                cursor_y_coord += line->height * (1.f + m_line_space);
+                for (int j = current_line_it->start;j < line_end_idx;j++) {
+                    m_string[j]->_calculated_position.y += y_diff;
+                }
             }
         }
     }
 
-    void TextWrapper::insertAt(const std::vector<CharPtr> string, int position) {
-        // for (auto c : string) {
-        //     m_text.push_back(c);
-        // }
-        m_text = string;
-        // recalculate();
+    void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string) {
+        clear();
+        m_string = string;
+        recalculate(0);
     }
-    void TextWrapper::setWidth(float width) {
+
+    void WrapAlgorithm::insertAt(const std::vector<WrapCharPtr>& string, int position) {
+        if (position == -1) {
+            if (m_string.empty())
+                position = 0;
+            else
+                position = m_string.size() - 1;
+        }
+        int end = position;
+        while (end < m_string.size()) {
+            if (m_string[end]->is_linebreak)
+                break;
+        }
+        end += string.size();
+        m_string.insert(m_string.begin() + position, string.begin(), string.end());
+        recalculate(position, end);
+    }
+    void WrapAlgorithm::insertAt(WrapCharPtr& c, int position) {
+        insertAt(std::vector<WrapCharPtr>{c}, position);
+    }
+    void WrapAlgorithm::deleteAt(int start, int end) {
+
+    }
+    void WrapAlgorithm::clear() {
+        m_string.clear();
+        m_lines.clear();
+        m_line_positions.clear();
+        m_lines.push_back(Line{ 0, 0.f });
+        m_line_positions.insert(0);
+    }
+    void WrapAlgorithm::setWidth(float width) {
         m_width = width;
+        recalculate();
+    }
+    void WrapAlgorithm::setHeight(float height) {
+        m_height = height;
+    }
+    void WrapAlgorithm::setLineSpace(float line_space) {
+        m_line_space = line_space;
         recalculate();
     }
 }
