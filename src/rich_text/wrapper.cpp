@@ -55,27 +55,27 @@ namespace RichText {
             if (next_it != m_lines.end() && next_it->start > start) {
                 break;
             }
+            if (next_it == m_lines.end())
+                break;
             line_it_start++;
         }
-        if (line_it_start == m_lines.end()) {
-            line_it_start = m_lines.begin();
-        }
+
         // Find the line that contains end position
         std::list<Line>::iterator line_it_end = line_it_start;
         while (line_it_end != m_lines.end()) {
-            auto next_it = std::next(line_it_end);
-            if (next_it != m_lines.end() && next_it->start > end) {
+            line_it_end++;
+            if (line_it_end != m_lines.end() && line_it_end->start > end) {
                 break;
             }
-            line_it_end++;
         }
+        float start_to_end_height = 0.f;
+        if (line_it_end != m_lines.end())
+            start_to_end_height = line_it_end->line_pos_y - line_it_start->line_pos_y;
         // All lines from start (not included) to end are invalid
         // Remove them
         if (line_it_start != line_it_end) {
             m_lines.erase(std::next(line_it_start), line_it_end);
         }
-
-
         // ==== SECTION 2 ====
         // Calculation of char and horizontal positions
 
@@ -85,14 +85,14 @@ namespace RichText {
 
         // Calculate line breaks
         {
-            float cursor_pos_x = 0.f;
             auto current_line_it = line_it_start;
+            float cursor_pos_x = 0.f;
 
             int word_idx = 0;
             float word_pos_x = 0.f;
 
             // Determining the line break, char by char
-            for (int cursor_idx = line_it_start->start;cursor_idx < m_string.size();cursor_idx++) {
+            for (int cursor_idx = line_it_start->start;cursor_idx <= end;cursor_idx++) {
                 WrapCharPtr c = m_string[cursor_idx];
 
                 // If a breakable char follows a white space (break line or breakable)
@@ -145,17 +145,16 @@ namespace RichText {
                     push_char_on_line(c, &cursor_pos_x);
                 }
             }
+            // line_it_end = current_line_it;
         }
         // ==== SECTION 3 ====
         // Calculation of char vertical positions
-
-        // Calculate vertical chars positions
         float cursor_pos_y = line_it_start->line_pos_y;
         for (auto current_line_it = line_it_start;current_line_it != line_it_end;current_line_it++) {
             auto next_it = std::next(current_line_it);
             current_line_it->line_pos_y = cursor_pos_y;
             int line_end_idx = m_string.size();
-            if (next_it != line_it_end) {
+            if (next_it != m_lines.end()) {
                 line_end_idx = next_it->start;
             }
 
@@ -179,30 +178,26 @@ namespace RichText {
         }
 
         // ==== SECTION 4 ====
-        // Update all subsequent lines and chars in their respective y position by
-        // the y amount that may have been added in between start and end 
-        float y_diff = cursor_pos_y - line_it_start->line_pos_y;
+        // Update all subsequent linesand chars in their respective y position by
+        //     the y amount that may have been added in between startand end
+        float y_diff = cursor_pos_y - line_it_start->line_pos_y - start_to_end_height;
         if (y_diff > 0.f) {
             for (auto current_line_it = line_it_end;current_line_it != m_lines.end();current_line_it++) {
                 current_line_it->line_pos_y += y_diff;
                 auto next_it = std::next(current_line_it);
-                int line_end_idx = m_string.size();
-                if (next_it != m_lines.end()) {
-                    line_end_idx = next_it->start;
-                }
-                for (int j = current_line_it->start;j < line_end_idx;j++) {
+            }
+            if (line_it_end != m_lines.end()) {
+                for (int j = line_it_end->start;j < m_string.size();j++) {
                     m_string[j]->_calculated_position.y += y_diff;
                 }
             }
         }
     }
-
     void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string) {
         clear();
         m_string = string;
         recalculate(0);
     }
-
     void WrapAlgorithm::insertAt(const std::vector<WrapCharPtr>& string, int position) {
         if (position == -1) {
             if (m_string.empty())
@@ -210,12 +205,21 @@ namespace RichText {
             else
                 position = m_string.size() - 1;
         }
+        // There is no reason to make the program crash if a greater position
+        // input has been given
+        if (position > m_string.size())
+            position = m_string.size();
+
         int end = position;
         while (end < m_string.size()) {
             if (m_string[end]->is_linebreak)
                 break;
+            end++;
         }
+        if (end >= m_string.size())
+            end = m_string.size() - 1;
         end += string.size();
+
         m_string.insert(m_string.begin() + position, string.begin(), string.end());
         recalculate(position, end);
     }
