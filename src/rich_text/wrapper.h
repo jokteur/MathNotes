@@ -113,8 +113,10 @@ namespace RichText {
         void deleteAt(int start, int end = -1);
         void clear();
 
+        int getCursorIndexFromPosition(ImVec2 coordinates);
+
         void setWidth(float width);
-        void setHeight(float height);
+        void setBoxHeight(float height);
         void setLineSpace(float line_space);
     };
 }

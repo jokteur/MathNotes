@@ -246,11 +246,29 @@ namespace RichText {
         m_lines.push_back(Line{ 0, 0.f });
         m_line_positions.insert(0);
     }
+    int WrapAlgorithm::getCursorIndexFromPosition(ImVec2 coordinates) {
+        auto line_it = m_lines.begin();
+        int line_idx_end = m_string.size() - 1;
+        for (;line_it != m_lines.end();line_it++) {
+            auto next_it = std::next(line_it);
+            if (next_it == m_lines.end() || next_it->line_pos_y > coordinates.y) {
+                break;
+            }
+            if (next_it->start) {
+                line_idx_end = next_it->start;
+            }
+        }
+        for (int j = line_it->start;j < line_idx_end;j++) {
+
+        }
+        // std::cout << line_it->start << " " << line_it->start << std::endl;
+        return 0;
+    }
     void WrapAlgorithm::setWidth(float width) {
         m_width = width;
         recalculate();
     }
-    void WrapAlgorithm::setHeight(float height) {
+    void WrapAlgorithm::setBoxHeight(float height) {
         m_height = height;
     }
     void WrapAlgorithm::setLineSpace(float line_space) {
