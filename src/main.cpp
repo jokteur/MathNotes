@@ -119,17 +119,18 @@ public:
         if (ImGui::Button("Insert")) {
             std::string str = "insertion of $$\\int_a^bx^2dx$$ \na few words";
             m_in_text.insert(m_in_text.begin() + m_insert_at, str.begin(), str.end());
-            // auto res = Utf8StrToImCharStr(
-            //     "insertion of \na few words ",
-            //     Tempo::GetImFont(m_font_regular32),
-            //     m_font_size * m_zoom * Tempo::GetScaling() * 0.8f,
-            //     microtex::RED);
-            // std::vector<WrapCharPtr> str;
-            // for (auto c : res) {
-            //     str.push_back(static_cast<WrapCharPtr>(c));
-            // }
-            // m_text.insert(m_text.begin() + m_insert_at, res.begin(), res.end());
-            // wrapper.insertAt(str, m_insert_at);
+        }
+        if (ImGui::Button("Delete 10 chars")) {
+            int num = 10;
+            if (num + m_insert_at > m_text.size()) {
+                num = m_text.size() - m_insert_at;
+            }
+            if (num > 0) {
+                wrapper.deleteAt(m_insert_at, m_insert_at + num);
+                m_text.erase(m_text.begin() + m_insert_at, m_text.begin() + m_insert_at + num);
+                m_in_text.erase(m_in_text.begin() + m_insert_at, m_in_text.begin() + m_insert_at + num);
+                m_prev_text.erase(m_prev_text.begin() + m_insert_at, m_prev_text.begin() + m_insert_at + num);
+            }
         }
         ImGui::End();
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));

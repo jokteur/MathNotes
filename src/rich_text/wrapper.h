@@ -95,7 +95,7 @@ namespace RichText {
         inline void push_char_on_line(WrapCharPtr c, float* cursor_x_coord);
         inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
-        void recalculate(int from = 0, int to = -1);
+        void recalculate(int from = 0, int to = -1, float offset_subsequent_lines = 0.f);
     public:
         /**
          * @brief Construct a new Text Wrapper object

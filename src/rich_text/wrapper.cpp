@@ -33,17 +33,18 @@ namespace RichText {
         line_it++;
         *cursor_pos_x = 0.f;
     }
-    void WrapAlgorithm::recalculate(int start, int end) {
+    void WrapAlgorithm::recalculate(int start, int end, float offset_subsequent_lines) {
+        if (m_width == 0.f) {
+            return;
+        }
         // abreviations used in this function:
         // it for iterator, pos for position, idx for index
-
         if (end == -1) {
             if (m_string.empty())
                 end = 0;
             else
                 end = m_string.size() - 1;
         }
-
         // ==== SECTION 1 ====
         // We need to figure out which lines are modified from start to end
         // This part is in O(# lines), but usually we have that # lines << # chars
@@ -69,13 +70,15 @@ namespace RichText {
             }
         }
         float start_to_end_height = 0.f;
-        if (line_it_end != m_lines.end())
+        if (line_it_end != m_lines.end()) {
             start_to_end_height = line_it_end->line_pos_y - line_it_start->line_pos_y;
+        }
         // All lines from start (not included) to end are invalid
         // Remove them
         if (line_it_start != line_it_end) {
             m_lines.erase(std::next(line_it_start), line_it_end);
         }
+
         // ==== SECTION 2 ====
         // Calculation of char and horizontal positions
 
@@ -180,8 +183,8 @@ namespace RichText {
         // ==== SECTION 4 ====
         // Update all subsequent linesand chars in their respective y position by
         //     the y amount that may have been added in between startand end
-        float y_diff = cursor_pos_y - line_it_start->line_pos_y - start_to_end_height;
-        if (y_diff > 0.f) {
+        float y_diff = cursor_pos_y - line_it_start->line_pos_y - start_to_end_height - offset_subsequent_lines;
+        if (y_diff != 0.f) {
             for (auto current_line_it = line_it_end;current_line_it != m_lines.end();current_line_it++) {
                 current_line_it->line_pos_y += y_diff;
                 auto next_it = std::next(current_line_it);
@@ -207,6 +210,7 @@ namespace RichText {
         }
         // There is no reason to make the program crash if a greater position
         // input has been given
+        // TODO: make exception and bound checks
         if (position > m_string.size())
             position = m_string.size();
 
@@ -226,8 +230,52 @@ namespace RichText {
     void WrapAlgorithm::insertAt(WrapCharPtr& c, int position) {
         insertAt(std::vector<WrapCharPtr>{c}, position);
     }
-    void WrapAlgorithm::deleteAt(int start, int end) {
+    void WrapAlgorithm::deleteAt(int delete_from, int delete_to) {
+        // The idea for deletion is to find the paragraph(s) that contains
+        // the deleted passage, and delete the desired passage in the string and
+        // all the lines that the paragraph(s) contain (except the first one), and
+        // make as if we insert a new paragraph(s)
+        int end_of_paragraph = delete_to;
+        while (end_of_paragraph < m_string.size()) {
+            if (m_string[end_of_paragraph]->is_linebreak)
+                break;
+            end_of_paragraph++;
+        }
+        // Find start and end line of paragraph(s)
+        auto line_it_start = m_lines.begin();
+        while (line_it_start != m_lines.end()) {
+            auto next_it = std::next(line_it_start);
+            if (next_it != m_lines.end() && next_it->start > delete_from) {
+                break;
+            }
+            if (next_it == m_lines.end())
+                break;
+            line_it_start++;
+        }
+        std::list<Line>::iterator line_it_end = line_it_start;
+        while (line_it_end != m_lines.end()) {
+            line_it_end++;
+            if (line_it_end != m_lines.end() && line_it_end->start > end_of_paragraph) {
+                break;
+            }
+        }
+        float deleted_height = 0.f;
+        if (line_it_end != m_lines.end())
+            deleted_height = line_it_end->line_pos_y - line_it_start->line_pos_y - line_it_start->height;
 
+        // We have found the (undeleted) paragraph(s) from line_it_start to line_it_end
+        // Now we can erase the passage in the string and the corresponding lines (but keeping
+        // the line_it_start)
+        m_string.erase(m_string.begin() + delete_from, m_string.begin() + delete_to);
+        if (line_it_start != line_it_end) {
+            m_lines.erase(std::next(line_it_start), line_it_end);
+        }
+        end_of_paragraph -= delete_to - delete_from;
+        if (end_of_paragraph >= m_string.size())
+            end_of_paragraph = m_string.size() - 1;
+
+        if (!m_string.empty())
+            recalculate(delete_from, end_of_paragraph, deleted_height);
     }
     void WrapAlgorithm::clear() {
         m_string.clear();
