@@ -25,6 +25,16 @@ add_subdirectory(external/TempoApp)
 include_directories(external/TempoApp/include)
 include_directories(external/TempoApp/external/imgui/imgui)
 
+# -----
+# Fonts
+# -----
+include_directories(external/IconFontCppHeaders)
+
+# -------
+# DocTest
+# -------
+add_subdirectory(external/doctest)
+
 # ---------------
 # STB image write
 # ---------------
@@ -33,21 +43,30 @@ include_directories(external/stb_image)
 # Sources of program
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    src/*.cpp
     src/core/*.cpp
     src/rich_text/*.cpp
     src/rich_text/chars/*.cpp
     src/latex/*.cpp
+    src/translations/*.cpp
+    src/ui/*.cpp src/ui/*.h
 )
-add_executable(${PROJECT_NAME} ${source_list})
-target_link_libraries(${PROJECT_NAME} PRIVATE microtex-imgui ${CAIRO_LIBRARIES})
+
+# Making a library without the main, for the tests and the program
+add_library(${PROJECT_NAME}_lib ${source_list})
+
+# Main program executable
+add_executable(${PROJECT_NAME} src/main.cpp ${APP_ICON_RESOURCE_WINDOWS})
+
+set(LIB_LINK microtex-imgui ${CAIRO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_lib ${LIB_LINK})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${LIB_LINK})
 
 # Copy the data (such as fonts) in build directory
 add_custom_command(TARGET MathNotes PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/data/ $<TARGET_FILE_DIR:MathNotes>/data)
 
-# CMake 3.21 is for this functionnality
+# CMake 3.21 is for this functionnality / Copy the dlls
 add_custom_command(TARGET MathNotes POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:MathNotes> $<TARGET_FILE_DIR:MathNotes>
     COMMAND_EXPAND_LISTS
