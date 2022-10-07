@@ -63,7 +63,7 @@ namespace Fonts {
                 font_info_out.font_id = font.font_sizes[size_wish];
             }
             else {
-                auto& res = Tempo::AddFontFromFileTTF(font.path, size_wish, ImFontConfig{}, ImVector<ImWchar>(), !font_info.auto_scaling);
+                auto res = Tempo::AddFontFromFileTTF(font.path, size_wish, ImFontConfig{}, ImVector<ImWchar>(), !font_info.auto_scaling);
                 font.font_sizes[size_wish] = res.value();
                 font_info_out.font_id = res.value();
             }
@@ -80,7 +80,7 @@ namespace Fonts {
             // Build font
             font_size = font_info.size_wish;
             // TODO: check validity
-            auto& res = Tempo::AddFontFromFileTTF(font.path, font_info.size_wish, ImFontConfig{}, ImVector<ImWchar>());
+            auto res = Tempo::AddFontFromFileTTF(font.path, font_info.size_wish, ImFontConfig{}, ImVector<ImWchar>());
             font.font_sizes[font_size] = res.value();
         }
         else {

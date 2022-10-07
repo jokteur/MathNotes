@@ -40,7 +40,7 @@ namespace RichText {
     void ImChar::draw(ImDrawList* draw_list) {
         if (m_font->im_font == nullptr)
             return;
-        auto& cursor_pos = ImGui::GetCursorScreenPos();
+        auto cursor_pos = ImGui::GetCursorScreenPos();
 
         if (!is_linebreak) {
             // ImGui RenderChar takes offset into account, this is why it is substracted

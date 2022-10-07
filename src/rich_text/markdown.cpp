@@ -166,8 +166,9 @@ namespace RichText {
 
     void MarkdownToWidgets::BLOCK_DOC(bool enter) {
         if (enter) {
-            auto& root = std::make_shared<RootNode>();
-            push_to_tree(std::static_pointer_cast<AbstractWidget>(root));
+            auto root = std::make_shared<RootNode>();
+            auto ptr = std::static_pointer_cast<AbstractWidget>(root);
+            push_to_tree(ptr);
         }
     }
     void MarkdownToWidgets::BLOCK_UL(const MD_BLOCK_UL_DETAIL* detail, bool enter) {
@@ -185,9 +186,10 @@ namespace RichText {
     void MarkdownToWidgets::BLOCK_H(const MD_BLOCK_H_DETAIL* detail, bool enter) {
         if (enter) {
             m_hlevel = detail->level;
-            auto& header = std::make_shared<HeaderWidget>();
+            auto header = std::make_shared<HeaderWidget>();
             header->hlevel = detail->level;
-            push_to_tree(std::static_pointer_cast<AbstractWidget>(header));
+            auto ptr = std::static_pointer_cast<AbstractWidget>(header);
+            push_to_tree(ptr);
         }
         else {
             m_hlevel = 0;
@@ -196,12 +198,13 @@ namespace RichText {
     }
     void MarkdownToWidgets::BLOCK_QUOTE(bool enter) {
         if (enter) {
-            auto& quote = std::make_shared<QuoteWidget>();
+            auto quote = std::make_shared<QuoteWidget>();
             if (m_current_ptr->type == WidgetsTypes::BLOCK_QUOTE) {
-                auto& new_ptr = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
+                auto new_ptr = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
                 quote->quote_level = new_ptr->quote_level + 1;
             }
-            push_to_tree(std::static_pointer_cast<AbstractWidget>(quote));
+            auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
+            push_to_tree(ptr);
         }
         else {
             end_block();
@@ -211,8 +214,9 @@ namespace RichText {
     void MarkdownToWidgets::BLOCK_CODE(const MD_BLOCK_CODE_DETAIL*, bool enter) {
         m_is_code = enter;
         if (enter) {
-            auto& code = std::make_shared<CodeWidget>();
-            push_to_tree(std::static_pointer_cast<AbstractWidget>(code));
+            auto code = std::make_shared<CodeWidget>();
+            auto ptr = std::static_pointer_cast<AbstractWidget>(code);
+            push_to_tree(ptr);
         }
         else {
             end_block();
@@ -224,8 +228,9 @@ namespace RichText {
 
     void MarkdownToWidgets::BLOCK_P(bool enter) {
         if (enter) {
-            auto& p = std::make_shared<ParagraphWidget>();
-            push_to_tree(std::static_pointer_cast<AbstractWidget>(p));
+            auto p = std::make_shared<ParagraphWidget>();
+            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
+            push_to_tree(ptr);
         }
         else {
             end_block();

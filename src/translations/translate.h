@@ -36,7 +36,7 @@ std::string string_format(const std::string& format, Args ... args) {
 
 template<typename ... Args>
 std::string gettext(const std::string& txt, Translator& babel, Args ... args) {
-    if (babel.texts.contains(txt)) {
+    if (babel.texts.find(txt) != babel.texts.end()) {
         return string_format(babel.texts[txt], args...);
     }
     return string_format(txt, args ...);

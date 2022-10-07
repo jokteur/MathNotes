@@ -1,4 +1,5 @@
 #include "latex.h"
+#include <cmath>
 
 namespace Latex {
     bool is_initialized = false;

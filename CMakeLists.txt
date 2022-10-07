@@ -11,8 +11,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(INSTALL_DIR "0.1")
 
 # ---- MicroTex ----
-add_subdirectory(external/microtex2)
-include_directories(external/microtex2)
+add_subdirectory(external/microtex)
+include_directories(external/microtex)
 
 # ---- Cairo ----
 find_package(Cairo)
@@ -73,11 +73,13 @@ add_custom_command(TARGET MathNotes PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/data/ $<TARGET_FILE_DIR:MathNotes>/data)
 
+if(MSVC)
 # CMake 3.21 is for this functionnality / Copy the dlls
 add_custom_command(TARGET MathNotes POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:MathNotes> $<TARGET_FILE_DIR:MathNotes>
     COMMAND_EXPAND_LISTS
 )
+endif()
 
 # Set compiler options
 if(MSVC)

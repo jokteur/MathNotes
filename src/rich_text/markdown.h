@@ -6,6 +6,7 @@
 #include <md4c-html.h>
 
 #include "widgets.h"
+#include "fonts.h"
 
 namespace RichText {
     // Inspired from https://github.com/mekhontsev/imgui_md
