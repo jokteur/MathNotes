@@ -1,9 +1,6 @@
 [submodule "external/TempoApp"]
 	path = external/TempoApp
-	url = git@github.com:jokteur/TempoApp.git
-[submodule "external/microtex/microtex"]
-	path = external/microtex/microtex
-	url = git@github.com:jokteur/MicroTeX
+	url = https://github.com/jokteur/TempoApp.git
 [submodule "external/IconFontCppHeaders"]
 	path = external/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
@@ -13,3 +10,6 @@
 [submodule "external/md4c"]
 	path = external/md4c
 	url = https://github.com/mity/md4c.git
+[submodule "external/microtex2/MicroTeX"]
+	path = external/microtex2/MicroTeX
+	url = https://github.com/jokteur/MicroTeX

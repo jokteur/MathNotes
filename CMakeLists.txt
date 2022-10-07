@@ -11,8 +11,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(INSTALL_DIR "0.1")
 
 # ---- MicroTex ----
-add_subdirectory(external/microtex)
-include_directories(external/microtex)
+add_subdirectory(external/microtex2)
+include_directories(external/microtex2)
 
 # ---- Cairo ----
 find_package(Cairo)
