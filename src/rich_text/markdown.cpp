@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "markdown.h"
 
 #include "blocks/paragraph.h"
@@ -35,24 +37,21 @@ namespace RichText {
     }
 
     int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, const char* str_end) {
-        switch (type) {
-        case MD_TEXT_NORMAL:
-            break;
-        case MD_TEXT_CODE:
-            break;
-        case MD_TEXT_NULLCHAR:
-            break;
-        case MD_TEXT_BR:
-            break;
-        case MD_TEXT_SOFTBR:
-            break;
-        case MD_TEXT_ENTITY:
-            break;
-        case MD_TEXT_HTML:
-            break;
-        case MD_TEXT_LATEXMATH:
-            break;
-        default:
+        m_text_start_idx = (int)(str - m_text);
+        m_text_end_idx = (int)(str_end - m_text);
+        using namespace Fonts;
+        m_font = FontRequestInfo();
+        m_font.font_styling = FontStyling{F_REGULAR, W_REGULAR, S_NORMAL};
+        if (m_is_code)
+            m_font.font_styling.family = F_MONOSPACE;
+        if (m_is_em)
+            m_font.font_styling.style = S_ITALIC;
+        if (m_is_strong)
+            m_font.font_styling.weight = W_MEDIUM;
+
+        switch (m_current_ptr->type) {
+            case T_BLOCK_H:
+            make_header(type);
             break;
         }
         return 0;
@@ -164,6 +163,12 @@ namespace RichText {
         }
     }
 
+    void MarkdownToWidgets::make_header(MD_TEXTTYPE type) {
+        auto ptr = std::static_pointer_cast<HeaderWidget>(m_current_ptr);
+        m_font.size_wish = round(2 + m_base_font_size * ((6 - ptr->hlevel)/5 * 2));
+        m_font.auto_scaling = true;
+    }
+
     void MarkdownToWidgets::BLOCK_DOC(bool enter) {
         if (enter) {
             auto root = std::make_shared<RootNode>();
@@ -199,7 +204,7 @@ namespace RichText {
     void MarkdownToWidgets::BLOCK_QUOTE(bool enter) {
         if (enter) {
             auto quote = std::make_shared<QuoteWidget>();
-            if (m_current_ptr->type == WidgetsTypes::BLOCK_QUOTE) {
+            if (m_current_ptr->type == T_BLOCK_QUOTE) {
                 auto new_ptr = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
                 quote->quote_level = new_ptr->quote_level + 1;
             }

@@ -2,6 +2,6 @@
 
 namespace RichText {
     HeaderWidget::HeaderWidget() {
-        type = WidgetsTypes::BLOCK_H;
+        type = T_BLOCK_H;
     }
 }

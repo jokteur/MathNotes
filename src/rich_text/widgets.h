@@ -10,7 +10,7 @@ namespace RichText {
     using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>; // replace with unique_ptr?
 
     struct AbstractWidget {
-        WidgetsTypes::Type type;
+        Type type;
 
         // Informations about the tree structure
         std::vector<AbstractWidgetPtr> childrens;
@@ -39,7 +39,7 @@ namespace RichText {
     };
     struct RootNode : public AbstractWidget {
         RootNode() {
-            type = WidgetsTypes::ROOT;
+            type = T_ROOT;
         }
     };
 }

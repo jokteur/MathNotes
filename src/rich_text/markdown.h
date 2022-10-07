@@ -15,7 +15,11 @@ namespace RichText {
         MD_PARSER m_md;
         std::vector<AbstractWidgetPtr> m_tree;
         const char* m_text;
+        int m_text_start_idx = 0;
+        int m_text_end_idx = 0;
         int m_text_size;
+        float m_base_font_size = 16.f;
+        Fonts::FontRequestInfo m_font;
 
         AbstractWidgetPtr m_current_ptr = nullptr;
 
@@ -47,6 +51,14 @@ namespace RichText {
         void set_href(bool enter, const MD_ATTRIBUTE& src);
         void end_block();
 
+        void make_header(MD_TEXTTYPE type);
+        void make_quote(MD_TEXTTYPE type);
+        void make_list_el(MD_TEXTTYPE type);
+        void make_hr(MD_TEXTTYPE type);
+        void make_code(MD_TEXTTYPE type);
+        void make_p(MD_TEXTTYPE type);
+        void make_table(MD_TEXTTYPE type);
+
         void BLOCK_DOC(bool);
         void BLOCK_QUOTE(bool);
         void BLOCK_UL(const MD_BLOCK_UL_DETAIL*, bool);
@@ -76,6 +88,8 @@ namespace RichText {
         void SPAN_U(bool);
     public:
         MarkdownToWidgets(unsigned md_flags);
+
+        void setBaseFontSize(float size) { m_base_font_size = size; }
 
         // Returns 0 on success
         int parse(const std::string& raw_text);

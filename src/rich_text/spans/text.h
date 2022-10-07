@@ -5,7 +5,7 @@
 
 namespace RichText {
     struct TextString : public AbstractSpan {
-        Fonts::FontStyling font_styling;
+        Fonts::FontRequestInfo font_styling;
         float text_size;
         int color;
     };
