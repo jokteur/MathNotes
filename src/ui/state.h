@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <tempo.h>
+#include "fonts.h"
 
 #include "translations/translate.h"
 
@@ -11,11 +12,7 @@ struct UIState {
     float scaling = 1.f;
 
     // Fonts
-    Tempo::FontID font_regular;
-    Tempo::FontID font_italic;
-    Tempo::FontID font_bold;
-    Tempo::FontID font_title;
-    Tempo::FontID icons_regular;
+    Fonts::FontManager font_manager;
 
     // Languages
     Language language = LANG_EN;

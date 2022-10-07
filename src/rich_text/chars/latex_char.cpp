@@ -17,7 +17,7 @@ namespace RichText {
 
     void LatexChar::draw(ImDrawList* draw_list) {
         auto& cursor_pos = ImGui::GetCursorScreenPos();
-        auto& final_pos = cursor_pos + _calculated_position + _scroll_offset;
+        auto& final_pos = cursor_pos + _calculated_position;
         final_pos.x = IM_ROUND(final_pos.x);
         final_pos.y = IM_ROUND(final_pos.y);
         draw_list->AddImage(
@@ -28,6 +28,6 @@ namespace RichText {
     }
 
     DrawableCharPtr ToLatexChar(const std::string& latex_src, float font_size, float line_space, microtex::color text_color, ImVec2 scale, ImVec2 inner_padding) {
-        return std::make_shared<LatexChar>(std::make_shared<Latex::LatexImage>(latex_src, font_size, line_space, text_color, scale, inner_padding));
+        return std::make_unique<LatexChar>(std::make_shared<Latex::LatexImage>(latex_src, font_size, line_space, text_color, scale, inner_padding));
     }
 }

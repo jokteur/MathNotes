@@ -41,7 +41,6 @@ namespace RichText {
         if (m_font->im_font == nullptr)
             return;
         auto& cursor_pos = ImGui::GetCursorScreenPos();
-        cursor_pos += _scroll_offset;
 
         if (!is_linebreak) {
             // ImGui RenderChar takes offset into account, this is why it is substracted
@@ -67,7 +66,7 @@ namespace RichText {
             bool force_breakable = false;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;
-            out_string.push_back(std::make_shared<ImChar>(font, (ImWchar)c, font_size, color, force_breakable));
+            out_string.push_back(std::make_unique<ImChar>(font, (ImWchar)c, font_size, color, force_breakable));
             i++;
 
         }

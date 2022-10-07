@@ -41,8 +41,6 @@ namespace RichText {
 
         // This should be only modified by WrapAlgorithm
         ImVec2 _calculated_position;
-        ImVec2 _scroll_offset;
-        bool _is_visible;
     };
 
     using WrapCharPtr = std::shared_ptr<WrapCharacter>;
@@ -92,7 +90,7 @@ namespace RichText {
         inline int find_line_idx(int cursor_pos);
         inline int find_next_line_break(int cursor_pos);
 
-        inline void push_char_on_line(WrapCharPtr c, float* cursor_x_coord);
+        inline void push_char_on_line(WrapCharPtr& c, float* cursor_x_coord);
         inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
         void recalculate(int from = 0, int to = -1);
@@ -113,7 +111,7 @@ namespace RichText {
         void deleteAt(int start, int end = -1);
         void clear();
 
-        int getCursorIndexFromPosition(ImVec2 coordinates);
+        const std::list<Line>& getLines() { return m_lines; }
 
         void setWidth(float width);
         void setBoxHeight(float height);

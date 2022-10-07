@@ -25,6 +25,11 @@ add_subdirectory(external/TempoApp)
 include_directories(external/TempoApp/include)
 include_directories(external/TempoApp/external/imgui/imgui)
 
+# ---- Markdown (md4c) ----
+add_compile_definitions(MD4C_USE_UTF8)
+add_subdirectory(external/md4c)
+include_directories(external/md4c/src)
+
 # -----
 # Fonts
 # -----
@@ -46,6 +51,8 @@ file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/core/*.cpp
     src/rich_text/*.cpp
     src/rich_text/chars/*.cpp
+    src/rich_text/spans/*.cpp
+    src/rich_text/blocks/*.cpp
     src/latex/*.cpp
     src/translations/*.cpp
     src/ui/*.cpp src/ui/*.h
@@ -57,7 +64,7 @@ add_library(${PROJECT_NAME}_lib ${source_list})
 # Main program executable
 add_executable(${PROJECT_NAME} src/main.cpp ${APP_ICON_RESOURCE_WINDOWS})
 
-set(LIB_LINK microtex-imgui ${CAIRO_LIBRARIES})
+set(LIB_LINK microtex-imgui ${CAIRO_LIBRARIES} md4c md4c-html)
 target_link_libraries(${PROJECT_NAME}_lib ${LIB_LINK})
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${LIB_LINK})
 

@@ -4,7 +4,6 @@
 
 #include "state.h"
 #include "misc/cpp/imgui_stdlib.h"
-#include "rich_text/text_widget.h"
 #include "rich_text/chars/im_char.h"
 #include "rich_text/chars/latex_char.h"
 #include "latex/latex.h"
