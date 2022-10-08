@@ -6,7 +6,7 @@
 #include <md4c-html.h>
 
 #include "widgets.h"
-#include "fonts.h"
+#include "ui/fonts.h"
 
 namespace RichText {
     // Inspired from https://github.com/mekhontsev/imgui_md
@@ -45,11 +45,12 @@ namespace RichText {
 
         void push_to_tree(AbstractWidgetPtr& node) {
             m_tree.push_back(node);
+            node->parent = m_current_ptr;
             if (m_current_ptr != nullptr) m_current_ptr->childrens.push_back(node);
             m_current_ptr = node;
         }
         void set_href(bool enter, const MD_ATTRIBUTE& src);
-        void end_block();
+        void tree_up();
 
         void make_header(MD_TEXTTYPE type);
         void make_quote(MD_TEXTTYPE type);

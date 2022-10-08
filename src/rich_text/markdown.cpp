@@ -39,8 +39,10 @@ namespace RichText {
     int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, const char* str_end) {
         m_text_start_idx = (int)(str - m_text);
         m_text_end_idx = (int)(str_end - m_text);
+
         using namespace Fonts;
         m_font = FontRequestInfo();
+        m_font.auto_scaling = true;
         m_font.font_styling = FontStyling{F_REGULAR, W_REGULAR, S_NORMAL};
         if (m_is_code)
             m_font.font_styling.family = F_MONOSPACE;
@@ -49,11 +51,34 @@ namespace RichText {
         if (m_is_strong)
             m_font.font_styling.weight = W_MEDIUM;
 
+        AbstractWidgetPtr ptr;
+
         switch (m_current_ptr->type) {
             case T_BLOCK_H:
             make_header(type);
             break;
+            case T_BLOCK_P:
+            make_p(type);
+            break;
         }
+        if (type == MD_TEXT_LATEXMATH) {
+
+        }
+        else if (type == MD_TEXT_HTML) {
+
+        }
+        else if (type == MD_TEXT_ENTITY) {
+
+        }
+        else {
+            auto span = std::make_shared<TextString>();
+            span->text_start_idx = m_text_start_idx;
+            span->text_end_idx = m_text_end_idx;
+            ptr = std::static_pointer_cast<AbstractWidget>(span);
+        }
+
+        push_to_tree(ptr);
+        tree_up();
         return 0;
     }
     int MarkdownToWidgets::block(MD_BLOCKTYPE type, void* detail, bool enter) {
@@ -157,7 +182,7 @@ namespace RichText {
             m_href.clear();
         }
     }
-    void MarkdownToWidgets::end_block() {
+    void MarkdownToWidgets::tree_up() {
         if (m_current_ptr->parent != nullptr) {
             m_current_ptr = m_current_ptr->parent;
         }
@@ -166,7 +191,10 @@ namespace RichText {
     void MarkdownToWidgets::make_header(MD_TEXTTYPE type) {
         auto ptr = std::static_pointer_cast<HeaderWidget>(m_current_ptr);
         m_font.size_wish = round(2 + m_base_font_size * ((6 - ptr->hlevel)/5 * 2));
-        m_font.auto_scaling = true;
+    }
+    void MarkdownToWidgets::make_p(MD_TEXTTYPE type) {
+        auto ptr = std::static_pointer_cast<HeaderWidget>(m_current_ptr);
+        m_font.size_wish = m_base_font_size;
     }
 
     void MarkdownToWidgets::BLOCK_DOC(bool enter) {
@@ -198,7 +226,7 @@ namespace RichText {
         }
         else {
             m_hlevel = 0;
-            end_block();
+            tree_up();
         }
     }
     void MarkdownToWidgets::BLOCK_QUOTE(bool enter) {
@@ -212,7 +240,7 @@ namespace RichText {
             push_to_tree(ptr);
         }
         else {
-            end_block();
+            tree_up();
         }
 
     }
@@ -224,7 +252,7 @@ namespace RichText {
             push_to_tree(ptr);
         }
         else {
-            end_block();
+            tree_up();
         }
     }
 
@@ -238,7 +266,7 @@ namespace RichText {
             push_to_tree(ptr);
         }
         else {
-            end_block();
+            tree_up();
         }
     }
     void MarkdownToWidgets::BLOCK_TABLE(const MD_BLOCK_TABLE_DETAIL*, bool enter) {

@@ -1,12 +1,13 @@
 #pragma once
 
 #include "../widgets.h"
-#include "fonts.h"
+#include "ui/fonts.h"
 
 namespace RichText {
     struct TextString : public AbstractSpan {
         Fonts::FontRequestInfo font_styling;
-        float text_size;
         int color;
+        int text_start_idx = 0;
+        int text_end_idx = 0;
     };
 }

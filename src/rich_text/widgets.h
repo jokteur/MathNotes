@@ -23,6 +23,8 @@ namespace RichText {
         ImVec2 dimensions;
         ImVec2 position;
 
+        float scale = 1.f;
+
         // Internal
         int text_begin = 0;
         int text_end = 0;
