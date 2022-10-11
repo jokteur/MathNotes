@@ -83,10 +83,10 @@ namespace Fonts {
             auto res = Tempo::AddFontFromFileTTF(font.path, font_info.size_wish, ImFontConfig{}, ImVector<ImWchar>());
             font.font_sizes[font_size] = res.value();
         }
-        else {
-            font_info_out.font_id = font.font_sizes[font_size];
-            font_info_out.size = font_size;
-        }
+        font_info_out.font_id = font.font_sizes[font_size];
+        font_info_out.size = font_size;
+        font_info_out.ratio = font_info.size_wish / font_size;
+        
         return E_OK;
     }
 }

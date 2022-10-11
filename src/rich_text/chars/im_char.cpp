@@ -51,25 +51,4 @@ namespace RichText {
                 m_color, m_char);
         }
     }
-
-    std::vector<DrawableCharPtr> Utf8StrToImCharStr(const std::string& str, Tempo::SafeImFontPtr font, float font_size, ImU32 color) {
-        std::vector<DrawableCharPtr> out_string;
-
-        int i = 0;
-        for (auto s : str) {
-            unsigned int c = (unsigned int)s;
-            if (c >= 0x80) {
-                ImTextCharFromUtf8(&c, &str[i], &str[str.size() - 1]);
-                if (c == 0) // Malformed UTF-8?
-                    break;
-            }
-            bool force_breakable = false;
-            if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
-                force_breakable = true;
-            out_string.push_back(std::make_unique<ImChar>(font, (ImWchar)c, font_size, color, force_breakable));
-            i++;
-
-        }
-        return out_string;
-    }
 }

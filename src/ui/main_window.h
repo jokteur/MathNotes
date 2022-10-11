@@ -4,10 +4,8 @@
 
 #include "state.h"
 #include "misc/cpp/imgui_stdlib.h"
-#include "rich_text/chars/im_char.h"
-#include "rich_text/chars/latex_char.h"
-#include "latex/latex.h"
 #include "imgui_internal.h"
+#include "rich_text/rich_text_widget.h"
 
 // Drawable and widgets
 int TextInputCallback(ImGuiInputTextCallbackData* data);
@@ -18,7 +16,7 @@ private:
     std::shared_ptr<UIState> m_ui_state = std::make_shared<UIState>();
 
     RichTextWidget m_rich_text;
-    std::vector<DrawableCharPtr> m_text;
+
     std::string m_in_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
         "Proin pulvinar urna non eros vehicula efficitur.\n\n"
 
@@ -27,10 +25,6 @@ private:
 
     //bool m_open = true;
     friend int TextInputCallback(ImGuiInputTextCallback* data);
-
-    void updateFontSize(float size);
-    void update_text(bool& capture_latex, std::string& tmp_text, std::string& tmp_latex);
-    void insertBigString();
 public:
     int m_insert_at = 0; // Just for
     MainApp();

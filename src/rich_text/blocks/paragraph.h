@@ -4,13 +4,14 @@
 
 namespace RichText {
     struct ParagraphWidget : public AbstractBlock {
-        ParagraphWidget();
+        ParagraphWidget(UIState_ptr ui_state);
+        bool buildAndAddChars(std::vector<WrapCharPtr>& string, int start = -1) override;
     };
     struct CodeWidget : public AbstractBlock {
-        CodeWidget();
+        CodeWidget(UIState_ptr ui_state);
     };
     struct QuoteWidget : public AbstractBlock {
-        QuoteWidget();
+        QuoteWidget(UIState_ptr ui_state);
         unsigned int quote_level = 0;
     };
     using ParagraphWidgetPtr = std::shared_ptr<ParagraphWidget>;

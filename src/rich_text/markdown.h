@@ -10,11 +10,13 @@
 
 namespace RichText {
     // Inspired from https://github.com/mekhontsev/imgui_md
+
     class MarkdownToWidgets {
     private:
         MD_PARSER m_md;
         std::vector<AbstractWidgetPtr> m_tree;
         const char* m_text;
+        SafeString m_safe_text;
         int m_text_start_idx = 0;
         int m_text_end_idx = 0;
         int m_text_size;
@@ -22,6 +24,8 @@ namespace RichText {
         Fonts::FontRequestInfo m_font;
 
         AbstractWidgetPtr m_current_ptr = nullptr;
+
+        UIState_ptr m_ui_state = nullptr;
 
         // current state
         bool m_is_underline = false;
@@ -96,6 +100,6 @@ namespace RichText {
         void setFlags(unsigned md_flags);
         void setBaseFontSize(float size) { m_base_font_size = size; }
 
-        std::vector<AbstractWidgetPtr> parse(const std::string& raw_text);
+        std::vector<AbstractWidgetPtr> parse(const SafeString& str, UIState_ptr ui_state);
     };
 }

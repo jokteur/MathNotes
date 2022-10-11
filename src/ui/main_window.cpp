@@ -80,74 +80,17 @@ void MainApp::AfterLoop() {
 }
 
 void MainApp::FrameUpdate() {
-    using namespace Fonts;
-    FontRequestInfo font;
-    font.font_styling = FontStyling{ F_REGULAR, W_REGULAR, S_NORMAL };
-    font.size_wish = m_font_size;
-    FontInfoOut f_out;
-    auto err = m_ui_state->font_manager.requestFont(font, f_out);
-
     ImGui::Begin("My window");
     ImGui::InputTextMultiline("input", &m_in_text, ImVec2(0, 0),
         ImGuiInputTextFlags_CallbackAlways, TextInputCallback, (void*)this);
 
     if (ImGui::Button("Markdown")) {
+        m_rich_text.setText(m_in_text);
     }
     ImGui::End();
+
+    m_rich_text.FrameUpdate();
 }
 
-void MainApp::updateFontSize(float size) {
-}
-
-void MainApp::update_text(bool& capture_latex, std::string& tmp_text, std::string& tmp_latex) {
-    // if (!capture_latex) {
-    //     capture_latex = true;
-    //     if (tmp_text.empty())
-    //         return;
-    //     using namespace Fonts;
-    //     FontRequestInfo font;
-    //     font.font_styling = FontStyling{ F_REGULAR, W_REGULAR, S_NORMAL };
-    //     font.size_wish = m_font_size;
-    //     FontInfoOut out;
-    //     auto err = m_ui_state->font_manager.requestFont(font, out);
-    //     auto res = Utf8StrToImCharStr(
-    //         tmp_text,
-    //         Tempo::GetImFont(out.font_id),
-    //         out.size * m_zoom * Tempo::GetScaling(),
-    //         microtex::BLACK
-    //     );
-    //     for (auto& c : res) {
-
-    //         m_text.emplace_back(c);
-    //     }
-    //     tmp_text.clear();
-    // }
-    // else {
-    //     capture_latex = false;
-    //     if (tmp_latex.empty())
-    //         return;
-    //     auto c = RichText::ToLatexChar(tmp_latex,
-    //         m_font_size * m_zoom * Tempo::GetScaling(),
-    //         7.f, microtex::BLACK,
-    //         ImVec2(1.f, 1.f),
-    //         ImVec2(m_zoom * 5.f, 0.f)
-    //     );
-    //     m_text.emplace_back(c);
-    //     tmp_latex.clear();
-    // }
-}
-void MainApp::insertBigString() {
-    // m_in_text.clear();
-    // for (int i = 0;i < m_text_size;i++) {
-    //     m_in_text += 32 + i % 90;
-    // }
-    // auto res = Utf8StrToImCharStr(
-    //     m_in_text,
-    //     Tempo::GetImFont(m_font_regular32),
-    //     m_font_size * m_zoom * Tempo::GetScaling(),
-    //     microtex::BLACK
-    // );
-    // wrapper.clear();
-}
 void MainApp::BeforeFrameUpdate() {
 }

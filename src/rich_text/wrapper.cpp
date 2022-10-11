@@ -47,6 +47,9 @@ namespace RichText {
         if (start == end) {
             return;
         }
+        if (m_string.empty()) {
+            return;
+        }
         // abreviations used in this function:
         // it for iterator, pos for position, idx for index
         if (end == -1) {

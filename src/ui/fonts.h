@@ -2,7 +2,9 @@
 
 #include <tempo.h>
 
+#ifndef FONT_ICON_FILE_NAME_MD
 #include "IconsMaterialDesign.h"
+#endif
 
 namespace Fonts {
     enum Family { F_REGULAR, F_CONDENSED, F_MONOSPACE };
@@ -51,6 +53,7 @@ namespace Fonts {
 
     struct FontInfoOut {
         float size = 0.f;
+        float ratio = 1.f; // Ratio between size wish and size out
         Tempo::FontID font_id = -1;
     };
 

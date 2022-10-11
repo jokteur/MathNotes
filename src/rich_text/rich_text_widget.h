@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 #include "markdown.h"
 #include "wrapper.h"
 #include "ui/drawable.h"
@@ -11,10 +13,16 @@ namespace RichText {
         WrapAlgorithm m_wrapper;
         MarkdownToWidgets m_md_to_widgets;
 
-        std::string m_raw_text;
+        SafeString m_safe_string = nullptr;
 
+        bool m_chars_dirty = false;
+        bool m_widget_dirty = false;
+        int m_number_of_attempts = 0;
         std::vector<WrapCharPtr> m_chars;
         std::vector<AbstractWidgetPtr> m_tree;
+
+        void start_build_chars();
+        void build_chars();
     public:
         RichTextWidget(std::shared_ptr<UIState> ui_state);
 

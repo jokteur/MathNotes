@@ -1,4 +1,5 @@
 #include "rich_text_widget.h"
+#include "chars/drawable_char.h"
 
 namespace RichText {
     RichTextWidget::RichTextWidget(std::shared_ptr<UIState> ui_state) : Drawable(ui_state) {
@@ -23,12 +24,13 @@ namespace RichText {
         vMax.y += ImGui::GetWindowPos().y;
         auto mouse_pos = ImGui::GetMousePos();
 
-        // if (!m_text.empty()) {
-        //     auto draw_list = ImGui::GetWindowDrawList();
-        //     for (auto& c : m_text) {
-        //         c->draw(draw_list);
-        //     }
-        // }
+        if (!m_chars.empty()) {
+            auto draw_list = ImGui::GetWindowDrawList();
+            for (auto& c : m_chars) {
+                auto ptr = std::static_pointer_cast<DrawableChar>(c);
+                ptr->draw(draw_list);
+            }
+        }
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
         ImGui::PopStyleColor();
@@ -38,16 +40,48 @@ namespace RichText {
             m_current_width = width;
             m_wrapper.setWidth(m_current_width);
         }
+        build_chars();
     }
     void RichTextWidget::setText(const std::string& text) {
-        m_raw_text = text;
+        m_safe_string = std::make_shared<std::string>(text);
         m_chars.clear();
-        m_tree = m_md_to_widgets.parse(m_raw_text);
+        m_tree = m_md_to_widgets.parse(m_safe_string, m_ui_state);
 
-        // Move this elsewhere
-        for (auto& el : m_tree) {
-            el->addCharPtrsToVector(m_chars);
+        start_build_chars();
+    }
+
+    void RichTextWidget::start_build_chars() {
+        m_chars_dirty = true;
+        m_widget_dirty = false;
+        m_number_of_attempts = 0;
+    }
+    void RichTextWidget::build_chars() {
+        if (m_number_of_attempts > 50) {
+            m_chars_dirty = false;
+            m_widget_dirty = true;
+            return;
         }
+        if(!m_chars_dirty)
+            return;
 
+        m_chars.clear();
+        auto it = m_tree.begin();
+        for (;it != m_tree.end();it++) {
+            bool success = (*it)->buildAndAddChars(m_chars);
+            if (!success) {
+                break;
+            }
+        }
+        if (it == m_tree.end()) {
+            m_chars_dirty = false;
+            m_number_of_attempts = 0;
+            m_wrapper.setString(m_chars);
+        }
+        else {
+            // If there hasn't been any success, the font may not be constructed yet
+            // and may be at the next frame
+            m_number_of_attempts++;
+            Tempo::PushAnimation("rich_text_widget", 50);
+        }
     }
 }
