@@ -4,8 +4,6 @@
 
 #include "state.h"
 
-// using namespace core;
-
 class Drawable {
 protected:
     std::shared_ptr<UIState> m_ui_state;

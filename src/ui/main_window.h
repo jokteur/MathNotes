@@ -17,25 +17,14 @@ class MainApp : public Tempo::App {
 private:
     std::shared_ptr<UIState> m_ui_state = std::make_shared<UIState>();
 
-    float text_size = 300.f;
-    float prev_size = 0.f;
-
-    Tempo::FontID m_font_regular32;
-
+    RichTextWidget m_rich_text;
     std::vector<DrawableCharPtr> m_text;
     std::string m_in_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
         "Proin pulvinar urna non eros vehicula efficitur.\n\n"
 
         "Phasellus eget nunc bibendum lectus dapibus tempor nec vitae neque.\n"
         "Ut euismod augue quis libero vulputate placerat.";
-    std::string m_prev_text = "";
-    float m_current_width = 0.f;
-    float m_font_size = 32.f;
-    float m_zoom = 1.f;
-    float m_prev_zoom = 1.f;
-    float m_scaling = 1.f;
-    WrapAlgorithm wrapper;
-    int m_text_size = 1000;
+
     //bool m_open = true;
     friend int TextInputCallback(ImGuiInputTextCallback* data);
 

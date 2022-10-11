@@ -5,7 +5,7 @@
 #include "style.h"
 #include "fonts.h"
 
-#include "rich_text/markdown.h"
+#include "rich_text/rich_text_widget.h"
 #include "imgui_internal.h"
 #include "translations/translate.h"
 #include "imgui_stdlib.h"
@@ -69,7 +69,7 @@ int TextInputCallback(ImGuiInputTextCallbackData* data) {
     main_app->m_insert_at = data->CursorPos;
     return 1;
 }
-MainApp::MainApp() : wrapper(0, 500.f) {
+MainApp::MainApp() : m_rich_text(m_ui_state) {
 }
 void MainApp::InitializationBeforeLoop() {
     setFonts(m_ui_state);
@@ -90,142 +90,51 @@ void MainApp::FrameUpdate() {
     ImGui::Begin("My window");
     ImGui::InputTextMultiline("input", &m_in_text, ImVec2(0, 0),
         ImGuiInputTextFlags_CallbackAlways, TextInputCallback, (void*)this);
-    ImGui::SliderFloat("Zoom", &m_zoom, 0.2f, 1.f, "%.2f");
-    ImGui::SliderInt("Size", &m_text_size, 100, 1000000);
 
-    if (ImGui::Button("Insert")) {
-        std::string str = "insertion of $$\\int_a^bx^2dx$$ \na few words";
-        m_in_text.insert(m_in_text.begin() + m_insert_at, str.begin(), str.end());
-    }
     if (ImGui::Button("Markdown")) {
-        unsigned flags = 0;
-        flags |= MD_FLAG_LATEXMATHSPANS | MD_FLAG_PERMISSIVEAUTOLINKS;
-        flags |= MD_FLAG_PERMISSIVEURLAUTOLINKS | MD_FLAG_PERMISSIVEWWWAUTOLINKS;
-        flags |= MD_FLAG_STRIKETHROUGH | MD_FLAG_TABLES | MD_FLAG_TASKLISTS;
-        flags |= MD_FLAG_UNDERLINE | MD_FLAG_WIKILINKS;
-        RichText::MarkdownToWidgets md(flags);
-        md.parse(m_in_text);
     }
-    if (ImGui::Button("Delete 10 chars")) {
-        int num = 10;
-        if (num + m_insert_at > m_text.size()) {
-            num = m_text.size() - m_insert_at;
-        }
-        if (num > 0) {
-            wrapper.deleteAt(m_insert_at, m_insert_at + num);
-            m_text.erase(m_text.begin() + m_insert_at, m_text.begin() + m_insert_at + num);
-            m_in_text.erase(m_in_text.begin() + m_insert_at, m_in_text.begin() + m_insert_at + num);
-            m_prev_text.erase(m_prev_text.begin() + m_insert_at, m_prev_text.begin() + m_insert_at + num);
-        }
-    }
-
     ImGui::End();
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
-    ImGui::Begin("Second window");
-    float width = ImGui::GetWindowContentRegionWidth();
-    ImVec2 vMin = ImGui::GetWindowContentRegionMin();
-    ImVec2 vMax = ImGui::GetWindowContentRegionMax();
-
-    vMin.x += ImGui::GetWindowPos().x;
-    vMin.y += ImGui::GetWindowPos().y;
-    vMax.x += ImGui::GetWindowPos().x;
-    vMax.y += ImGui::GetWindowPos().y;
-    auto mouse_pos = ImGui::GetMousePos();
-
-    if (!m_text.empty()) {
-        auto draw_list = ImGui::GetWindowDrawList();
-        for (auto& c : m_text) {
-            c->draw(draw_list);
-        }
-    }
-    ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
-
-    ImGui::End();
-    ImGui::PopStyleColor();
-    if (m_in_text != m_prev_text) {
-        m_text.clear();
-        bool capture_latex = false;
-        m_prev_text = m_in_text;
-        bool is_prev_dollar = false;
-        std::string tmp_text, tmp_latex;
-        for (auto s : m_in_text) {
-            if (s == '$') {
-                if (is_prev_dollar) {
-                    update_text(capture_latex, tmp_text, tmp_latex);
-                }
-                is_prev_dollar = true;
-            }
-            if (s != '$') {
-                is_prev_dollar = false;
-                if (capture_latex)
-                    tmp_latex.push_back(s);
-                else
-                    tmp_text.push_back(s);
-            }
-        }
-        update_text(capture_latex, tmp_text, tmp_latex);
-        std::vector<WrapCharPtr> str;
-        for (auto& c : m_text) {
-            str.push_back(c);
-        }
-        wrapper.setString(str);
-    }
-    if ((m_zoom != m_prev_zoom ||
-        Tempo::GetScaling() != m_scaling ||
-        m_current_width != width
-        )
-        && Tempo::GetImFont(f_out.font_id) != nullptr
-        ) {
-        m_current_width = width;
-        m_prev_zoom = m_zoom;
-        m_scaling = Tempo::GetScaling();
-        auto t = std::chrono::high_resolution_clock::now();
-        wrapper.setWidth(m_current_width);
-        // auto end = std::chrono::high_resolution_clock::now();
-        // std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - t).count() << std::endl;
-    }
-    // ImGui::ShowDemoWindow();
 }
 
 void MainApp::updateFontSize(float size) {
 }
 
 void MainApp::update_text(bool& capture_latex, std::string& tmp_text, std::string& tmp_latex) {
-    if (!capture_latex) {
-        capture_latex = true;
-        if (tmp_text.empty())
-            return;
-        using namespace Fonts;
-        FontRequestInfo font;
-        font.font_styling = FontStyling{ F_REGULAR, W_REGULAR, S_NORMAL };
-        font.size_wish = m_font_size;
-        FontInfoOut out;
-        auto err = m_ui_state->font_manager.requestFont(font, out);
-        auto res = Utf8StrToImCharStr(
-            tmp_text,
-            Tempo::GetImFont(out.font_id),
-            out.size * m_zoom * Tempo::GetScaling(),
-            microtex::BLACK
-        );
-        for (auto& c : res) {
+    // if (!capture_latex) {
+    //     capture_latex = true;
+    //     if (tmp_text.empty())
+    //         return;
+    //     using namespace Fonts;
+    //     FontRequestInfo font;
+    //     font.font_styling = FontStyling{ F_REGULAR, W_REGULAR, S_NORMAL };
+    //     font.size_wish = m_font_size;
+    //     FontInfoOut out;
+    //     auto err = m_ui_state->font_manager.requestFont(font, out);
+    //     auto res = Utf8StrToImCharStr(
+    //         tmp_text,
+    //         Tempo::GetImFont(out.font_id),
+    //         out.size * m_zoom * Tempo::GetScaling(),
+    //         microtex::BLACK
+    //     );
+    //     for (auto& c : res) {
 
-            m_text.emplace_back(c);
-        }
-        tmp_text.clear();
-    }
-    else {
-        capture_latex = false;
-        if (tmp_latex.empty())
-            return;
-        auto c = RichText::ToLatexChar(tmp_latex,
-            m_font_size * m_zoom * Tempo::GetScaling(),
-            7.f, microtex::BLACK,
-            ImVec2(1.f, 1.f),
-            ImVec2(m_zoom * 5.f, 0.f)
-        );
-        m_text.emplace_back(c);
-        tmp_latex.clear();
-    }
+    //         m_text.emplace_back(c);
+    //     }
+    //     tmp_text.clear();
+    // }
+    // else {
+    //     capture_latex = false;
+    //     if (tmp_latex.empty())
+    //         return;
+    //     auto c = RichText::ToLatexChar(tmp_latex,
+    //         m_font_size * m_zoom * Tempo::GetScaling(),
+    //         7.f, microtex::BLACK,
+    //         ImVec2(1.f, 1.f),
+    //         ImVec2(m_zoom * 5.f, 0.f)
+    //     );
+    //     m_text.emplace_back(c);
+    //     tmp_latex.clear();
+    // }
 }
 void MainApp::insertBigString() {
     // m_in_text.clear();

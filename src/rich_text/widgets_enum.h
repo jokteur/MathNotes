@@ -18,6 +18,7 @@ namespace RichText {
         T_BLOCK_LI,
         T_BLOCK_OL,
         T_BLOCK_HR,
-        T_BLOCK_H
+        T_BLOCK_H,
+        T_TEXT
     };
 }

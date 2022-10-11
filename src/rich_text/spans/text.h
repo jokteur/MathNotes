@@ -5,6 +5,8 @@
 
 namespace RichText {
     struct TextString : public AbstractSpan {
+        TextString();
+
         Fonts::FontRequestInfo font_styling;
         int color;
         int text_start_idx = 0;

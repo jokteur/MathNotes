@@ -103,6 +103,7 @@ namespace RichText {
          * @param line_space relative line space: space between lines is calculated as line_height * line_space
          */
         WrapAlgorithm(float width, float height, float line_space = 0.3);
+        WrapAlgorithm();
         ~WrapAlgorithm();
 
         void setString(const std::vector<WrapCharPtr>& string);
@@ -114,6 +115,7 @@ namespace RichText {
         const std::list<Line>& getLines() { return m_lines; }
 
         void setWidth(float width);
+        void setHeight(float height);
         void setBoxHeight(float height);
         void setLineSpace(float line_space);
     };

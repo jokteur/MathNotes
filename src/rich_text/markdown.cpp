@@ -13,9 +13,8 @@
 
 
 namespace RichText {
-    MarkdownToWidgets::MarkdownToWidgets(unsigned md_flags) {
+    void MarkdownToWidgets::configure_parser() {
         m_md.abi_version = 0;
-        m_md.flags = md_flags;
 
         m_md.enter_block = [](MD_BLOCKTYPE t, void* detail, void* u) {
             return ((MarkdownToWidgets*)u)->block(t, detail, true);
@@ -35,6 +34,21 @@ namespace RichText {
         m_md.debug_log = nullptr;
         m_md.syntax = nullptr;
     }
+    MarkdownToWidgets::MarkdownToWidgets(unsigned md_flags) {
+        m_md.flags = md_flags;
+        configure_parser();
+    }
+    MarkdownToWidgets::MarkdownToWidgets() {
+        m_md.flags = 0;
+        m_md.flags |= MD_FLAG_LATEXMATHSPANS | MD_FLAG_PERMISSIVEAUTOLINKS;
+        m_md.flags |= MD_FLAG_PERMISSIVEURLAUTOLINKS | MD_FLAG_PERMISSIVEWWWAUTOLINKS;
+        m_md.flags |= MD_FLAG_STRIKETHROUGH | MD_FLAG_TABLES | MD_FLAG_TASKLISTS;
+        m_md.flags |= MD_FLAG_UNDERLINE | MD_FLAG_WIKILINKS;
+        configure_parser();
+    }
+    void MarkdownToWidgets::setFlags(unsigned md_flags) {
+        m_md.flags = md_flags;
+    }
 
     int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, const char* str_end) {
         m_text_start_idx = (int)(str - m_text);
@@ -43,7 +57,7 @@ namespace RichText {
         using namespace Fonts;
         m_font = FontRequestInfo();
         m_font.auto_scaling = true;
-        m_font.font_styling = FontStyling{F_REGULAR, W_REGULAR, S_NORMAL};
+        m_font.font_styling = FontStyling{ F_REGULAR, W_REGULAR, S_NORMAL };
         if (m_is_code)
             m_font.font_styling.family = F_MONOSPACE;
         if (m_is_em)
@@ -52,15 +66,6 @@ namespace RichText {
             m_font.font_styling.weight = W_MEDIUM;
 
         AbstractWidgetPtr ptr;
-
-        switch (m_current_ptr->type) {
-            case T_BLOCK_H:
-            make_header(type);
-            break;
-            case T_BLOCK_P:
-            make_p(type);
-            break;
-        }
         if (type == MD_TEXT_LATEXMATH) {
 
         }
@@ -72,6 +77,10 @@ namespace RichText {
         }
         else {
             auto span = std::make_shared<TextString>();
+            if (m_hlevel > 0)
+                span->font_styling.size_wish = calculate_text_size();
+            else
+                span->font_styling.size_wish = m_base_font_size;
             span->text_start_idx = m_text_start_idx;
             span->text_end_idx = m_text_end_idx;
             ptr = std::static_pointer_cast<AbstractWidget>(span);
@@ -188,9 +197,8 @@ namespace RichText {
         }
     }
 
-    void MarkdownToWidgets::make_header(MD_TEXTTYPE type) {
-        auto ptr = std::static_pointer_cast<HeaderWidget>(m_current_ptr);
-        m_font.size_wish = round(2 + m_base_font_size * ((6 - ptr->hlevel)/5 * 2));
+    float MarkdownToWidgets::calculate_text_size() {
+        return round(2 + m_base_font_size * ((6 - m_hlevel) / 5 * 2));
     }
     void MarkdownToWidgets::make_p(MD_TEXTTYPE type) {
         auto ptr = std::static_pointer_cast<HeaderWidget>(m_current_ptr);
@@ -315,12 +323,12 @@ namespace RichText {
     void MarkdownToWidgets::SPAN_DEL(bool enter) {
         m_is_strikethrough = enter;
     }
-    int MarkdownToWidgets::parse(const std::string& raw_text) {
+    std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const std::string& raw_text) {
         m_tree.clear();
         m_text = raw_text.c_str();
         m_text_size = raw_text.size();
         m_current_ptr = nullptr;
         md_parse(m_text, m_text_size, &m_md, this);
-        return 0;
+        return m_tree;
     }
 }

@@ -52,7 +52,7 @@ namespace RichText {
         void set_href(bool enter, const MD_ATTRIBUTE& src);
         void tree_up();
 
-        void make_header(MD_TEXTTYPE type);
+        inline float calculate_text_size();
         void make_quote(MD_TEXTTYPE type);
         void make_list_el(MD_TEXTTYPE type);
         void make_hr(MD_TEXTTYPE type);
@@ -87,12 +87,15 @@ namespace RichText {
         void SPAN_LATEXMATH_DISPLAY(bool);
         void SPAN_WIKILINK(const MD_SPAN_WIKILINK_DETAIL*, bool);
         void SPAN_U(bool);
+
+        void configure_parser();
     public:
         MarkdownToWidgets(unsigned md_flags);
+        MarkdownToWidgets();
 
+        void setFlags(unsigned md_flags);
         void setBaseFontSize(float size) { m_base_font_size = size; }
 
-        // Returns 0 on success
-        int parse(const std::string& raw_text);
+        std::vector<AbstractWidgetPtr> parse(const std::string& raw_text);
     };
 }

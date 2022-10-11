@@ -13,6 +13,13 @@ namespace RichText {
         m_lines.push_back(Line{ 0, 0.f });
         m_line_positions.insert(0);
     }
+    WrapAlgorithm::WrapAlgorithm() {
+        m_width = 1.f;
+        m_height = 1.f;
+        m_lines.push_back(Line{ 0, 0.f });
+        m_line_positions.insert(0);
+
+    }
     WrapAlgorithm::~WrapAlgorithm() {
 
     }
