@@ -31,8 +31,8 @@ void setFonts(UIState_ptr state) {
     state->font_manager.setWeightFallBack(F_MONOSPACE, W_THIN, W_REGULAR);
     state->font_manager.setWeightFallBack(F_MONOSPACE, W_LIGHT, W_REGULAR);
     state->font_manager.setWeightFallBack(F_MONOSPACE, W_MEDIUM, W_REGULAR);
-    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_LIGHT, S_NORMAL }, "data/fonts/Ubuntu/UbuntuMono-R.ttf");
-    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_LIGHT, S_ITALIC }, "data/fonts/Ubuntu/UbuntuMono-Ri.ttf");
+    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_REGULAR, S_NORMAL }, "data/fonts/Ubuntu/UbuntuMono-R.ttf");
+    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_REGULAR, S_ITALIC }, "data/fonts/Ubuntu/UbuntuMono-Ri.ttf");
     state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_BOLD, S_NORMAL }, "data/fonts/Ubuntu/UbuntuMono-B.ttf");
     state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_BOLD, S_ITALIC }, "data/fonts/Ubuntu/UbuntuMono-BI.ttf");
 

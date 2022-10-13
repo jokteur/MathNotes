@@ -54,17 +54,6 @@ namespace RichText {
         m_text_start_idx = (int)(str - m_text);
         m_text_end_idx = (int)(str_end - m_text);
 
-        using namespace Fonts;
-        m_font = FontRequestInfo();
-        m_font.auto_scaling = true;
-        m_font.font_styling = FontStyling{ F_REGULAR, W_REGULAR, S_NORMAL };
-        if (m_is_code)
-            m_font.font_styling.family = F_MONOSPACE;
-        if (m_is_em)
-            m_font.font_styling.style = S_ITALIC;
-        if (m_is_strong)
-            m_font.font_styling.weight = W_MEDIUM;
-
         AbstractWidgetPtr ptr;
         if (type == MD_TEXT_LATEXMATH) {
 
@@ -76,11 +65,24 @@ namespace RichText {
 
         }
         else {
+            using namespace Fonts;
+            m_font.auto_scaling = true;
             auto span = std::make_shared<TextString>(m_ui_state);
-            if (m_hlevel > 0)
-                span->font_styling.size_wish = calculate_text_size();
-            else
-                span->font_styling.size_wish = m_base_font_size;
+            FontRequestInfo font_info_cpy = m_font;
+            if (m_is_code) {
+                set_font_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractWidget>(span));
+            }
+            if (m_is_em) {
+                MarkdownConfig::make_em(span->font_request.font_styling);
+            }
+            if (m_is_strong) {
+                MarkdownConfig::make_bold(span->font_request.font_styling);
+            }
+            if (m_is_underline) {
+                span->font_underline = true;
+            }
+            // Override set_font_info on the size
+            span->font_request.size_wish = m_config.font_sizes[m_hlevel];
             span->text_begin = m_text_start_idx;
             span->text_end = m_text_end_idx;
             span->safe_string = m_safe_text;
@@ -187,9 +189,11 @@ namespace RichText {
     void MarkdownToWidgets::set_href(bool enter, const MD_ATTRIBUTE& src) {
         if (enter) {
             m_href.assign(src.text, src.size);
+            m_color = m_config.default_colors[MarkdownConfig::HREF];
         }
         else {
             m_href.clear();
+            m_color = m_config.default_colors[MarkdownConfig::P];
         }
     }
     void MarkdownToWidgets::tree_up() {
@@ -197,13 +201,17 @@ namespace RichText {
             m_current_ptr = m_current_ptr->parent;
         }
     }
-
-    float MarkdownToWidgets::calculate_text_size() {
-        return round(2 + m_base_font_size * ((6 - m_hlevel) / 5 * 2));
+    void MarkdownToWidgets::set_font_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr) {
+        ptr->font_request.font_styling = m_config.font_stylings[type];
+        ptr->font_request.size_wish = m_config.font_sizes[type];
+        ptr->line_space = m_config.line_spaces[type];
+        ptr->font_underline = m_config.font_underlines[type];
+        ptr->font_color = m_config.default_colors[type];
+        ptr->bg_color = m_config.bg_colors[type];
     }
     void MarkdownToWidgets::make_p(MD_TEXTTYPE type) {
         auto ptr = std::static_pointer_cast<HeaderWidget>(m_current_ptr);
-        m_font.size_wish = m_base_font_size;
+        set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ptr));
     }
 
     void MarkdownToWidgets::BLOCK_DOC(bool enter) {
@@ -227,9 +235,10 @@ namespace RichText {
 
     void MarkdownToWidgets::BLOCK_H(const MD_BLOCK_H_DETAIL* detail, bool enter) {
         if (enter) {
-            m_hlevel = detail->level;
             auto header = std::make_shared<HeaderWidget>(m_ui_state);
+            m_hlevel = detail->level;
             header->hlevel = detail->level;
+            set_font_infos((MarkdownConfig::type)m_hlevel, std::static_pointer_cast<AbstractWidget>(header));
             auto ptr = std::static_pointer_cast<AbstractWidget>(header);
             push_to_tree(ptr);
         }
@@ -242,8 +251,9 @@ namespace RichText {
         if (enter) {
             auto quote = std::make_shared<QuoteWidget>(m_ui_state);
             if (m_current_ptr->type == T_BLOCK_QUOTE) {
-                auto new_ptr = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
-                quote->quote_level = new_ptr->quote_level + 1;
+                auto parent = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
+                quote->quote_level = parent->quote_level + 1;
+                set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(quote));
             }
             auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
             push_to_tree(ptr);
@@ -259,6 +269,7 @@ namespace RichText {
             auto code = std::make_shared<CodeWidget>(m_ui_state);
             auto ptr = std::static_pointer_cast<AbstractWidget>(code);
             push_to_tree(ptr);
+            set_font_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractWidget>(code));
         }
         else {
             tree_up();
@@ -272,6 +283,7 @@ namespace RichText {
         if (enter) {
             auto p = std::make_shared<ParagraphWidget>(m_ui_state);
             auto ptr = std::static_pointer_cast<AbstractWidget>(p);
+            set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(p));
             push_to_tree(ptr);
         }
         else {
@@ -324,12 +336,13 @@ namespace RichText {
     void MarkdownToWidgets::SPAN_DEL(bool enter) {
         m_is_strikethrough = enter;
     }
-    std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state) {
+    std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, MarkdownConfig config) {
         m_tree.clear();
         m_safe_text = str;
         m_text = str->c_str();
         m_text_size = str->size();
         m_current_ptr = nullptr;
+        m_config = config;
         m_ui_state = ui_state;
         md_parse(m_text, m_text_size, &m_md, this);
         return m_tree;

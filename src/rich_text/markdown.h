@@ -5,8 +5,10 @@
 #include <md4c.h>
 #include <md4c-html.h>
 
+
 #include "widgets.h"
 #include "ui/fonts.h"
+#include "markdown_config.h"
 
 namespace RichText {
     // Inspired from https://github.com/mekhontsev/imgui_md
@@ -20,11 +22,11 @@ namespace RichText {
         int m_text_start_idx = 0;
         int m_text_end_idx = 0;
         int m_text_size;
-        float m_base_font_size = 16.f;
         Fonts::FontRequestInfo m_font;
 
         AbstractWidgetPtr m_current_ptr = nullptr;
 
+        MarkdownConfig m_config;
         UIState_ptr m_ui_state = nullptr;
 
         // current state
@@ -39,6 +41,7 @@ namespace RichText {
         bool m_is_inline = false;
         bool m_is_code = false;
         std::string m_href;
+        Colors::color m_color = Colors::BLACK;
         unsigned m_hlevel = 0;//0 - no heading
 
         int text(MD_TEXTTYPE type, const char* str, const char* str_end);
@@ -55,8 +58,8 @@ namespace RichText {
         }
         void set_href(bool enter, const MD_ATTRIBUTE& src);
         void tree_up();
+        void set_font_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr);
 
-        inline float calculate_text_size();
         void make_quote(MD_TEXTTYPE type);
         void make_list_el(MD_TEXTTYPE type);
         void make_hr(MD_TEXTTYPE type);
@@ -98,8 +101,7 @@ namespace RichText {
         MarkdownToWidgets();
 
         void setFlags(unsigned md_flags);
-        void setBaseFontSize(float size) { m_base_font_size = size; }
 
-        std::vector<AbstractWidgetPtr> parse(const SafeString& str, UIState_ptr ui_state);
+        std::vector<AbstractWidgetPtr> parse(const SafeString& str, UIState_ptr ui_state, MarkdownConfig config = MarkdownConfig());
     };
 }

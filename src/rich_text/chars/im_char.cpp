@@ -37,14 +37,14 @@ namespace RichText {
         advance = scale * glyph->AdvanceX;
     }
 
-    void ImChar::draw(ImDrawList* draw_list) {
+    void ImChar::draw(ImDrawList* draw_list, ImVec2 draw_offset) {
         if (m_font->im_font == nullptr)
             return;
         auto cursor_pos = ImGui::GetCursorScreenPos();
 
         if (!is_linebreak) {
             // ImGui RenderChar takes offset into account, this is why it is substracted
-            ImVec2 position = _calculated_position + cursor_pos - offset;
+            ImVec2 position = _calculated_position + cursor_pos - offset + draw_offset;
             m_font->im_font->RenderChar(draw_list,
                 m_font_size,
                 position,

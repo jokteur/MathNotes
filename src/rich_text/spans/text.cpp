@@ -13,13 +13,13 @@ namespace RichText {
 
         using namespace Fonts;
         FontInfoOut font_out;
-        m_ui_state->font_manager.requestFont(font_styling, font_out);
+        m_ui_state->font_manager.requestFont(font_request, font_out);
         auto font = Tempo::GetImFont(font_out.font_id);
 
         if (safe_string == nullptr || font.get() == nullptr) {
             return false;
         }
-        
+
         float font_size = font_out.size * font_out.ratio * scale * Tempo::GetScaling();
         for (int i = text_begin;i < text_end;i++) {
             unsigned int c = (unsigned int)(*safe_string)[i];
@@ -38,7 +38,7 @@ namespace RichText {
         return true;
     }
     void TextString::draw(ImDrawList* draw_list) {
-        for (auto& c: chars) {
+        for (auto& c : chars) {
             c->draw(draw_list);
         }
     }

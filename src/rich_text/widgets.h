@@ -6,6 +6,7 @@
 #include "chars/drawable_char.h"
 #include "wrapper.h"
 #include "ui/drawable.h"
+#include "ui/fonts.h"
 
 namespace RichText {
     using SafeString = std::shared_ptr<std::string>;
@@ -23,14 +24,22 @@ namespace RichText {
         int level = 0;
 
         // For display, start not implemented yet
-        // Returns false if not succesfully build char
+        // Returns false if not succesfully build chars
         bool virtual buildAndAddChars(std::vector<WrapCharPtr>& string, int start = -1) { return true; }
         void virtual draw(ImDrawList* draw_list) {}
         std::vector<DrawableCharPtr> chars;
+
+        // Potential customizations
+        Fonts::FontRequestInfo font_request;
+        Colors::color font_color = Colors::BLACK;
+        Colors::color bg_color = Colors::TRANSPARENT;
+        bool font_underline = false;
+        float line_space = 1.5f;
+
         ImVec2 dimensions;
         ImVec2 position;
-
         float scale = 1.f;
+        float window_width = 1.f;
 
         // Internal
         SafeString safe_string;
@@ -44,7 +53,15 @@ namespace RichText {
     };
 
     struct AbstractBlock : public AbstractWidget {
+    private:
+        void build_chars() {}
+    public:
         AbstractBlock(UIState_ptr ui_state) : AbstractWidget(ui_state) {}
+        void setWidth(float width) {}
+
+        float x_offset = 0.f;
+        bool widget_dirty = false;
+        WrapAlgorithm wrapper;
     };
     struct AbstractSpan : public AbstractWidget {
         AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {}

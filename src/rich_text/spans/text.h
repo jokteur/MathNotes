@@ -11,7 +11,7 @@ namespace RichText {
         bool buildAndAddChars(std::vector<WrapCharPtr>& string, int start = -1) override;
         void draw(ImDrawList* draw_list) override;
 
-        Fonts::FontRequestInfo font_styling;
+        Fonts::FontRequestInfo font_request;
         int color = Colors::BLACK; // TODO: Remove microtex dependence
     };
 }

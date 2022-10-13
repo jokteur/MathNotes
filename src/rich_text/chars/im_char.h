@@ -16,7 +16,7 @@ namespace RichText {
     public:
         ImChar(Tempo::SafeImFontPtr font, ImWchar c, float font_size, ImU32 color, bool force_blank = false);
 
-        void draw(ImDrawList* draw_list) override;
+        void draw(ImDrawList* draw_list, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
     };
 
     std::vector<DrawableCharPtr> Utf8StrToImCharStr(const std::string& str, Tempo::SafeImFontPtr font, float font_size, ImU32 color);
