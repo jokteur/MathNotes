@@ -5,40 +5,38 @@
 
 namespace RichText {
     TextString::TextString(UIState_ptr ui_state) : AbstractSpan(ui_state) {
-        type = T_TEXT;
+        m_type = T_TEXT;
     }
 
-    bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& string, int start) {
-        chars.clear();
-
+    bool TextString::buildAndAddChars(std::vector<DrawableCharPtr>& draw_string, std::vector<WrapCharPtr>& wrap_string, int start) {
         using namespace Fonts;
         FontInfoOut font_out;
-        m_ui_state->font_manager.requestFont(font_request, font_out);
+        m_ui_state->font_manager.requestFont(m_font_request, font_out);
         auto font = Tempo::GetImFont(font_out.font_id);
 
-        if (safe_string == nullptr || font.get() == nullptr) {
+        if (m_safe_string == nullptr || font->im_font == nullptr) {
             return false;
         }
 
-        float font_size = font_out.size * font_out.ratio * scale * Tempo::GetScaling();
-        for (int i = text_begin;i < text_end;i++) {
-            unsigned int c = (unsigned int)(*safe_string)[i];
+        float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
+        for (int i = m_raw_text_begin;i < m_raw_text_end;i++) {
+            unsigned int c = (unsigned int)(*m_safe_string)[i];
             if (c >= 0x80) {
-                ImTextCharFromUtf8(&c, &(*safe_string)[i], &(*safe_string)[safe_string->size() - 1]);
+                ImTextCharFromUtf8(&c, &(*m_safe_string)[i], &(*m_safe_string)[m_safe_string->size() - 1]);
                 if (c == 0) // Malformed UTF-8?
                     break;
             }
             bool force_breakable = false;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;
-            auto char_ptr = std::make_shared<ImChar>(font, (ImWchar)c, font_size, color, force_breakable);
-            chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
-            string.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
+            auto char_ptr = std::make_shared<ImChar>(font, (ImWchar)c, font_size, m_font_color, force_breakable);
+            m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
+            wrap_string.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
         }
         return true;
     }
     void TextString::draw(ImDrawList* draw_list) {
-        for (auto& c : chars) {
+        for (auto& c : m_draw_chars) {
             c->draw(draw_list);
         }
     }

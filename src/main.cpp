@@ -20,8 +20,8 @@ int main() {
     Tempo::Config config;
     config.app_name = "TestApp";
     config.app_title = "Hello world";
-    config.default_window_width = 1920;
-    config.default_window_height = 1080;
+    config.default_window_width = 1280;
+    config.default_window_height = 720;
 
     MainApp* app = new MainApp();
     Tempo::Run(app, config);

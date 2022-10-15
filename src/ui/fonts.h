@@ -45,8 +45,8 @@ namespace Fonts {
     };
 
     struct FontRequestInfo {
-        FontStyling font_styling;
-        float size_wish;
+        FontStyling font_styling = FontStyling{ F_REGULAR, W_REGULAR, S_NORMAL };
+        float size_wish = 16.f;
         bool auto_scaling = true;
         bool exact_request = false;
     };

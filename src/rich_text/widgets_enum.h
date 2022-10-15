@@ -21,4 +21,10 @@ namespace RichText {
         T_BLOCK_H,
         T_TEXT
     };
+    enum Category {
+        C_NONAME,
+        C_ROOT,
+        C_BLOCK,
+        C_SPAN
+    };
 }

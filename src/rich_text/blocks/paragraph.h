@@ -5,7 +5,7 @@
 namespace RichText {
     struct ParagraphWidget : public AbstractBlock {
         ParagraphWidget(UIState_ptr ui_state);
-        bool buildAndAddChars(std::vector<WrapCharPtr>& string, int start = -1) override;
+        void virtual draw(ImDrawList* draw_list) override;
     };
     struct CodeWidget : public AbstractBlock {
         CodeWidget(UIState_ptr ui_state);

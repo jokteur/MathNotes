@@ -52,8 +52,8 @@ namespace RichText {
 
         void push_to_tree(AbstractWidgetPtr& node) {
             m_tree.push_back(node);
-            node->parent = m_current_ptr;
-            if (m_current_ptr != nullptr) m_current_ptr->childrens.push_back(node);
+            node->m_parent = m_current_ptr;
+            if (m_current_ptr != nullptr) m_current_ptr->m_childrens.push_back(node);
             m_current_ptr = node;
         }
         void set_href(bool enter, const MD_ATTRIBUTE& src);

@@ -107,16 +107,11 @@ namespace RichText {
         ~WrapAlgorithm();
 
         void setString(const std::vector<WrapCharPtr>& string);
-        void insertAt(const std::vector<WrapCharPtr>& string, int position = -1);
-        void insertAt(WrapCharPtr& c, int position = -1);
-        void deleteAt(int start, int end = -1);
         void clear();
 
         const std::list<Line>& getLines() { return m_lines; }
 
         void setWidth(float width);
-        void setHeight(float height);
-        void setBoxHeight(float height);
         void setLineSpace(float line_space);
     };
 }
