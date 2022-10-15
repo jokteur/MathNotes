@@ -24,7 +24,8 @@ namespace RichText {
         auto mouse_pos = ImGui::GetMousePos();
 
         if (!m_tree.empty()) {
-            m_tree[0]->draw(ImGui::GetWindowDrawList());
+            ImVec2 draw_offset;
+            m_tree[0]->draw(ImGui::GetWindowDrawList(), draw_offset);
         }
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
@@ -41,8 +42,8 @@ namespace RichText {
         m_safe_string = std::make_shared<std::string>(text);
         m_tree = m_md_to_widgets.parse(m_safe_string, m_ui_state);
         if (!m_tree.empty()) {
-            m_tree[0]->buildWidget();
             m_tree[0]->setWidth(m_current_width);
+            m_tree[0]->buildWidget();
         }
     }
 }

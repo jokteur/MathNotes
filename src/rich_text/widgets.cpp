@@ -1,16 +1,32 @@
 #include "widgets.h"
 
 namespace RichText {
-    RootNode::RootNode(UIState_ptr ui_state) : AbstractWidget(ui_state) {
-        m_type = T_ROOT;
-        m_category = C_ROOT;
+    // AbstractWidget
+    bool AbstractWidget::buildAndAddChars(std::vector<WrapCharPtr>&) { 
+       return true;
+    }
+    void AbstractWidget::draw(ImDrawList* draw_list, ImVec2& draw_offset) {
+        for (auto ptr : m_childrens) {
+            ptr->draw(draw_list, draw_offset);
+            draw_offset.y += ptr->m_dimensions.y;
+        }
+        buildWidget();
+    }
+    void AbstractWidget::setWidth(float width) {
+        for (auto ptr : m_childrens) {
+            ptr->setWidth(width);
+        }
+        m_window_width = width;
     }
 
-    void RootNode::draw(ImDrawList* draw_list) {
+    // AbstractBlock
+    void AbstractBlock::setWidth(float width) {
         for (auto ptr : m_childrens) {
-            if (ptr->m_type != T_TEXT) {
-                ptr->draw(draw_list);
-            }
+            ptr->setWidth(width);
         }
+        m_wrapper.setWidth(width);
+        m_window_width = width;
+        m_dimensions.x = width - m_x_offset;
+        m_dimensions.y = m_wrapper.getHeight();
     }
 }

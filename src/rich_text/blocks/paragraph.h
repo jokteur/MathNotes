@@ -5,7 +5,7 @@
 namespace RichText {
     struct ParagraphWidget : public AbstractBlock {
         ParagraphWidget(UIState_ptr ui_state);
-        void virtual draw(ImDrawList* draw_list) override;
+        void virtual draw(ImDrawList* draw_list, ImVec2& draw_offset) override;
     };
     struct CodeWidget : public AbstractBlock {
         CodeWidget(UIState_ptr ui_state);

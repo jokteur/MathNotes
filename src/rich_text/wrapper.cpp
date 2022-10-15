@@ -5,27 +5,16 @@
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
 namespace RichText {
-    WrapAlgorithm::WrapAlgorithm(float width, float height, float line_space) {
+    WrapAlgorithm::WrapAlgorithm(float width, float line_space) {
         m_width = width;
-        m_height = height;
         m_line_space = line_space;
-
-        m_lines.push_back(Line{ 0, 0.f });
-        m_line_positions.insert(0);
     }
     WrapAlgorithm::WrapAlgorithm() {
-        m_width = 1.f;
-        m_height = 1.f;
-        m_lines.push_back(Line{ 0, 0.f });
-        m_line_positions.insert(0);
-
     }
     WrapAlgorithm::~WrapAlgorithm() {
-
     }
 
     inline int WrapAlgorithm::find_line_idx(int cursor_pos) {
-        // m_line_positions.find(cursor_pos);
         return 0;
     }
     inline int WrapAlgorithm::find_next_line_break(int cursor_pos) {
@@ -40,24 +29,22 @@ namespace RichText {
         line_it++;
         *cursor_pos_x = 0.f;
     }
-    void WrapAlgorithm::recalculate(int start, int end) {
+    void WrapAlgorithm::recalculate() {
         if (m_width < 1.f) {
-            return;
-        }
-        if (start == end) {
             return;
         }
         if (m_string.empty()) {
             return;
         }
-        // abreviations used in this function:
-        // it for iterator, pos for position, idx for index
-        if (end == -1) {
-            if (m_string.empty())
-                end = 0;
-            else
-                end = m_string.size() - 1;
-        }
+        // Initial conditions
+        m_lines.clear();
+        m_line_positions.clear();
+        m_lines.push_back(Line{ 0, 0.f });
+        m_line_positions.insert(0);
+        m_height = 0.f;
+
+        int start = 0;
+        int end = m_string.size() - 1;
         // ==== SECTION 1 ====
         // Calculation of char and horizontal positions
 
@@ -132,6 +119,8 @@ namespace RichText {
         // ==== SECTION 2 ====
         // Calculation of char vertical positions
         float cursor_pos_y = 0.f;
+        float max_ascent = 0.f;
+        float max_descent = 0.f;
         for (auto current_line_it = m_lines.begin();current_line_it != m_lines.end();current_line_it++) {
             auto next_it = std::next(current_line_it);
             current_line_it->line_pos_y = cursor_pos_y;
@@ -143,8 +132,8 @@ namespace RichText {
             // Find max char height relative to cursor pos
             // ascent is the distance from origin to bearing
             // descent is the distance from origin to bottom of char
-            float max_ascent = 0.f;
-            float max_descent = 0.f;
+            max_ascent = 0.f;
+            max_descent = 0.f;
             for (int j = current_line_it->start;j < line_end_idx;j++) {
                 WrapCharPtr& c = m_string[j];
                 max_ascent = max(max_ascent, c->ascent);
@@ -156,21 +145,17 @@ namespace RichText {
                 c->_calculated_position.y = cursor_pos_y + max_ascent - c->ascent + c->offset.y;
             }
             current_line_it->height = max_ascent + max_descent;
-            cursor_pos_y += current_line_it->height * (1.f + m_line_space);
+            cursor_pos_y += current_line_it->height * m_line_space;
         }
+        m_height = cursor_pos_y;// + max_ascent + max_descent;
     }
     void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string) {
-        clear();
         m_string = string;
-        if (m_string.size() > 0)
-            recalculate(0);
+        recalculate();
     }
     void WrapAlgorithm::clear() {
         m_string.clear();
         m_lines.clear();
-        m_line_positions.clear();
-        m_lines.push_back(Line{ 0, 0.f });
-        m_line_positions.insert(0);
     }
     void WrapAlgorithm::setWidth(float width) {
         m_width = width;

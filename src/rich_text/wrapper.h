@@ -80,9 +80,9 @@ namespace RichText {
         float m_total_height;
 
         // User set quantities
-        float m_width;
-        float m_height;
-        float m_line_space;
+        float m_width = 1.f;
+        float m_height = 0.f;
+        float m_line_space = 1.3f;
 
         /**
          * @brief Returns the index of the line which contains pos
@@ -93,16 +93,15 @@ namespace RichText {
         inline void push_char_on_line(WrapCharPtr& c, float* cursor_x_coord);
         inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
-        void recalculate(int from = 0, int to = -1);
+        void recalculate();
     public:
         /**
          * @brief Construct a new Text Wrapper object
          *
          * @param width width (in px) of the box
-         * @param height height (in px) of the box
          * @param line_space relative line space: space between lines is calculated as line_height * line_space
          */
-        WrapAlgorithm(float width, float height, float line_space = 0.3);
+        WrapAlgorithm(float width, float line_space = 1.3);
         WrapAlgorithm();
         ~WrapAlgorithm();
 
@@ -110,6 +109,7 @@ namespace RichText {
         void clear();
 
         const std::list<Line>& getLines() { return m_lines; }
+        float getHeight() { return m_height; }
 
         void setWidth(float width);
         void setLineSpace(float line_space);

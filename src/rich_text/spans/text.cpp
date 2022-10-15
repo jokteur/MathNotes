@@ -8,7 +8,7 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::buildAndAddChars(std::vector<DrawableCharPtr>& draw_string, std::vector<WrapCharPtr>& wrap_string, int start) {
+    bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& wrap_string) {
         using namespace Fonts;
         FontInfoOut font_out;
         m_ui_state->font_manager.requestFont(m_font_request, font_out);
@@ -35,9 +35,9 @@ namespace RichText {
         }
         return true;
     }
-    void TextString::draw(ImDrawList* draw_list) {
+    void TextString::draw(ImDrawList* draw_list, ImVec2& draw_offset) {
         for (auto& c : m_draw_chars) {
-            c->draw(draw_list);
+            c->draw(draw_list, draw_offset);
         }
     }
 }

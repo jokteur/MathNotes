@@ -6,7 +6,7 @@ namespace RichText {
     HeaderWidget::HeaderWidget(UIState_ptr ui_state) : AbstractBlock(ui_state) {
         m_type = T_BLOCK_H;
     }
-    bool HeaderWidget::buildAndAddChars(std::vector<DrawableCharPtr>& draw_string, std::vector<WrapCharPtr>& wrap_string, int start) {
+    bool HeaderWidget::buildAndAddChars(std::vector<WrapCharPtr>& wrap_string) {        
         // auto char_ptr = std::make_shared<NewLine>();
         // // string.push_back(char_ptr);
         // m_draw_string.push_back(char_ptr);
@@ -28,22 +28,15 @@ namespace RichText {
         return true;
     }
 
-    void HeaderWidget::draw(ImDrawList* draw_list) {
-        for (auto ptr : m_childrens) {
-            ptr->draw(draw_list);
-        }
-        buildWidget();
-    }
     void HeaderWidget::buildWidget() {
         if (m_widget_dirty) {
-            m_draw_chars.clear();
             m_wrap_chars.clear();
             bool success = true;
             for (auto ptr : m_childrens) {
                 if (ptr->m_category != C_SPAN) {
                     break;
                 }
-                auto res = ptr->buildAndAddChars(m_draw_chars, m_wrap_chars);
+                auto res = ptr->buildAndAddChars(m_wrap_chars);
                 if (!res) {
                     success = false;
                     break;
@@ -52,7 +45,9 @@ namespace RichText {
             if (success) {
                 m_wrapper.clear();
                 m_wrapper.setWidth(m_window_width - m_x_offset);
+                m_wrapper.setLineSpace(m_line_space);
                 m_wrapper.setString(m_wrap_chars);
+                m_dimensions.y = m_wrapper.getHeight();
                 m_widget_dirty = false;
             }
         }

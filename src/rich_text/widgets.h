@@ -18,6 +18,7 @@ namespace RichText {
         Type m_type;
         Category m_category;
         AbstractWidget(UIState_ptr ui_state) : Drawable(ui_state) {}
+        ~AbstractWidget() {};
 
         // Informations about the tree structure
         std::vector<AbstractWidgetPtr> m_childrens;
@@ -31,12 +32,9 @@ namespace RichText {
 
         // For display, start not implemented yet
         // Returns false if not succesfully build chars
-        bool virtual buildAndAddChars(std::vector<DrawableCharPtr>& draw_string, std::vector<WrapCharPtr>& wrap_string, int start = -1) { return true; }
-        void virtual draw(ImDrawList* draw_list) {
-            for (auto ptr : m_childrens) {
-                ptr->draw(draw_list);
-            }
-        }
+        bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_string);
+        void virtual draw(ImDrawList* draw_list, ImVec2& draw_offset);
+
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<WrapCharPtr> m_wrap_chars;
 
@@ -61,11 +59,7 @@ namespace RichText {
         void virtual onClick() {}
         void virtual onSelect() {}
         void virtual onDeselect() {}
-        void virtual setWidth(float width) {
-            for (auto ptr : m_childrens) {
-                ptr->setWidth(width);
-            }
-        }
+        void virtual setWidth(float width);
     };
 
     struct AbstractBlock : public AbstractWidget {
@@ -73,27 +67,23 @@ namespace RichText {
         AbstractBlock(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_BLOCK;
         }
-        void setWidth(float width) {
-            for (auto ptr : m_childrens) {
-                ptr->setWidth(width);
-            }
-            m_wrapper.setWidth(width - m_x_offset);
-            m_children_dirty = true;
-        }
+        void setWidth(float width) override;
 
         float m_x_offset = 0.f;
         bool m_widget_dirty = true;
-        bool m_children_dirty = false;
         WrapAlgorithm m_wrapper;
     };
+    
     struct AbstractSpan : public AbstractWidget {
         AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_SPAN;
         }
     };
-    struct RootNode : public AbstractWidget {
-        RootNode(UIState_ptr ui_state);
 
-        void virtual draw(ImDrawList* draw_list) override;
+    struct RootNode : public AbstractWidget {
+        RootNode(UIState_ptr ui_state) : AbstractWidget(ui_state) {
+            m_type = T_ROOT;
+            m_category = C_ROOT;
+        }
     };
 }
