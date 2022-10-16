@@ -53,7 +53,6 @@ namespace RichText {
         m_text_start_idx = (int)(str - m_text);
         m_text_end_idx = (int)(str_end - m_text);
 
-        AbstractWidgetPtr ptr;
         if (type == MD_TEXT_LATEXMATH) {
 
         }
@@ -91,11 +90,10 @@ namespace RichText {
             span->m_raw_text_begin = m_text_start_idx;
             span->m_raw_text_end = m_text_end_idx;
             span->m_safe_string = m_safe_text;
-            ptr = std::static_pointer_cast<AbstractWidget>(span);
+            auto ptr = std::static_pointer_cast<AbstractWidget>(span);
+            push_to_tree(ptr);
+            tree_up();
         }
-
-        push_to_tree(ptr);
-        tree_up();
         return 0;
     }
     int MarkdownToWidgets::block(MD_BLOCKTYPE type, void* detail, bool enter) {
@@ -237,7 +235,7 @@ namespace RichText {
             }
             ul_list->is_tight = (bool)detail->is_tight;
             ul_list->mark = detail->mark;
-            ul_list->m_size_props.h_paddings.x = m_config.x_level_offset * ul_list->list_level;
+            ul_list->m_h_paddings.x = m_config.x_level_offset * ul_list->list_level;
             set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ul_list));
             auto ptr = std::static_pointer_cast<AbstractWidget>(ul_list);
             push_to_tree(ptr);
@@ -258,7 +256,7 @@ namespace RichText {
             }
             ol_list->is_tight = (bool)detail->is_tight;
             ol_list->start = detail->start;
-            ol_list->m_size_props.h_paddings.x = m_config.x_level_offset * ol_list->list_level;
+            ol_list->m_h_paddings.x = m_config.x_level_offset * ol_list->list_level;
             set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ol_list));
             auto ptr = std::static_pointer_cast<AbstractWidget>(ol_list);
             push_to_tree(ptr);
@@ -279,7 +277,7 @@ namespace RichText {
             else if (m_current_ptr->m_type == T_BLOCK_OL) {
                 list_el->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level;
             }
-            list_el->m_size_props.h_paddings.x = m_config.x_level_offset * list_el->list_level;
+            list_el->m_h_paddings.x = m_config.x_level_offset * list_el->list_level;
             set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(list_el));
             auto ptr = std::static_pointer_cast<AbstractWidget>(list_el);
             push_to_tree(ptr);
@@ -314,7 +312,7 @@ namespace RichText {
                 quote->quote_level = parent->quote_level + 1;
                 set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(quote));
             }
-            quote->m_size_props.h_paddings.x = m_config.x_level_offset * quote->quote_level;
+            quote->m_h_paddings.x = m_config.x_level_offset * quote->quote_level;
             auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
             push_to_tree(ptr);
         }

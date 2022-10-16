@@ -18,7 +18,7 @@ namespace RichText {
             return false;
         }
 
-        float font_size = font_out.size * font_out.ratio * m_size_props.scale * Tempo::GetScaling();
+        float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
         for (int i = m_raw_text_begin;i < m_raw_text_end;i++) {
             unsigned int c = (unsigned int)(*m_safe_string)[i];
             if (c >= 0x80) {
@@ -36,7 +36,7 @@ namespace RichText {
         }
         return true;
     }
-    void TextString::draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset) {
+    void TextString::draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         // Parent is drawing
     }
 }

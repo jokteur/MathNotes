@@ -7,9 +7,9 @@ namespace Colors {
     static constexpr color transparent = 0x00000000;
     static constexpr color black = 0xff000000;
     static constexpr color white = 0xffffffff;
-    static constexpr color red = 0xffff0000;
+    static constexpr color red = 0xff0000ff;
     static constexpr color green = 0xff00ff00;
-    static constexpr color blue = 0xff0000ff;
+    static constexpr color blue = 0xffff0000;
     static constexpr color yellow = 0xffffff00;
     static constexpr color cyan = 0xff00ffff;
     static constexpr color magenta = 0xffff00ff;

@@ -9,6 +9,6 @@ namespace RichText {
         TextString(UIState_ptr ui_state);
 
         bool buildAndAddChars(std::vector<WrapCharPtr>& wrap_string, std::vector<DrawableCharPtr>& draw_chars) override;
-        void draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset) override;
+        void draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
     };
 }

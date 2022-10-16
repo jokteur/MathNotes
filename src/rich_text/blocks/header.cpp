@@ -10,7 +10,7 @@ namespace RichText {
         using namespace Fonts;
         FontInfoOut font_out;
         m_ui_state->font_manager.requestFont(m_font_request, font_out);
-        float font_size = font_out.size * font_out.ratio * m_size_props.scale * Tempo::GetScaling();
+        float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
 
         auto font = Tempo::GetImFont(font_out.font_id);
         if (font->im_font == nullptr) {

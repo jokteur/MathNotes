@@ -7,6 +7,7 @@
 #include "ui/drawable.h"
 #include "ui/fonts.h"
 #include "ui/colors.h"
+#include "types.h"
 
 namespace RichText {
     using SafeString = std::shared_ptr<std::string>;
@@ -43,7 +44,7 @@ namespace RichText {
         // For display, start not implemented yet
         // Returns false if not succesfully build chars
         bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars);
-        void virtual draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset);
+        void virtual draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
 
         // Font infos
@@ -56,8 +57,17 @@ namespace RichText {
         bool m_widget_dirty = true;
         WrapAlgorithm m_wrapper;
 
-        SizeProperties m_size_props;
+        // Vector infos
         ImVec2 m_position;
+        ImVec2 m_dimensions;
+        ImVec2 m_h_paddings;
+        ImVec2 m_v_paddings;
+        float m_scale = 1.f;
+        float m_window_width = 1.f;
+
+        // Debug
+        bool m_show_boundaries = false;
+
 
         // Internal
         SafeString m_safe_string;
@@ -78,7 +88,7 @@ namespace RichText {
         }
 
         void buildWidget() override;
-        void draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset) override;
+        void draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
 
         void setWidth(float width) override;
     };

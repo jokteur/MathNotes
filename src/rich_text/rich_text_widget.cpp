@@ -25,7 +25,10 @@ namespace RichText {
 
         if (!m_tree.empty()) {
             float cursor_pos_y = 0.f;
-            m_tree[0]->draw(ImGui::GetWindowDrawList(), cursor_pos_y, 0.f);
+            Rect boundaries;
+            boundaries.h = vMax.y - vMin.y;
+            boundaries.w = width;
+            m_tree[0]->draw(ImGui::GetWindowDrawList(), cursor_pos_y, 0.f, boundaries);
         }
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
