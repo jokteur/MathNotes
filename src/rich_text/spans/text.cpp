@@ -8,7 +8,7 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars) {
+    bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars) {
         using namespace Fonts;
         FontInfoOut font_out;
         m_ui_state->font_manager.requestFont(m_font_request, font_out);
@@ -31,12 +31,42 @@ namespace RichText {
                 force_breakable = true;
             auto char_ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, m_font_color, force_breakable);
             // m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
-            draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
+            m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
             wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
         }
         return true;
     }
     void TextString::draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
-        // Parent is drawing
+        // TODO save this info somewhere
+        // Find dimensions of span
+        if (!m_draw_chars.empty()) {
+            auto start_char = m_draw_chars.begin()->get();
+            auto end_char = (m_draw_chars.end() - 1)->get();
+            float ascent = start_char->ascent;
+            float descent = end_char->descent;
+            m_position = ImVec2(
+                start_char->_calculated_position.x - start_char->offset.x,
+                start_char->_calculated_position.y - start_char->offset.y
+            );
+            m_dimensions = ImVec2(
+                end_char->_calculated_position.x - end_char->offset.x + end_char->advance,
+                end_char->_calculated_position.y - end_char->offset.y + ascent - descent
+            );
+            m_dimensions -= m_position;
+        }
+        if (isInsideRectY(m_position, boundaries)) {
+            // Doesn't work for multi-lines
+            if (m_bg_color != Colors::transparent) {
+                auto cursor_pos = ImGui::GetCursorScreenPos();
+                ImVec2 p_min = cursor_pos + m_position;
+                ImVec2 p_max = cursor_pos + m_position + m_dimensions;
+                draw_list->AddRectFilled(p_min, p_max, Colors::lightgray, 3.f);
+            }
+
+            // Draw all chars
+            for(auto ptr : m_draw_chars) {
+                ptr->draw(draw_list, ImVec2(x_offset, cursor_y_pos));
+            }
+        }
     }
 }

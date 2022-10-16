@@ -30,26 +30,26 @@ namespace RichText {
 
         // Colors
         Colors::color default_colors[9] = {
-            Colors::BLACK, // Paragraph
-            Colors::BLACK, // H1
-            Colors::BLACK, // H2
-            Colors::BLACK, // H3
-            Colors::BLACK, // H4
-            Colors::BLACK, // H5
-            Colors::BLACK, // H6
-            Colors::BLACK, // Code
-            Colors::BLUE   // href
+            Colors::black, // Paragraph
+            Colors::black, // H1
+            Colors::black, // H2
+            Colors::black, // H3
+            Colors::black, // H4
+            Colors::black, // H5
+            Colors::black, // H6
+            Colors::black, // Code
+            Colors::blue   // href
         };
         Colors::color bg_colors[9] = {
-            Colors::TRANSPARENT, // Paragraph
-            Colors::TRANSPARENT, // H1
-            Colors::TRANSPARENT, // H2
-            Colors::TRANSPARENT, // H3
-            Colors::TRANSPARENT, // H4
-            Colors::TRANSPARENT, // H5
-            Colors::TRANSPARENT, // H6
-            Colors::TRANSPARENT, // Code
-            Colors::TRANSPARENT  // href
+            Colors::transparent, // Paragraph
+            Colors::transparent, // H1
+            Colors::transparent, // H2
+            Colors::transparent, // H3
+            Colors::transparent, // H4
+            Colors::transparent, // H5
+            Colors::transparent, // H6
+            Colors::lightgray, // Code
+            Colors::transparent  // href
         };
 
         float x_level_offset = 15.f;

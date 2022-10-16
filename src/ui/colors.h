@@ -4,6 +4,7 @@
 
 namespace Colors {
     using color = std::uint32_t;
+    // Basic
     static constexpr color transparent = 0x00000000;
     static constexpr color black = 0xff000000;
     static constexpr color white = 0xffffffff;
@@ -14,13 +15,14 @@ namespace Colors {
     static constexpr color cyan = 0xff00ffff;
     static constexpr color magenta = 0xffff00ff;
 
-    static constexpr color TRANSPARENT = transparent;
-    static constexpr color BLACK = black;
-    static constexpr color WHITE = white;
-    static constexpr color RED = red;
-    static constexpr color GREEN = green;
-    static constexpr color BLUE = blue;
-    static constexpr color YELLOW = yellow;
-    static constexpr color CYAN = cyan;
-    static constexpr color MAGENTA = magenta;
+    // Gray
+    static constexpr color gainsboro = 0xffdcdcdc;
+    static constexpr color lightgray = 0xffd3d3d3;
+    static constexpr color silver = 0xffc0c0c0;
+    static constexpr color darkgray = 0xffa9a9a9;
+    static constexpr color gray = 0xffa9a9a9;
+    static constexpr color dimgray = 0xff696969;
+    static constexpr color lightslategray = 0xff778899;
+    static constexpr color slategray = 0xff708090;
+    static constexpr color darkslategray = 0xff2f4f4f;
 }

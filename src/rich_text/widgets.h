@@ -43,14 +43,14 @@ namespace RichText {
         
         // For display, start not implemented yet
         // Returns false if not succesfully build chars
-        bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars);
+        bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
 
         // Font infos
         Fonts::FontRequestInfo m_font_request;
-        Colors::color m_font_color = Colors::BLACK;
-        Colors::color m_bg_color = Colors::TRANSPARENT;
+        Colors::color m_font_color = Colors::black;
+        Colors::color m_bg_color = Colors::transparent;
         bool m_font_underline = false;
         float m_line_space = 1.5f;
 

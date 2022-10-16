@@ -41,7 +41,8 @@ namespace RichText {
         bool m_is_inline = false;
         bool m_is_code = false;
         std::string m_href;
-        Colors::color m_color = Colors::BLACK;
+        Colors::color m_color = Colors::black;
+        Colors::color m_bg_color = Colors::transparent;
         unsigned m_hlevel = 0;//0 - no heading
 
         int text(MD_TEXTTYPE type, const char* str, const char* str_end);

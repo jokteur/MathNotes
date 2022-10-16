@@ -85,6 +85,8 @@ namespace RichText {
             if (m_is_underline) {
                 span->m_font_underline = true;
             }
+            span->m_font_color = m_color;
+            span->m_bg_color = m_bg_color;
             // Override set_font_info on the size
             span->m_font_request.size_wish = m_config.font_sizes[m_hlevel];
             span->m_raw_text_begin = m_text_start_idx;
@@ -325,9 +327,10 @@ namespace RichText {
         m_is_code = enter;
         if (enter) {
             auto code = std::make_shared<CodeWidget>(m_ui_state);
+            code->m_bg_color = m_config.bg_colors[MarkdownConfig::CODE];
             auto ptr = std::static_pointer_cast<AbstractWidget>(code);
             push_to_tree(ptr);
-            set_font_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractWidget>(code));
+            set_font_infos(MarkdownConfig::CODE, ptr);
         }
         else {
             tree_up();
@@ -378,6 +381,12 @@ namespace RichText {
     }
     void MarkdownToWidgets::SPAN_CODE(bool enter) {
         m_is_code = enter;
+        if (enter) {
+            m_bg_color = m_config.bg_colors[MarkdownConfig::CODE];
+        }
+        else {
+            m_bg_color = m_config.bg_colors[MarkdownConfig::P];
+        }
     }
     void MarkdownToWidgets::SPAN_LATEXMATH(bool enter) {
         m_is_latex = enter;
