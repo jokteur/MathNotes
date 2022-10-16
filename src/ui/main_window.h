@@ -17,11 +17,8 @@ private:
 
     RichTextWidget m_rich_text;
 
-    std::string m_in_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
-        "Proin pulvinar urna non eros vehicula efficitur.\n\n"
-
-        "Phasellus eget nunc bibendum lectus dapibus tempor nec vitae neque.\n"
-        "Ut euismod augue quis libero vulputate placerat.";
+    std::string m_in_text;
+    std::string m_prev_text;
 
     //bool m_open = true;
     friend int TextInputCallback(ImGuiInputTextCallback* data);

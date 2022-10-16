@@ -6,50 +6,24 @@ namespace RichText {
     HeaderWidget::HeaderWidget(UIState_ptr ui_state) : AbstractBlock(ui_state) {
         m_type = T_BLOCK_H;
     }
-    bool HeaderWidget::buildAndAddChars(std::vector<WrapCharPtr>& wrap_string) {        
-        // auto char_ptr = std::make_shared<NewLine>();
-        // // string.push_back(char_ptr);
-        // m_draw_string.push_back(char_ptr);
-        // m_wrap_chars.push_back(char_ptr);
+    bool HeaderWidget::build_chars() {   
+        using namespace Fonts;
+        FontInfoOut font_out;
+        m_ui_state->font_manager.requestFont(m_font_request, font_out);
+        float font_size = font_out.size * font_out.ratio * m_size_props.scale * Tempo::GetScaling();
 
-        // using namespace Fonts;
-        // FontInfoOut font_out;
-        // m_ui_state->font_manager.requestFont(m_font_request, font_out);
-
-        // auto font = Tempo::GetImFont(font_out.font_id);
-        // if (font == nullptr) {
-        //     return false;
-        // }
-        // for (int i = 0;i < hlevel;i++) {
-        //     auto ptr = std::make_shared<ImChar>(font, (ImWchar)'#', font_out.size, m_font_color, false);
-        //     m_draw_string.push_back(ptr);
-        //     m_wrap_chars.push_back(ptr);
-        // }
-        return true;
-    }
-
-    void HeaderWidget::buildWidget() {
-        if (m_widget_dirty) {
-            m_wrap_chars.clear();
-            bool success = true;
-            for (auto ptr : m_childrens) {
-                if (ptr->m_category != C_SPAN) {
-                    break;
-                }
-                auto res = ptr->buildAndAddChars(m_wrap_chars);
-                if (!res) {
-                    success = false;
-                    break;
-                }
-            }
-            if (success) {
-                m_wrapper.clear();
-                m_wrapper.setWidth(m_window_width - m_x_offset);
-                m_wrapper.setLineSpace(m_line_space);
-                m_wrapper.setString(m_wrap_chars);
-                m_dimensions.y = m_wrapper.getHeight();
-                m_widget_dirty = false;
-            }
+        auto font = Tempo::GetImFont(font_out.font_id);
+        if (font->im_font == nullptr) {
+            return false;
         }
+        for (int i = 0;i < hlevel;i++) {
+            auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)'#', font_size, m_font_color, false);
+            m_draw_chars.push_back(ptr);
+            m_wrap_chars.push_back(ptr);
+        }
+        auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)' ', font_size, m_font_color, false);
+        m_draw_chars.push_back(ptr);
+        m_wrap_chars.push_back(ptr);
+        return true;
     }
 }

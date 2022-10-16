@@ -84,6 +84,11 @@ void MainApp::FrameUpdate() {
     ImGui::InputTextMultiline("input", &m_in_text, ImVec2(0, 0),
         ImGuiInputTextFlags_CallbackAlways, TextInputCallback, (void*)this);
 
+    if (m_in_text != m_prev_text) {
+        m_prev_text = m_in_text;
+        m_rich_text.setText(m_in_text);
+    }
+
     if (ImGui::Button("Markdown")) {
         m_rich_text.setText(m_in_text);
     }

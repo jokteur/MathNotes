@@ -8,7 +8,7 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& wrap_string) {
+    bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars) {
         using namespace Fonts;
         FontInfoOut font_out;
         m_ui_state->font_manager.requestFont(m_font_request, font_out);
@@ -18,7 +18,7 @@ namespace RichText {
             return false;
         }
 
-        float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
+        float font_size = font_out.size * font_out.ratio * m_size_props.scale * Tempo::GetScaling();
         for (int i = m_raw_text_begin;i < m_raw_text_end;i++) {
             unsigned int c = (unsigned int)(*m_safe_string)[i];
             if (c >= 0x80) {
@@ -29,15 +29,14 @@ namespace RichText {
             bool force_breakable = false;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;
-            auto char_ptr = std::make_shared<ImChar>(font, (ImWchar)c, font_size, m_font_color, force_breakable);
-            m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
-            wrap_string.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
+            auto char_ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, m_font_color, force_breakable);
+            // m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
+            draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
+            wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
         }
         return true;
     }
-    void TextString::draw(ImDrawList* draw_list, ImVec2& draw_offset) {
-        for (auto& c : m_draw_chars) {
-            c->draw(draw_list, draw_offset);
-        }
+    void TextString::draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset) {
+        // Parent is drawing
     }
 }

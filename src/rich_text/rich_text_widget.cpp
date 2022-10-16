@@ -24,8 +24,8 @@ namespace RichText {
         auto mouse_pos = ImGui::GetMousePos();
 
         if (!m_tree.empty()) {
-            ImVec2 draw_offset;
-            m_tree[0]->draw(ImGui::GetWindowDrawList(), draw_offset);
+            float cursor_pos_y = 0.f;
+            m_tree[0]->draw(ImGui::GetWindowDrawList(), cursor_pos_y, 0.f);
         }
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
@@ -43,7 +43,6 @@ namespace RichText {
         m_tree = m_md_to_widgets.parse(m_safe_string, m_ui_state);
         if (!m_tree.empty()) {
             m_tree[0]->setWidth(m_current_width);
-            m_tree[0]->buildWidget();
         }
     }
 }

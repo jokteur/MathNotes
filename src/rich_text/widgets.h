@@ -14,7 +14,21 @@ namespace RichText {
     struct AbstractWidget;
     using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>; // replace with unique_ptr?
 
+    struct SizeProperties {
+        ImVec2 dimensions;
+        ImVec2 position;
+        ImVec2 h_paddings;
+        ImVec2 v_paddings;
+        float scale = 1.f;
+        float window_width = 1.f;
+    };
+
     struct AbstractWidget : public Drawable {
+        protected:
+            std::vector<DrawableCharPtr> m_draw_chars;
+            std::vector<WrapCharPtr> m_wrap_chars;
+            bool virtual build_chars() { return true; }
+        public:
         Type m_type;
         Category m_category;
         AbstractWidget(UIState_ptr ui_state) : Drawable(ui_state) {}
@@ -24,31 +38,26 @@ namespace RichText {
         std::vector<AbstractWidgetPtr> m_childrens;
         AbstractWidgetPtr m_parent = nullptr;
 
-        void virtual buildWidget() {
-            for (auto ptr : m_childrens) {
-                ptr->buildWidget();
-            }
-        }
-
+        void virtual buildWidget();
+        
         // For display, start not implemented yet
         // Returns false if not succesfully build chars
-        bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_string);
-        void virtual draw(ImDrawList* draw_list, ImVec2& draw_offset);
+        bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars);
+        void virtual draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset);
 
-        std::vector<DrawableCharPtr> m_draw_chars;
-        std::vector<WrapCharPtr> m_wrap_chars;
 
-        // Potential customizations
+        // Font infos
         Fonts::FontRequestInfo m_font_request;
         Colors::color m_font_color = Colors::BLACK;
         Colors::color m_bg_color = Colors::TRANSPARENT;
         bool m_font_underline = false;
         float m_line_space = 1.5f;
 
-        ImVec2 m_dimensions;
+        bool m_widget_dirty = true;
+        WrapAlgorithm m_wrapper;
+
+        SizeProperties m_size_props;
         ImVec2 m_position;
-        float m_scale = 1.f;
-        float m_window_width = 1.f;
 
         // Internal
         SafeString m_safe_string;
@@ -67,13 +76,13 @@ namespace RichText {
         AbstractBlock(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_BLOCK;
         }
-        void setWidth(float width) override;
 
-        float m_x_offset = 0.f;
-        bool m_widget_dirty = true;
-        WrapAlgorithm m_wrapper;
+        void buildWidget() override;
+        void draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset) override;
+
+        void setWidth(float width) override;
     };
-    
+
     struct AbstractSpan : public AbstractWidget {
         AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_SPAN;

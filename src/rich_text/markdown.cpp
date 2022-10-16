@@ -227,12 +227,66 @@ namespace RichText {
         }
     }
     void MarkdownToWidgets::BLOCK_UL(const MD_BLOCK_UL_DETAIL* detail, bool enter) {
+        if (enter) {
+            auto ul_list = std::make_shared<ULWidget>(m_ui_state);
+            if (m_current_ptr->m_type == T_BLOCK_UL) {
+                ul_list->list_level = std::static_pointer_cast<ULWidget>(m_current_ptr)->list_level + 1;
+            }
+            else if (m_current_ptr->m_type == T_BLOCK_OL) {
+                ul_list->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level + 1;
+            }
+            ul_list->is_tight = (bool)detail->is_tight;
+            ul_list->mark = detail->mark;
+            ul_list->m_size_props.h_paddings.x = m_config.x_level_offset * ul_list->list_level;
+            set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ul_list));
+            auto ptr = std::static_pointer_cast<AbstractWidget>(ul_list);
+            push_to_tree(ptr);
+        }
+        else {
+            tree_up();
+        }
     }
 
     void MarkdownToWidgets::BLOCK_OL(const MD_BLOCK_OL_DETAIL* detail, bool enter) {
+        if (enter) {
+            auto ol_list = std::make_shared<OLWidget>(m_ui_state);
+            if (m_current_ptr->m_type == T_BLOCK_UL) {
+                ol_list->list_level = std::static_pointer_cast<ULWidget>(m_current_ptr)->list_level + 1;
+            }
+            else if (m_current_ptr->m_type == T_BLOCK_OL) {
+                ol_list->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level + 1;
+            }
+            ol_list->is_tight = (bool)detail->is_tight;
+            ol_list->start = detail->start;
+            ol_list->m_size_props.h_paddings.x = m_config.x_level_offset * ol_list->list_level;
+            set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ol_list));
+            auto ptr = std::static_pointer_cast<AbstractWidget>(ol_list);
+            push_to_tree(ptr);
+        }
+        else {
+            tree_up();
+        }
     }
 
-    void MarkdownToWidgets::BLOCK_LI(const MD_BLOCK_LI_DETAIL*, bool enter) {
+    void MarkdownToWidgets::BLOCK_LI(const MD_BLOCK_LI_DETAIL* detail, bool enter) {
+        if (enter) {
+            auto list_el = std::make_shared<LIWidget>(m_ui_state);
+            list_el->is_task = detail->is_task;
+            list_el->task_mark = detail->task_mark;
+            if (m_current_ptr->m_type == T_BLOCK_UL) {
+                list_el->list_level = std::static_pointer_cast<ULWidget>(m_current_ptr)->list_level;
+            }
+            else if (m_current_ptr->m_type == T_BLOCK_OL) {
+                list_el->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level;
+            }
+            list_el->m_size_props.h_paddings.x = m_config.x_level_offset * list_el->list_level;
+            set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(list_el));
+            auto ptr = std::static_pointer_cast<AbstractWidget>(list_el);
+            push_to_tree(ptr);
+        }
+        else {
+            tree_up();
+        }
     }
 
     void MarkdownToWidgets::BLOCK_HR(bool enter) {
@@ -260,6 +314,7 @@ namespace RichText {
                 quote->quote_level = parent->quote_level + 1;
                 set_font_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(quote));
             }
+            quote->m_size_props.h_paddings.x = m_config.x_level_offset * quote->quote_level;
             auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
             push_to_tree(ptr);
         }

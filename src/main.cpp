@@ -20,6 +20,7 @@ int main() {
     Tempo::Config config;
     config.app_name = "TestApp";
     config.app_title = "Hello world";
+    config.poll_or_wait = Tempo::Config::WAIT;
     config.default_window_width = 1920;
     config.default_window_height = 1080;
 
