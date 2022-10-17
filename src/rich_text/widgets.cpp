@@ -75,7 +75,7 @@ namespace RichText {
                 ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries);
         }
 
-        current_y_pos += m_style.v_paddings.y;
+        cursor_y_pos += m_style.v_paddings.y;
         m_dimensions.x = m_window_width - x_offset;
         m_dimensions.y = cursor_y_pos - current_y_pos;
         current_y_pos += m_style.v_margins.y;
