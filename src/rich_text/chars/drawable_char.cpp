@@ -1,6 +1,6 @@
 #include "drawable_char.h"
 
 namespace RichText {
-    void NewLine::draw(ImDrawList*, ImVec2) {
+    void NewLine::draw(Draw::DrawList&, ImVec2) {
     }
 }

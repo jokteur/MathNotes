@@ -36,7 +36,7 @@ namespace RichText {
         }
         return true;
     }
-    void TextString::draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    void TextString::draw(Draw::DrawList&  draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         // TODO save this info somewhere
         // Find dimensions of span
         if (!m_draw_chars.empty()) {
@@ -55,14 +55,17 @@ namespace RichText {
             m_dimensions -= m_position;
         }
         if (isInsideRectY(m_position, boundaries)) {
-            // Doesn't work for multi-lines
+            // Draw all backgrounds
             if (m_bg_color != Colors::transparent) {
                 auto cursor_pos = ImGui::GetCursorScreenPos();
-                ImVec2 p_min = cursor_pos + m_position;
-                ImVec2 p_max = cursor_pos + m_position + m_dimensions;
-                draw_list->AddRectFilled(p_min, p_max, Colors::lightgray, 3.f);
+                int i = 0;
+                for(auto ptr : m_draw_chars) {
+                    ImVec2 p_min = cursor_pos + ptr->_calculated_position - ptr->offset;
+                    ImVec2 p_max = p_min + ImVec2(ptr->advance, ptr->ascent - ptr->descent);
+                    draw_list->AddRectFilled(p_min, p_max, m_bg_color, 0);
+                    i++;
+                }
             }
-
             // Draw all chars
             for(auto ptr : m_draw_chars) {
                 ptr->draw(draw_list, ImVec2(x_offset, cursor_y_pos));

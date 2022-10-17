@@ -1,6 +1,8 @@
 #include "rich_text_widget.h"
 #include "chars/drawable_char.h"
 
+#include "ui/draw_commands.h"
+
 namespace RichText {
     RichTextWidget::RichTextWidget(std::shared_ptr<UIState> ui_state) : Drawable(ui_state) {
         unsigned flags = 0;
@@ -28,7 +30,14 @@ namespace RichText {
             Rect boundaries;
             boundaries.h = vMax.y - vMin.y;
             boundaries.w = width;
-            m_tree[0]->draw(ImGui::GetWindowDrawList(), cursor_pos_y, 0.f, boundaries);
+            m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
+
+            // Background, ForGround
+            m_draw_list.Split(2);
+            m_draw_list.SetCurrentChannel(1);
+            // m_draw_list.SetDefaultChannel(0);
+            m_tree[0]->draw(m_draw_list, cursor_pos_y, 0.f, boundaries);
+            m_draw_list.Merge();
         }
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();

@@ -6,6 +6,7 @@
 #include "wrapper.h"
 #include "ui/drawable.h"
 #include "ui/fonts.h"
+#include "ui/draw_commands.h"
 #include "ui/colors.h"
 #include "types.h"
 
@@ -44,7 +45,7 @@ namespace RichText {
         // For display, start not implemented yet
         // Returns false if not succesfully build chars
         bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars);
-        void virtual draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
 
         // Font infos
@@ -88,7 +89,7 @@ namespace RichText {
         }
 
         void buildWidget() override;
-        void draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
+        void draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
 
         void setWidth(float width) override;
     };

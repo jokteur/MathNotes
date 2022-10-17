@@ -7,7 +7,7 @@ namespace RichText {
     bool AbstractWidget::buildAndAddChars(std::vector<WrapCharPtr>&) { 
        return true;
     }
-    void AbstractWidget::draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    void AbstractWidget::draw(Draw::DrawList&  draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         m_position.x = x_offset;
         m_position.y = cursor_y_pos;
         for (auto ptr : m_childrens) {
@@ -23,7 +23,7 @@ namespace RichText {
     }
 
     // AbstractBlock
-    void AbstractBlock::draw(ImDrawList* draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    void AbstractBlock::draw(Draw::DrawList&  draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         x_offset += m_h_paddings.x;
         m_position.x = x_offset;
         m_position.y = cursor_y_pos;
@@ -68,10 +68,11 @@ namespace RichText {
         }
         // Draw background
         if (m_bg_color != Colors::transparent) {
-            // auto cursor_pos = ImGui::GetCursorScreenPos();
-            // ImVec2 p_min = cursor_pos + m_position;
-            // ImVec2 p_max = cursor_pos + m_position + m_dimensions;
-            // background->AddRectFilled(p_min, p_max, m_bg_color, 3.f);
+            draw_list.SetCurrentChannel(0);
+            auto cursor_pos = ImGui::GetCursorScreenPos();
+            ImVec2 p_min = cursor_pos + m_position;
+            ImVec2 p_max = cursor_pos + m_position + m_dimensions;
+            draw_list->AddRectFilled(p_min, p_max, m_bg_color, 3.f);
         }
     }
     void AbstractBlock::buildWidget() {

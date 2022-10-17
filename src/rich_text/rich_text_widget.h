@@ -5,6 +5,7 @@
 #include "markdown.h"
 #include "wrapper.h"
 #include "ui/drawable.h"
+#include "ui/draw_commands.h"
 
 namespace RichText {
     class RichTextWidget : public Drawable {
@@ -16,6 +17,7 @@ namespace RichText {
         SafeString m_safe_string = nullptr;
 
         std::vector<AbstractWidgetPtr> m_tree;
+        Draw::DrawList m_draw_list;
 
     public:
         RichTextWidget(std::shared_ptr<UIState> ui_state);

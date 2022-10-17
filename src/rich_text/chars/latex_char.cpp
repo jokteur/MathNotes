@@ -15,7 +15,7 @@ namespace RichText {
     }
 
 
-    void LatexChar::draw(ImDrawList* draw_list, ImVec2 draw_offset) {
+    void LatexChar::draw(Draw::DrawList& draw_list, ImVec2 draw_offset) {
         auto cursor_pos = ImGui::GetCursorScreenPos();
         auto final_pos = cursor_pos + _calculated_position + draw_offset;
         final_pos.x = IM_ROUND(final_pos.x);
