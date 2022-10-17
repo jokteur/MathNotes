@@ -8,8 +8,12 @@ namespace RichText {
     }
     bool HeaderWidget::build_chars() {   
         using namespace Fonts;
+        FontRequestInfo font_request;
+        font_request.font_styling = m_style.font_styling;
+        font_request.size_wish = m_style.font_size;
+
         FontInfoOut font_out;
-        m_ui_state->font_manager.requestFont(m_font_request, font_out);
+        m_ui_state->font_manager.requestFont(font_request, font_out);
         float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
 
         auto font = Tempo::GetImFont(font_out.font_id);
@@ -17,11 +21,11 @@ namespace RichText {
             return false;
         }
         for (int i = 0;i < hlevel;i++) {
-            auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)'#', font_size, m_font_color, false);
+            auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)'#', font_size, m_style.font_color, false);
             m_draw_chars.push_back(ptr);
             m_wrap_chars.push_back(ptr);
         }
-        auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)' ', font_size, m_font_color, false);
+        auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)' ', font_size, m_style.font_color, false);
         m_draw_chars.push_back(ptr);
         m_wrap_chars.push_back(ptr);
         return true;

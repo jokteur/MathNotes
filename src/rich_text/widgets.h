@@ -1,29 +1,23 @@
 #pragma once
 
 #include <tempo.h>
-#include "widgets_enum.h"
-#include "chars/drawable_char.h"
-#include "wrapper.h"
+
+#include "types.h"
 #include "ui/drawable.h"
 #include "ui/fonts.h"
 #include "ui/draw_commands.h"
 #include "ui/colors.h"
-#include "types.h"
+
+#include "widgets_enum.h"
+#include "markdown_config.h"
+#include "wrapper.h"
+#include "chars/drawable_char.h"
 
 namespace RichText {
     using SafeString = std::shared_ptr<std::string>;
 
     struct AbstractWidget;
     using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>; // replace with unique_ptr?
-
-    struct SizeProperties {
-        ImVec2 dimensions;
-        ImVec2 position;
-        ImVec2 h_paddings;
-        ImVec2 v_paddings;
-        float scale = 1.f;
-        float window_width = 1.f;
-    };
 
     struct AbstractWidget : public Drawable {
         protected:
@@ -47,22 +41,14 @@ namespace RichText {
         bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
-
-        // Font infos
-        Fonts::FontRequestInfo m_font_request;
-        Colors::color m_font_color = Colors::black;
-        Colors::color m_bg_color = Colors::transparent;
-        bool m_font_underline = false;
-        float m_line_space = 1.5f;
+        Style m_style;
 
         bool m_widget_dirty = true;
         WrapAlgorithm m_wrapper;
 
-        // Vector infos
+        // Widget position and size
         ImVec2 m_position;
         ImVec2 m_dimensions;
-        ImVec2 m_h_paddings;
-        ImVec2 m_v_paddings;
         float m_scale = 1.f;
         float m_window_width = 1.f;
 

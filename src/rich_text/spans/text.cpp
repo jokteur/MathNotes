@@ -10,8 +10,12 @@ namespace RichText {
 
     bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars) {
         using namespace Fonts;
+        FontRequestInfo font_request;
+        font_request.font_styling = m_style.font_styling;
+        font_request.size_wish = m_style.font_size;
+
         FontInfoOut font_out;
-        m_ui_state->font_manager.requestFont(m_font_request, font_out);
+        m_ui_state->font_manager.requestFont(font_request, font_out);
         auto font = Tempo::GetImFont(font_out.font_id);
 
         if (m_safe_string == nullptr || font->im_font == nullptr) {
@@ -29,7 +33,7 @@ namespace RichText {
             bool force_breakable = false;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;
-            auto char_ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, m_font_color, force_breakable);
+            auto char_ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, m_style.font_color, force_breakable);
             // m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
             m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
             wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
@@ -54,15 +58,18 @@ namespace RichText {
             );
             m_dimensions -= m_position;
         }
+        // We do not update cursor_y_pos in text span (taken care of parent block)
         if (isInsideRectY(m_position, boundaries)) {
             // Draw all backgrounds
-            if (m_bg_color != Colors::transparent) {
+            if (m_style.bg_color != Colors::transparent) {
                 auto cursor_pos = ImGui::GetCursorScreenPos();
                 int i = 0;
                 for(auto ptr : m_draw_chars) {
                     ImVec2 p_min = cursor_pos + ptr->_calculated_position - ptr->offset;
+                    p_min.x += x_offset;
+                    p_min.y += cursor_y_pos;
                     ImVec2 p_max = p_min + ImVec2(ptr->advance, ptr->ascent - ptr->descent);
-                    draw_list->AddRectFilled(p_min, p_max, m_bg_color, 0);
+                    draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 0);
                     i++;
                 }
             }

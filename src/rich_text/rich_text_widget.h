@@ -18,6 +18,7 @@ namespace RichText {
 
         std::vector<AbstractWidgetPtr> m_tree;
         Draw::DrawList m_draw_list;
+        float m_y_scroll = 0.f;
 
     public:
         RichTextWidget(std::shared_ptr<UIState> ui_state);

@@ -26,19 +26,24 @@ namespace RichText {
         auto mouse_pos = ImGui::GetMousePos();
 
         if (!m_tree.empty()) {
-            float cursor_pos_y = 0.f;
             Rect boundaries;
+            float y_cursor = m_y_scroll;
             boundaries.h = vMax.y - vMin.y;
             boundaries.w = width;
             m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
 
-            // Background, ForGround
+            // Background, ForeGround
             m_draw_list.Split(2);
             m_draw_list.SetCurrentChannel(1);
-            // m_draw_list.SetDefaultChannel(0);
-            m_tree[0]->draw(m_draw_list, cursor_pos_y, 0.f, boundaries);
+            m_tree[0]->draw(m_draw_list, y_cursor, 0.f, boundaries);
             m_draw_list.Merge();
         }
+        if (isInsideRect(mouse_pos, Rect{vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y})) {
+            m_y_scroll += ImGui::GetIO().MouseWheel * 40;
+            if (m_y_scroll > 0.f)
+                m_y_scroll = 0.f;
+        }
+
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
         ImGui::PopStyleColor();

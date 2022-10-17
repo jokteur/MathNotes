@@ -59,7 +59,7 @@ namespace RichText {
         }
         void set_href(bool enter, const MD_ATTRIBUTE& src);
         void tree_up();
-        void set_font_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr);
+        void set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr);
 
         void make_quote(MD_TEXTTYPE type);
         void make_list_el(MD_TEXTTYPE type);
