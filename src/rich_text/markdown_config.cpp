@@ -41,19 +41,18 @@ namespace RichText {
         // Code
         styles[CODE].font_styling = Fonts::FontStyling{Fonts::F_MONOSPACE, Fonts::W_REGULAR, Fonts::S_NORMAL};
         styles[CODE].line_space = 1.4f;
-        styles[CODE].h_margins = ImVec2(45.f, 0.f);
+        styles[CODE].h_margins = ImVec2(15.f, 0.f);
         styles[CODE].v_margins = ImVec2(5.f, 5.f);
         styles[CODE].h_paddings = ImVec2(15.f, 5.f);
         styles[CODE].v_paddings = ImVec2(10.f, 10.f);
-        styles[CODE].font_color = Colors::gray;
-        styles[CODE].bg_color = Colors::silver;
+        styles[CODE].font_color = Colors::dimgray;
+        styles[CODE].bg_color = Colors::gainsboro;
 
         // Quote
         styles[QUOTE].line_space = 1.4f;
         styles[QUOTE].h_margins = ImVec2(15.f, 0.f);
         styles[QUOTE].v_margins = ImVec2(15.f, 3.f);
-        styles[QUOTE].font_color = Colors::gray;
-        styles[QUOTE].bg_color = Colors::silver;
+        styles[QUOTE].font_color = Colors::dimgray;
 
         // href
         styles[HREF].font_underline = true;

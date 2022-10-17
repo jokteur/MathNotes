@@ -61,13 +61,6 @@ namespace RichText {
         void tree_up();
         void set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr);
 
-        void make_quote(MD_TEXTTYPE type);
-        void make_list_el(MD_TEXTTYPE type);
-        void make_hr(MD_TEXTTYPE type);
-        void make_code(MD_TEXTTYPE type);
-        void make_p(MD_TEXTTYPE type);
-        void make_table(MD_TEXTTYPE type);
-
         void BLOCK_DOC(bool);
         void BLOCK_QUOTE(bool);
         void BLOCK_UL(const MD_BLOCK_UL_DETAIL*, bool);

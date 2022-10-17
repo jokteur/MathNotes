@@ -34,7 +34,7 @@ namespace RichText {
         std::vector<AbstractWidgetPtr> m_childrens;
         AbstractWidgetPtr m_parent = nullptr;
 
-        void virtual buildWidget();
+        void virtual buildWidgetChars(float x_offset);
         
         // For display, start not implemented yet
         // Returns false if not succesfully build chars
@@ -74,7 +74,7 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
-        void buildWidget() override;
+        void buildWidgetChars(float x_offset) override;
         void draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
 
         void setWidth(float width) override;

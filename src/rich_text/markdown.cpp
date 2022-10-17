@@ -50,7 +50,7 @@ namespace RichText {
         m_md.flags = md_flags;
     }
     int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, const char* str_end) {
-        m_text_start_idx = (int)(str - m_text);
+         m_text_start_idx = (int)(str - m_text);
         m_text_end_idx = (int)(str_end - m_text);
 
         if (type == MD_TEXT_LATEXMATH) {
@@ -66,13 +66,25 @@ namespace RichText {
             using namespace Fonts;
             m_font.auto_scaling = true;
             auto span = std::make_shared<TextString>(m_ui_state);
-            // If parent is header, font inherints header properties
-            if (m_current_ptr->m_type == T_BLOCK_H) {
-                span->m_style.font_styling = m_current_ptr->m_style.font_styling;
+
+            // If parent is header, p or code, font inherints header properties
+            if (m_current_ptr->m_type == T_BLOCK_H || m_current_ptr->m_type == T_BLOCK_CODE || m_current_ptr->m_type == T_BLOCK_P) {
+                span->m_style.font_color = m_current_ptr->m_style.font_color;
+                span->m_style.font_size = m_current_ptr->m_style.font_size;
+                span->m_style.bg_color = m_current_ptr->m_style.bg_color;
+                span->m_style.font_underline = m_current_ptr->m_style.font_underline;
             }
 
             // Span properties
-            if (m_is_code) {
+            // span->m_style.font_color = m_color;
+            // span->m_style.bg_color = m_bg_color;
+
+            // Override set_font_info on the size
+            span->m_raw_text_begin = m_text_start_idx;
+            span->m_raw_text_end = m_text_end_idx;
+            span->m_safe_string = m_safe_text;
+
+            if (m_is_code && m_current_ptr->m_type != T_BLOCK_CODE) {
                 set_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractWidget>(span));
             }
             if (m_is_em) {
@@ -84,13 +96,6 @@ namespace RichText {
             if (m_is_underline) {
                 span->m_style.font_underline = true;
             }
-            span->m_style.font_color = m_color;
-            span->m_style.bg_color = m_bg_color;
-            // Override set_font_info on the size
-            span->m_style.font_size = m_config.styles[m_hlevel].font_size;
-            span->m_raw_text_begin = m_text_start_idx;
-            span->m_raw_text_end = m_text_end_idx;
-            span->m_safe_string = m_safe_text;
             auto ptr = std::static_pointer_cast<AbstractWidget>(span);
             push_to_tree(ptr);
             tree_up();
@@ -208,10 +213,6 @@ namespace RichText {
     void MarkdownToWidgets::set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr) {
         ptr->m_style = m_config.styles[type];
     }
-    void MarkdownToWidgets::make_p(MD_TEXTTYPE type) {
-        auto ptr = std::static_pointer_cast<HeaderWidget>(m_current_ptr);
-        set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ptr));
-    }
 
     void MarkdownToWidgets::BLOCK_DOC(bool enter) {
         if (enter) {
@@ -231,7 +232,7 @@ namespace RichText {
             }
             ul_list->is_tight = (bool)detail->is_tight;
             ul_list->mark = detail->mark;
-            ul_list->m_style.h_margins.x = m_config.x_level_offset * ul_list->list_level;
+            ul_list->m_style.h_margins.x = m_config.x_level_offset;
             set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ul_list));
             auto ptr = std::static_pointer_cast<AbstractWidget>(ul_list);
             push_to_tree(ptr);
@@ -252,7 +253,7 @@ namespace RichText {
             }
             ol_list->is_tight = (bool)detail->is_tight;
             ol_list->start = detail->start;
-            ol_list->m_style.h_margins.x = m_config.x_level_offset * ol_list->list_level;
+            ol_list->m_style.h_margins.x = m_config.x_level_offset;
             set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ol_list));
             auto ptr = std::static_pointer_cast<AbstractWidget>(ol_list);
             push_to_tree(ptr);
@@ -273,7 +274,7 @@ namespace RichText {
             else if (m_current_ptr->m_type == T_BLOCK_OL) {
                 list_el->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level;
             }
-            list_el->m_style.h_margins.x = m_config.x_level_offset * list_el->list_level;
+            list_el->m_style.h_margins.x = m_config.x_level_offset;
             set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(list_el));
             auto ptr = std::static_pointer_cast<AbstractWidget>(list_el);
             push_to_tree(ptr);
@@ -306,9 +307,9 @@ namespace RichText {
             if (m_current_ptr->m_type == T_BLOCK_QUOTE) {
                 auto parent = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
                 quote->quote_level = parent->quote_level + 1;
-                set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(quote));
             }
-            quote->m_style.h_margins.x = m_config.x_level_offset;
+            set_infos(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractWidget>(quote));
+            quote->m_style.h_margins.x += m_config.x_level_offset;
             auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
             push_to_tree(ptr);
         }
@@ -338,9 +339,12 @@ namespace RichText {
             auto p = std::make_shared<ParagraphWidget>(m_ui_state);
             auto ptr = std::static_pointer_cast<AbstractWidget>(p);
             set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(p));
+            if (m_current_ptr->m_type == T_BLOCK_H || m_current_ptr->m_type == T_BLOCK_CODE)
+                p->m_style = m_current_ptr->m_style; // Paragraph inherits style from parent
             push_to_tree(ptr);
         }
         else {
+            m_color = m_config.styles[MarkdownConfig::P].font_color;
             tree_up();
         }
     }
@@ -374,12 +378,6 @@ namespace RichText {
     }
     void MarkdownToWidgets::SPAN_CODE(bool enter) {
         m_is_code = enter;
-        if (enter) {
-            m_bg_color = m_config.styles[MarkdownConfig::CODE].bg_color;
-        }
-        else {
-            m_bg_color = m_config.styles[MarkdownConfig::P].bg_color;
-        }
     }
     void MarkdownToWidgets::SPAN_LATEXMATH(bool enter) {
         m_is_latex = enter;

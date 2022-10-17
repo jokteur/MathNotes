@@ -28,7 +28,7 @@ namespace RichText {
 
         cursor_y_pos += m_style.v_margins.y;
     }
-    void AbstractWidget::buildWidget() {}
+    void AbstractWidget::buildWidgetChars(float) {}
     void AbstractWidget::setWidth(float width) {
         m_window_width = width;
         for (auto ptr : m_childrens) {
@@ -49,8 +49,8 @@ namespace RichText {
         x_offset += m_style.h_paddings.x;
         cursor_y_pos += m_style.v_paddings.x;
 
-        // buildWidget uses m_position, so we must call this function after setting m_position
-        buildWidget();
+        // buildWidgetChars uses m_position, so we must call this function after setting m_position
+        buildWidgetChars(x_offset);
 
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
@@ -96,7 +96,7 @@ namespace RichText {
             draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
         }
     }
-    void AbstractBlock::buildWidget() {
+    void AbstractBlock::buildWidgetChars(float x_offset) {
         if (m_widget_dirty) {
             m_wrap_chars.clear();
             m_draw_chars.clear();
@@ -117,7 +117,7 @@ namespace RichText {
                 }
             }
             m_wrapper.clear();
-            float internal_size = m_window_width - m_position.x;
+            float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
             m_wrapper.setWidth(internal_size);
             m_wrapper.setLineSpace(m_style.line_space);
             m_wrapper.setString(m_wrap_chars);
