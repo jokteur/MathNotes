@@ -4,29 +4,36 @@
 #include "ui/colors.h"
 
 namespace RichText {
+#define NEW_STYLE_ELEMENT(name_, type_, default_) \
+    type_ name_ = (default_); \
+    bool isset_##name_ = false; \
+    void set_##name_(type_ _##name_) { name_ = _##name_; isset_##name_ = true; }
+#define COMMA ,
+
     struct Style {
-        float font_size = 16.f;
-        Fonts::FontStyling font_styling = Fonts::FontStyling{Fonts::F_REGULAR, Fonts::W_REGULAR, Fonts::S_NORMAL};
-        bool font_underline = false;
-        Colors::color font_color = Colors::black;
+        NEW_STYLE_ELEMENT(font_size, float, 16.f);
+        NEW_STYLE_ELEMENT(font_styling, Fonts::FontStyling, Fonts::FontStyling{Fonts::F_REGULAR COMMA Fonts::W_REGULAR COMMA Fonts::S_NORMAL});
+        NEW_STYLE_ELEMENT(font_underline, bool, false);
+        NEW_STYLE_ELEMENT(font_strikethrough, bool, false);
+        NEW_STYLE_ELEMENT(font_color, Colors::color, Colors::black);
 
-        float line_space = 1.4f;
-        ImVec2 h_margins;
-        ImVec2 v_margins;
-        ImVec2 h_paddings;
-        ImVec2 v_paddings;
+        NEW_STYLE_ELEMENT(line_space, float, 1.4f);
+        NEW_STYLE_ELEMENT(h_margins, ImVec2, ImVec2(0.f COMMA 0.f));
+        NEW_STYLE_ELEMENT(v_margins, ImVec2, ImVec2(0.f COMMA 0.f));
+        NEW_STYLE_ELEMENT(h_paddings, ImVec2, ImVec2(0.f COMMA 0.f));
+        NEW_STYLE_ELEMENT(v_paddings, ImVec2, ImVec2(0.f COMMA 0.f));
 
-        Colors::color bg_color = Colors::transparent;
+        NEW_STYLE_ELEMENT(bg_color, Colors::color, Colors::transparent);
     };
     struct MarkdownConfig {
         MarkdownConfig();
 
         // Everything is specified in pixel (which are scaled to zoom level and monitor scaling)
-        enum type { P, H1, H2, H3, H4, H5, H6, CODE, QUOTE, HREF };
+        enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, HREF };
         // In order: normal font size, h1, h2, h3, h4, h5, h6
         // Array is compatible with hlevel in md, e.g. font_sizes[4] gives
         // h4 font size
-        Style styles[10];
+        Style styles[11];
 
         float x_level_offset = 15.f;
 

@@ -1,5 +1,9 @@
 # Set C++ 17 compiler flags
-cmake_minimum_required(VERSION 3.21)
+if(MSVC)
+    cmake_minimum_required(VERSION 3.21)
+else()
+    cmake_minimum_required(VERSION 3.17)
+endif()
 set(CMAKE_CXX_STANDARD 17)
 
 # Set project name
