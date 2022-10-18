@@ -18,6 +18,8 @@ namespace RichText {
         NEW_STYLE_ELEMENT(font_color, Colors::color, Colors::black);
         NEW_STYLE_ELEMENT(font_bg_color, Colors::color, Colors::transparent);
 
+        NEW_STYLE_ELEMENT(special_char_color, Colors::color, Colors::gray);
+
         NEW_STYLE_ELEMENT(line_space, float, 1.4f);
         NEW_STYLE_ELEMENT(h_margins, ImVec2, ImVec2(0.f COMMA 0.f));
         NEW_STYLE_ELEMENT(v_margins, ImVec2, ImVec2(0.f COMMA 0.f));
