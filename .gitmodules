@@ -9,7 +9,7 @@
 	url = https://github.com/doctest/doctest.git
 [submodule "external/md4c"]
 	path = external/md4c
-	url = https://github.com/mity/md4c.git
+	url = https://github.com/jokteur/md4c.git
 [submodule "external/microtex2/MicroTeX"]
 	path = external/microtex/microtex
 	url = https://github.com/jokteur/MicroTeX
