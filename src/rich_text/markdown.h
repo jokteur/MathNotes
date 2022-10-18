@@ -45,7 +45,7 @@ namespace RichText {
         Colors::color m_bg_color = Colors::transparent;
         unsigned m_hlevel = 0;//0 - no heading
 
-        int text(MD_TEXTTYPE type, const char* str, const char* str_end);
+        int text(MD_TEXTTYPE type, const char* str, int size, int text_pos);
         int block(MD_BLOCKTYPE type, void* detail, bool enter);
         int span(MD_SPANTYPE type, void* detail, bool enter);
 

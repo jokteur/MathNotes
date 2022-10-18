@@ -81,6 +81,7 @@ namespace RichText {
     };
 
     struct AbstractSpan : public AbstractWidget {
+        std::string m_processed_text;
         AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_SPAN;
         }

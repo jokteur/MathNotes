@@ -23,10 +23,10 @@ namespace RichText {
         }
 
         float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
-        for (int i = m_raw_text_begin;i < m_raw_text_end;i++) {
-            unsigned int c = (unsigned int)(*m_safe_string)[i];
+        for (int i = 0;i < m_processed_text.size();i++) {
+            unsigned int c = (unsigned int)m_processed_text[i];
             if (c >= 0x80) {
-                ImTextCharFromUtf8(&c, &(*m_safe_string)[i], &(*m_safe_string)[m_safe_string->size() - 1]);
+                ImTextCharFromUtf8(&c, &(m_processed_text[i]), &(m_processed_text[m_processed_text.size() - 1]));
                 if (c == 0) // Malformed UTF-8?
                     break;
             }

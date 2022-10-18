@@ -28,8 +28,8 @@ namespace RichText {
         m_md.leave_span = [](MD_SPANTYPE t, void* detail, void* u) {
             return ((MarkdownToWidgets*)u)->span(t, detail, false);
         };
-        m_md.text = [](MD_TEXTTYPE t, const MD_CHAR* text, MD_SIZE size, void* u) {
-            return ((MarkdownToWidgets*)u)->text(t, text, text + size);
+        m_md.text = [](MD_TEXTTYPE t, const MD_CHAR* text, MD_SIZE size, MD_SIZE text_pos, void* u) {
+            return ((MarkdownToWidgets*)u)->text(t, text, size, text_pos);
         };
         m_md.debug_log = nullptr;
         m_md.syntax = nullptr;
@@ -49,9 +49,9 @@ namespace RichText {
     void MarkdownToWidgets::setFlags(unsigned md_flags) {
         m_md.flags = md_flags;
     }
-    int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, const char* str_end) {
-         m_text_start_idx = (int)(str - m_text);
-        m_text_end_idx = (int)(str_end - m_text);
+    int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, int size, int text_pos) {
+        m_text_start_idx = text_pos;
+        m_text_end_idx = m_text_start_idx + size;
 
         if (type == MD_TEXT_LATEXMATH) {
 
@@ -66,12 +66,13 @@ namespace RichText {
             using namespace Fonts;
             m_font.auto_scaling = true;
             auto span = std::make_shared<TextString>(m_ui_state);
+            span->m_processed_text.append(str, size);
 
             // If parent is header, p or code, font inherints header properties
             if (m_current_ptr->m_type == T_BLOCK_H || m_current_ptr->m_type == T_BLOCK_CODE || m_current_ptr->m_type == T_BLOCK_P) {
                 span->m_style.font_color = m_current_ptr->m_style.font_color;
                 span->m_style.font_size = m_current_ptr->m_style.font_size;
-                span->m_style.bg_color = m_current_ptr->m_style.bg_color;
+                // span->m_style.bg_color = m_current_ptr->m_style.bg_color;
                 span->m_style.font_underline = m_current_ptr->m_style.font_underline;
             }
 
