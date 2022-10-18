@@ -68,25 +68,15 @@ namespace RichText {
             auto span = std::make_shared<TextString>(m_ui_state);
             span->m_processed_text.append(str, size);
 
-            // If parent is header, p or code, font inherints header properties
-            if (m_current_ptr->m_type == T_BLOCK_H || m_current_ptr->m_type == T_BLOCK_CODE || m_current_ptr->m_type == T_BLOCK_P) {
-                span->m_style.font_color = m_current_ptr->m_style.font_color;
-                span->m_style.font_size = m_current_ptr->m_style.font_size;
-                // span->m_style.bg_color = m_current_ptr->m_style.bg_color;
-                span->m_style.font_underline = m_current_ptr->m_style.font_underline;
-            }
-
-            // Span properties
-            // span->m_style.font_color = m_color;
-            // span->m_style.bg_color = m_bg_color;
-
             // Override set_font_info on the size
             span->m_raw_text_begin = m_text_start_idx;
             span->m_raw_text_end = m_text_end_idx;
             span->m_safe_string = m_safe_text;
 
+            set_style(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(span));
+
             if (m_is_code && m_current_ptr->m_type != T_BLOCK_CODE) {
-                set_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractWidget>(span));
+                set_style(MarkdownConfig::INLINE_CODE, std::static_pointer_cast<AbstractWidget>(span));
             }
             if (m_is_em) {
                 MarkdownConfig::make_em(span->m_style.font_styling);
@@ -211,8 +201,23 @@ namespace RichText {
             m_current_ptr = m_current_ptr->m_parent;
         }
     }
-    void MarkdownToWidgets::set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr) {
-        ptr->m_style = m_config.styles[type];
+    void MarkdownToWidgets::set_style(MarkdownConfig::type type, AbstractWidgetPtr ptr) {
+        auto& style = m_config.styles[type];
+        ptr->m_style = style;
+        // Inherit potential properties from parents
+#define INHERIT_PROPERTY(name_) \
+    if (!style.isset_##name_) { ptr->m_style.##name_ = m_current_ptr->m_style.##name_;}
+        INHERIT_PROPERTY(font_size);
+        INHERIT_PROPERTY(font_styling);
+        INHERIT_PROPERTY(font_color);
+        INHERIT_PROPERTY(font_underline);
+        INHERIT_PROPERTY(font_strikethrough);
+        INHERIT_PROPERTY(line_space);
+        INHERIT_PROPERTY(h_margins);
+        INHERIT_PROPERTY(v_margins);
+        INHERIT_PROPERTY(h_paddings);
+        INHERIT_PROPERTY(v_paddings);
+        INHERIT_PROPERTY(bg_color);
     }
 
     void MarkdownToWidgets::BLOCK_DOC(bool enter) {
@@ -234,7 +239,7 @@ namespace RichText {
             ul_list->is_tight = (bool)detail->is_tight;
             ul_list->mark = detail->mark;
             ul_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ul_list));
+            set_style(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ul_list));
             auto ptr = std::static_pointer_cast<AbstractWidget>(ul_list);
             push_to_tree(ptr);
         }
@@ -255,7 +260,7 @@ namespace RichText {
             ol_list->is_tight = (bool)detail->is_tight;
             ol_list->start = detail->start;
             ol_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ol_list));
+            set_style(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ol_list));
             auto ptr = std::static_pointer_cast<AbstractWidget>(ol_list);
             push_to_tree(ptr);
         }
@@ -276,7 +281,7 @@ namespace RichText {
                 list_el->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level;
             }
             list_el->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(list_el));
+            set_style(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(list_el));
             auto ptr = std::static_pointer_cast<AbstractWidget>(list_el);
             push_to_tree(ptr);
         }
@@ -293,7 +298,7 @@ namespace RichText {
             auto header = std::make_shared<HeaderWidget>(m_ui_state);
             m_hlevel = detail->level;
             header->hlevel = detail->level;
-            set_infos((MarkdownConfig::type)m_hlevel, std::static_pointer_cast<AbstractWidget>(header));
+            set_style((MarkdownConfig::type)m_hlevel, std::static_pointer_cast<AbstractWidget>(header));
             auto ptr = std::static_pointer_cast<AbstractWidget>(header);
             push_to_tree(ptr);
         }
@@ -309,7 +314,7 @@ namespace RichText {
                 auto parent = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
                 quote->quote_level = parent->quote_level + 1;
             }
-            set_infos(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractWidget>(quote));
+            set_style(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractWidget>(quote));
             quote->m_style.h_margins.x += m_config.x_level_offset;
             auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
             push_to_tree(ptr);
@@ -325,7 +330,7 @@ namespace RichText {
             auto code = std::make_shared<CodeWidget>(m_ui_state);
             auto ptr = std::static_pointer_cast<AbstractWidget>(code);
             push_to_tree(ptr);
-            set_infos(MarkdownConfig::CODE, ptr);
+            set_style(MarkdownConfig::CODE, ptr);
         }
         else {
             tree_up();
@@ -339,9 +344,7 @@ namespace RichText {
         if (enter) {
             auto p = std::make_shared<ParagraphWidget>(m_ui_state);
             auto ptr = std::static_pointer_cast<AbstractWidget>(p);
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(p));
-            if (m_current_ptr->m_type == T_BLOCK_H || m_current_ptr->m_type == T_BLOCK_CODE)
-                p->m_style = m_current_ptr->m_style; // Paragraph inherits style from parent
+            set_style(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(p));
             push_to_tree(ptr);
         }
         else {

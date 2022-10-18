@@ -12,10 +12,11 @@ namespace RichText {
 
     struct Style {
         NEW_STYLE_ELEMENT(font_size, float, 16.f);
-        NEW_STYLE_ELEMENT(font_styling, Fonts::FontStyling, Fonts::FontStyling{Fonts::F_REGULAR COMMA Fonts::W_REGULAR COMMA Fonts::S_NORMAL});
+        NEW_STYLE_ELEMENT(font_styling, Fonts::FontStyling, Fonts::FontStyling{ Fonts::F_REGULAR COMMA Fonts::W_REGULAR COMMA Fonts::S_NORMAL });
         NEW_STYLE_ELEMENT(font_underline, bool, false);
         NEW_STYLE_ELEMENT(font_strikethrough, bool, false);
         NEW_STYLE_ELEMENT(font_color, Colors::color, Colors::black);
+        NEW_STYLE_ELEMENT(font_bg_color, Colors::color, Colors::transparent);
 
         NEW_STYLE_ELEMENT(line_space, float, 1.4f);
         NEW_STYLE_ELEMENT(h_margins, ImVec2, ImVec2(0.f COMMA 0.f));
