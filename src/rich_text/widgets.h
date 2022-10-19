@@ -43,22 +43,21 @@ namespace RichText {
         std::vector<AbstractWidgetPtr> m_childrens;
         AbstractWidgetPtr m_parent = nullptr;
 
-        void virtual buildWidgetChars(float x_offset);
+        // void virtual buildWidgetChars(float x_offset);
 
-        // For display, start not implemented yet
         // Returns false if not succesfully build chars
-        bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars);
+        bool virtual add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
-        inline void hk_draw_set_position(float& cursor_y_pos, float x_offset);
-        inline void hk_draw_set_dimensions(float& cursor_y_pos, float x_offset);
-        inline void hk_build_widget_before();
-        inline void hk_build_widget_after();
-        inline void hk_draw_before();
-        inline void hk_draw_children();
-        inline void hk_draw_after();
-        inline void hk_draw_background();
-        inline void hk_draw_show_boundaries();
+        // Draw hooks
+        inline float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
+        inline void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
+        inline void virtual hk_build_widget_before(float x_offset);
+        inline void virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        inline void virtual hk_build_widget_after(float x_offset);
+        inline void virtual hk_draw_after(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        inline void virtual hk_draw_background(Draw::DrawList& draw_list);
+        inline void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list);
 
         Style m_style;
 
@@ -91,8 +90,9 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
-        void buildWidgetChars(float x_offset) override;
-        void draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
+        inline void hk_build_widget_before(float x_offset) override;
+        void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
+        inline void hk_draw_background(Draw::DrawList& draw_list) override;
 
         void setWidth(float width) override;
     };
@@ -102,7 +102,7 @@ namespace RichText {
         AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_SPAN;
         }
-        bool buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars) override;
+        bool add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 
     struct RootNode : public AbstractWidget {

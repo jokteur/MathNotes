@@ -8,7 +8,7 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars) {
+    bool TextString::add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars) {
         using namespace Fonts;
         FontRequestInfo font_request;
         font_request.font_styling = m_style.font_styling;
@@ -40,9 +40,8 @@ namespace RichText {
         }
         return true;
     }
-    void TextString::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
-        // TODO save this info somewhere
-        // Find dimensions of span
+    float TextString::hk_set_position(float& cursor_y_pos, float& x_offset) {
+        // Dimension is also directly calculated here
         if (!m_draw_chars.empty()) {
             auto start_char = m_draw_chars.begin()->get();
             auto end_char = (m_draw_chars.end() - 1)->get();
@@ -58,7 +57,12 @@ namespace RichText {
             );
             m_dimensions -= m_position;
         }
-        buildWidgetChars(x_offset);
+        return cursor_y_pos;
+    }
+    void TextString::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
+        
+    }
+    void TextString::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         // We do not update cursor_y_pos in text span (taken care of parent block)
         if (isInsideRectY(m_position, boundaries)) {
             // Draw all backgrounds
