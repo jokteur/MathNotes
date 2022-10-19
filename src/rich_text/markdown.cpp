@@ -228,7 +228,7 @@ namespace RichText {
         ptr->m_style = style;
         // Inherit potential properties from parents
 #define INHERIT_PROPERTY(name_) \
-    if (!style.isset_##name_) { ptr->m_style.##name_ = m_current_ptr->m_style.##name_;}
+    if (!style.isset_##name_) { ptr->m_style.name_ = m_current_ptr->m_style.name_;}
         INHERIT_PROPERTY(font_size);
         INHERIT_PROPERTY(font_styling);
         INHERIT_PROPERTY(font_color);
