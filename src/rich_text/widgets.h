@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tempo.h>
+#include <unordered_set>
 
 #include "types.h"
 #include "ui/drawable.h"
@@ -17,14 +18,22 @@ namespace RichText {
     using SafeString = std::shared_ptr<std::string>;
 
     struct AbstractWidget;
-    using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>; // replace with unique_ptr?
+    using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>;
+
+    struct RawTextInfo {
+        int pre = 0;
+        int begin = 0;
+        int end = 0;
+        int post;
+    };
+    using RawTextPtr = std::shared_ptr<RawTextInfo>;
 
     struct AbstractWidget : public Drawable {
-        protected:
-            std::vector<DrawableCharPtr> m_draw_chars;
-            std::vector<WrapCharPtr> m_wrap_chars;
-            bool virtual build_chars() { return true; }
-        public:
+    protected:
+        std::vector<DrawableCharPtr> m_draw_chars;
+        std::vector<WrapCharPtr> m_wrap_chars;
+        bool virtual build_chars() { return true; }
+    public:
         Type m_type;
         Category m_category;
         AbstractWidget(UIState_ptr ui_state) : Drawable(ui_state) {}
@@ -35,11 +44,21 @@ namespace RichText {
         AbstractWidgetPtr m_parent = nullptr;
 
         void virtual buildWidgetChars(float x_offset);
-        
+
         // For display, start not implemented yet
         // Returns false if not succesfully build chars
         bool virtual buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+
+        inline void hk_draw_set_position(float& cursor_y_pos, float x_offset);
+        inline void hk_draw_set_dimensions(float& cursor_y_pos, float x_offset);
+        inline void hk_build_widget_before();
+        inline void hk_build_widget_after();
+        inline void hk_draw_before();
+        inline void hk_draw_children();
+        inline void hk_draw_after();
+        inline void hk_draw_background();
+        inline void hk_draw_show_boundaries();
 
         Style m_style;
 
@@ -55,11 +74,9 @@ namespace RichText {
         // Debug
         bool m_show_boundaries = false;
 
-
         // Internal
         SafeString m_safe_string;
-        int m_raw_text_begin = 0;
-        int m_raw_text_end = 0;
+        RawTextInfo m_raw_text_info;
 
         // Events
         void virtual onClick() {}
@@ -85,6 +102,7 @@ namespace RichText {
         AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_SPAN;
         }
+        bool buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 
     struct RootNode : public AbstractWidget {

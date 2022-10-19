@@ -58,6 +58,7 @@ namespace RichText {
             );
             m_dimensions -= m_position;
         }
+        buildWidgetChars(x_offset);
         // We do not update cursor_y_pos in text span (taken care of parent block)
         if (isInsideRectY(m_position, boundaries)) {
             // Draw all backgrounds

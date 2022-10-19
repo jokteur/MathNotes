@@ -6,6 +6,9 @@ namespace RichText {
         // Paragraph
         styles[P].set_line_space(1.4f);
         styles[P].set_v_margins(ImVec2(15.f, 5.f));
+        styles[P].set_h_margins(ImVec2(0.f, 0.f));
+        styles[P].set_v_paddings(ImVec2(0.f, 0.f));
+        styles[P].set_h_paddings(ImVec2(0.f, 0.f));
 
         // H1
         styles[H1].set_font_size(32.f);
@@ -39,7 +42,7 @@ namespace RichText {
         styles[H6].set_line_space(1.4f);
 
         // Code
-        styles[CODE].set_font_styling(Fonts::FontStyling{ Fonts::F_MONOSPACE, Fonts::W_REGULAR, Fonts::S_NORMAL });
+        styles[CODE].set_font_monospace(true);
         styles[CODE].set_h_margins(ImVec2(15.f, 0.f));
         styles[CODE].set_v_margins(ImVec2(5.f, 5.f));
         styles[CODE].set_h_paddings(ImVec2(15.f, 5.f));
@@ -48,20 +51,24 @@ namespace RichText {
         styles[CODE].set_bg_color(Colors::gainsboro);
 
         // Inline code
-        styles[INLINE_CODE].set_font_styling(Fonts::FontStyling{ Fonts::F_MONOSPACE, Fonts::W_REGULAR, Fonts::S_NORMAL });
+        styles[INLINE_CODE].set_font_monospace(true);
         styles[INLINE_CODE].set_font_color(Colors::dimgray);
         styles[INLINE_CODE].set_font_bg_color(Colors::gainsboro);
 
         // Quote
         styles[QUOTE].set_line_space(1.4f);
         styles[QUOTE].set_h_margins(ImVec2(15.f, 0.f));
-        styles[QUOTE].set_v_margins(ImVec2(15.f, 3.f));
-        styles[QUOTE].set_font_color(Colors::dimgray);
+        styles[QUOTE].set_v_margins(ImVec2(5.f, 3.f));
 
         // href
         styles[HREF].set_font_underline(true);
         styles[HREF].set_font_color(Colors::blue);
         styles[HREF].set_line_space(1.4f);
+
+        // em
+        styles[EM].set_font_em(true);
+        // strong
+        styles[STRONG].set_font_strong(true);
     }
     void MarkdownConfig::make_bold(FontStyling& styling) {
         if (styling.family == F_MONOSPACE) {
@@ -79,5 +86,8 @@ namespace RichText {
 
     void MarkdownConfig::make_em(FontStyling& styling) {
         styling.style = S_ITALIC;
+    }
+    void MarkdownConfig::make_monospace(FontStyling& styling) {
+        styling.family = F_MONOSPACE;
     }
 }

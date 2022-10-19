@@ -4,6 +4,7 @@ namespace RichText {
     enum Type {
         T_NONAME,
         T_ROOT,
+        // Blocks
         T_BLOCK_P,
         T_BLOCK_QUOTE,
         T_BLOCK_CODE,
@@ -19,6 +20,17 @@ namespace RichText {
         T_BLOCK_OL,
         T_BLOCK_HR,
         T_BLOCK_H,
+        // Spans
+        T_SPAN_EM,
+        T_SPAN_STRONG,
+        T_SPAN_A,
+        T_SPAN_WIKILINK,
+        T_SPAN_DEL,
+        T_SPAN_CODE,
+        T_SPAN_U,
+        T_SPAN_LATEX,
+        T_SPAN_DISPLAY,
+        // Text
         T_TEXT
     };
     enum Category {

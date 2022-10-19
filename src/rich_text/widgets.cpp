@@ -1,13 +1,14 @@
 #include "widgets.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
+#include "rich_text/chars/im_char.h"
 
 namespace RichText {
     // AbstractWidget
-    bool AbstractWidget::buildAndAddChars(std::vector<WrapCharPtr>&) { 
-       return true;
+    bool AbstractWidget::buildAndAddChars(std::vector<WrapCharPtr>&) {
+        return true;
     }
-    void AbstractWidget::draw(Draw::DrawList&  draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    void AbstractWidget::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         x_offset += m_style.h_margins.x;
         cursor_y_pos += m_style.v_margins.y;
 
@@ -37,7 +38,7 @@ namespace RichText {
     }
 
     // AbstractBlock
-    void AbstractBlock::draw(Draw::DrawList&  draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    void AbstractBlock::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         // Margins should added to offset, as they aren't counted in the block dimension
         x_offset += m_style.h_margins.x;
         cursor_y_pos += m_style.v_margins.y;
@@ -102,7 +103,7 @@ namespace RichText {
             m_draw_chars.clear();
 
             bool success = true;
-            
+
             bool ret = build_chars();
             if (!ret)
                 success = false;
@@ -116,6 +117,8 @@ namespace RichText {
                     success = false;
                 }
             }
+
+            // Wrapper
             m_wrapper.clear();
             float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
             m_wrapper.setWidth(internal_size);
@@ -124,6 +127,22 @@ namespace RichText {
             if (success)
                 m_widget_dirty = false;
         }
+    }
+    bool AbstractSpan::buildAndAddChars(std::vector<WrapCharPtr>& wrap_chars) {
+        if (m_widget_dirty) {
+            bool success = true;
+
+            for (auto ptr : m_childrens) {
+                auto res = ptr->buildAndAddChars(wrap_chars);
+                if (!res) {
+                    success = false;
+                }
+            }
+            if (success)
+                m_widget_dirty = false;
+            return success;
+        }
+        return true;
     }
     void AbstractBlock::setWidth(float width) {
         float internal_size = m_dimensions.x - m_style.h_paddings.x - m_style.h_paddings.y;

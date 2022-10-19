@@ -17,6 +17,9 @@ namespace RichText {
         NEW_STYLE_ELEMENT(font_strikethrough, bool, false);
         NEW_STYLE_ELEMENT(font_color, Colors::color, Colors::black);
         NEW_STYLE_ELEMENT(font_bg_color, Colors::color, Colors::transparent);
+        NEW_STYLE_ELEMENT(font_strong, bool, false);
+        NEW_STYLE_ELEMENT(font_em, bool, false);
+        NEW_STYLE_ELEMENT(font_monospace, bool, false);
 
         NEW_STYLE_ELEMENT(special_char_color, Colors::color, Colors::gray);
 
@@ -32,15 +35,16 @@ namespace RichText {
         MarkdownConfig();
 
         // Everything is specified in pixel (which are scaled to zoom level and monitor scaling)
-        enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, HREF };
+        enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, HREF, EM, STRONG };
         // In order: normal font size, h1, h2, h3, h4, h5, h6
         // Array is compatible with hlevel in md, e.g. font_sizes[4] gives
         // h4 font size
-        Style styles[11];
+        Style styles[13];
 
         float x_level_offset = 15.f;
 
         static void make_bold(Fonts::FontStyling& styling);
         static void make_em(Fonts::FontStyling& styling);
+        static void make_monospace(Fonts::FontStyling& styling);
     };
 }
