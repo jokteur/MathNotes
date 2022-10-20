@@ -44,22 +44,20 @@ namespace RichText {
         AbstractWidgetPtr m_parent = nullptr;
 
         // Returns false if not succesfully build chars
-        bool virtual add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars);
+        bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         // Draw hooks
         float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
         void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
-        void virtual hk_build_widget_before(float x_offset);
+        void virtual hk_build_widget(float x_offset);
         void virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
-        void virtual hk_build_widget_after(float x_offset);
-        void virtual hk_draw_after(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
         void virtual hk_draw_background(Draw::DrawList& draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list);
 
         Style m_style;
 
-        bool m_widget_dirty = true;
+        bool m_is_selected = true;
         WrapAlgorithm m_wrapper;
 
         // Widget position and size
@@ -88,7 +86,10 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
-        void hk_build_widget_before(float x_offset) override;
+        bool m_widget_dirty_before = true;
+        bool m_widget_dirty_after = true;
+
+        void hk_build_widget(float x_offset) override;
         void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
         void hk_draw_background(Draw::DrawList& draw_list) override;
 
@@ -100,7 +101,7 @@ namespace RichText {
         AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {
             m_category = C_SPAN;
         }
-        bool add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars) override;
+        bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 
     struct RootNode : public AbstractWidget {

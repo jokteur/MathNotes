@@ -8,7 +8,7 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars) {
+    bool TextString::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
         m_draw_chars.clear();
 
         using namespace Fonts;

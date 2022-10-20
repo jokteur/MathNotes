@@ -56,4 +56,33 @@ namespace RichText {
                 m_color, m_char);
         }
     }
+
+    bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style) {
+        using namespace Fonts;
+        FontRequestInfo font_request;
+        font_request.font_styling = style.font_styling;
+        font_request.size_wish = style.font_size;
+
+        FontInfoOut font_out;
+        ui_state->font_manager.requestFont(font_request, font_out);
+        float font_size = font_out.size * font_out.ratio * style.scale * Tempo::GetScaling();
+
+        auto font = Tempo::GetImFont(font_out.font_id);
+        if (font->im_font == nullptr) {
+            return false;
+        }
+
+        for (int i = start;i < end;i++) {
+            unsigned int c = (unsigned int)(*str)[i];
+            if (c >= 0x80) {
+                ImTextCharFromUtf8(&c, &((*str)[i]), &((*str)[str->size() - 1]));
+                if (c == 0) // Malformed UTF-8?
+                    break;
+            }
+            auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, style.special_char_color, false);
+            draw_chars.push_back(ptr);
+            wrap_chars.push_back(ptr);
+        }
+        return true;
+    }
 }

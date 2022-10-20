@@ -5,7 +5,7 @@
 
 namespace RichText {
     // AbstractWidget
-    bool AbstractWidget::add_chars_to_parent(std::vector<WrapCharPtr>&) {
+    bool AbstractWidget::add_chars(std::vector<WrapCharPtr>&) {
         return true;
     }
     float AbstractWidget::hk_set_position(float& cursor_y_pos, float& x_offset) {
@@ -27,19 +27,20 @@ namespace RichText {
 
         cursor_y_pos += m_style.v_margins.y;
     }
-    void AbstractWidget::hk_build_widget_before(float x_offset) {
-
-    }
-    void AbstractWidget::hk_build_widget_after(float x_offset) {
+    void AbstractWidget::hk_build_widget(float x_offset) {
 
     }
     void AbstractWidget::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);    
+
+        if (isInsideRectY(m_position, boundaries)) {
+            for (auto ptr : m_draw_chars) {
+                ptr->draw(draw_list, m_position + padding_before);
+            }
+        }
         for (auto& ptr : m_childrens) {
             ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries);
         }
-    }
-    void AbstractWidget::hk_draw_after(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
-
     }
     void AbstractWidget::hk_draw_background(Draw::DrawList& draw_list) {
 
@@ -55,10 +56,8 @@ namespace RichText {
 
     void AbstractWidget::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
-        hk_build_widget_before(x_offset);
+        hk_build_widget(x_offset);
         hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries);
-        hk_build_widget_after(x_offset);
-        hk_draw_after(draw_list, cursor_y_pos, x_offset, boundaries);
         hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
         hk_draw_background(draw_list);
         hk_draw_show_boundaries(draw_list);
@@ -106,50 +105,32 @@ namespace RichText {
             draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
         }
     }
-    void AbstractBlock::hk_build_widget_before(float x_offset) {
-        if (m_widget_dirty) {
+    void AbstractBlock::hk_build_widget(float x_offset) {
+        if (m_widget_dirty_before) {
             m_wrap_chars.clear();
             m_draw_chars.clear();
 
             bool success = true;
 
-            // bool ret = build_chars();
-            // if (!ret)
-            //     success = false;
-
             for (auto ptr : m_childrens) {
                 if (ptr->m_category != C_SPAN) {
                     break;
                 }
-                auto res = ptr->add_chars_to_parent(m_wrap_chars);
+                auto res = ptr->add_chars(m_wrap_chars);
                 if (!res) {
                     success = false;
                 }
             }
 
-            // Wrapper
             m_wrapper.clear();
             float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
             m_wrapper.setWidth(internal_size);
             m_wrapper.setLineSpace(m_style.line_space);
             m_wrapper.setString(m_wrap_chars);
+
             if (success)
-                m_widget_dirty = false;
+                m_widget_dirty_before = false;
         }
-    }
-
-    // Spans
-    bool AbstractSpan::add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars) {
-        bool success = true;
-
-        for (auto ptr : m_childrens) {
-            auto res = ptr->add_chars_to_parent(wrap_chars);
-            if (!res) {
-                success = false;
-            }
-        }
-        m_widget_dirty = success;
-        return success;
     }
     void AbstractBlock::setWidth(float width) {
         float internal_size = m_dimensions.x - m_style.h_paddings.x - m_style.h_paddings.y;
@@ -158,5 +139,32 @@ namespace RichText {
         for (auto ptr : m_childrens) {
             ptr->setWidth(width);
         }
+    }
+
+    // Spans
+    bool AbstractSpan::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
+        bool success = true;
+        m_draw_chars.clear();
+
+        if (m_is_selected) {
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.pre, m_raw_text_info.begin, m_style);
+            if (!res) {
+                success = false;
+            }
+        }
+
+        for (auto ptr : m_childrens) {
+            auto res = ptr->add_chars(wrap_chars);
+            if (!res) {
+                success = false;
+            }
+        }
+        if (m_is_selected) {
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.end, m_raw_text_info.post, m_style);
+            if (!res) {
+                success = false;
+            }
+        }
+        return success;
     }
 }

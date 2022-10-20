@@ -1,6 +1,7 @@
 #pragma once
 
 #include "drawable_char.h"
+#include "rich_text/widgets.h"
 
 namespace RichText {
     /**
@@ -19,5 +20,5 @@ namespace RichText {
         void draw(Draw::DrawList& draw_list, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
     };
 
-    std::vector<DrawableCharPtr> Utf8StrToImCharStr(const std::string& str, Tempo::SafeImFontPtr font, float font_size, ImU32 color);
+    bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style);
 }

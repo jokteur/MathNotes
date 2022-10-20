@@ -8,7 +8,7 @@ namespace RichText {
     struct TextString : public AbstractSpan {
         TextString(UIState_ptr ui_state);
 
-        bool add_chars_to_parent(std::vector<WrapCharPtr>& wrap_string) override;
+        bool add_chars(std::vector<WrapCharPtr>& wrap_string) override;
 
         inline float hk_set_position(float& cursor_y_pos, float& x_offset) override;
         inline void hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) override;

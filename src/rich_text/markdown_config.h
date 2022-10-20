@@ -30,6 +30,8 @@ namespace RichText {
         NEW_STYLE_ELEMENT(v_paddings, ImVec2, ImVec2(0.f COMMA 0.f));
 
         NEW_STYLE_ELEMENT(bg_color, Colors::color, Colors::transparent);
+
+        NEW_STYLE_ELEMENT(scale, float, 1.f);
     };
     struct MarkdownConfig {
         MarkdownConfig();
