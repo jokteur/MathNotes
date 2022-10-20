@@ -43,8 +43,6 @@ namespace RichText {
         std::vector<AbstractWidgetPtr> m_childrens;
         AbstractWidgetPtr m_parent = nullptr;
 
-        // void virtual buildWidgetChars(float x_offset);
-
         // Returns false if not succesfully build chars
         bool virtual add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);

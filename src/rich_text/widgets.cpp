@@ -113,9 +113,9 @@ namespace RichText {
 
             bool success = true;
 
-            bool ret = build_chars();
-            if (!ret)
-                success = false;
+            // bool ret = build_chars();
+            // if (!ret)
+            //     success = false;
 
             for (auto ptr : m_childrens) {
                 if (ptr->m_category != C_SPAN) {

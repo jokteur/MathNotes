@@ -9,6 +9,8 @@ namespace RichText {
     }
 
     bool TextString::add_chars_to_parent(std::vector<WrapCharPtr>& wrap_chars) {
+        m_draw_chars.clear();
+
         using namespace Fonts;
         FontRequestInfo font_request;
         font_request.font_styling = m_style.font_styling;
@@ -34,7 +36,6 @@ namespace RichText {
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;
             auto char_ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, m_style.font_color, force_breakable);
-            // m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
             m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
             wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
         }
@@ -60,7 +61,7 @@ namespace RichText {
         return cursor_y_pos;
     }
     void TextString::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
-        
+
     }
     void TextString::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         // We do not update cursor_y_pos in text span (taken care of parent block)
