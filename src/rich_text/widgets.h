@@ -50,14 +50,14 @@ namespace RichText {
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         // Draw hooks
-        inline float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
-        inline void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
-        inline void virtual hk_build_widget_before(float x_offset);
-        inline void virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
-        inline void virtual hk_build_widget_after(float x_offset);
-        inline void virtual hk_draw_after(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
-        inline void virtual hk_draw_background(Draw::DrawList& draw_list);
-        inline void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list);
+        float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
+        void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
+        void virtual hk_build_widget_before(float x_offset);
+        void virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        void virtual hk_build_widget_after(float x_offset);
+        void virtual hk_draw_after(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        void virtual hk_draw_background(Draw::DrawList& draw_list);
+        void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list);
 
         Style m_style;
 
@@ -90,9 +90,9 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
-        inline void hk_build_widget_before(float x_offset) override;
+        void hk_build_widget_before(float x_offset) override;
         void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
-        inline void hk_draw_background(Draw::DrawList& draw_list) override;
+        void hk_draw_background(Draw::DrawList& draw_list) override;
 
         void setWidth(float width) override;
     };
