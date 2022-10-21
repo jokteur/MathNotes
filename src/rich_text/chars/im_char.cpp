@@ -79,7 +79,7 @@ namespace RichText {
                 if (c == 0) // Malformed UTF-8?
                     break;
             }
-            auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, style.special_char_color, false);
+            auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, style.font_color, false);
             draw_chars.push_back(ptr);
             wrap_chars.push_back(ptr);
         }

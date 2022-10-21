@@ -32,7 +32,6 @@ namespace RichText {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<WrapCharPtr> m_wrap_chars;
-        bool virtual build_chars() { return true; }
     public:
         Type m_type;
         Category m_category;
@@ -56,6 +55,7 @@ namespace RichText {
         void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list);
 
         Style m_style;
+        Style m_special_chars_style;
 
         bool m_is_selected = true;
         WrapAlgorithm m_wrapper;
@@ -86,8 +86,7 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
-        bool m_widget_dirty_before = true;
-        bool m_widget_dirty_after = true;
+        bool m_widget_dirty = true;
 
         void hk_build_widget(float x_offset) override;
         void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;

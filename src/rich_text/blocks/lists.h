@@ -16,10 +16,8 @@ namespace RichText {
         OLWidget(UIState_ptr ui_state);
     };
     struct LIWidget : public AbstractBlock {
-        protected:
-        bool build_chars() override;
-
-        public:
+    protected:
+    public:
         unsigned int list_level = 0;
         bool is_task;
         char task_mark;

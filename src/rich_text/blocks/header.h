@@ -4,10 +4,8 @@
 
 namespace RichText {
     struct HeaderWidget : public AbstractBlock {
-        protected:
-        bool build_chars() override;
-
-        public:
+    protected:
+    public:
         unsigned int hlevel;
         HeaderWidget(UIState_ptr ui_state);
     };

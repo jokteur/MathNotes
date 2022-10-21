@@ -4,10 +4,8 @@
 
 namespace RichText {
     struct ParagraphWidget : public AbstractBlock {
-        protected:
-        bool build_chars() override;
-
-        public:
+    protected:
+    public:
         ParagraphWidget(UIState_ptr ui_state);
     };
     struct CodeWidget : public AbstractBlock {

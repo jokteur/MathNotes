@@ -8,7 +8,4 @@ namespace RichText {
     HeaderWidget::HeaderWidget(UIState_ptr ui_state) : AbstractBlock(ui_state) {
         m_type = T_BLOCK_H;
     }
-    bool HeaderWidget::build_chars() {
-        return true;
-    }
 }

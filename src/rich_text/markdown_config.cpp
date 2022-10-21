@@ -69,6 +69,9 @@ namespace RichText {
         styles[EM].set_font_em(true);
         // strong
         styles[STRONG].set_font_strong(true);
+
+        // markdown characters (non-visible usually)
+        styles[SPECIAL].set_font_color(Colors::gray);
     }
     void MarkdownConfig::make_bold(FontStyling& styling) {
         if (styling.family == F_MONOSPACE) {
@@ -86,8 +89,17 @@ namespace RichText {
 
     void MarkdownConfig::make_em(FontStyling& styling) {
         styling.style = S_ITALIC;
+        if (styling.family == F_MONOSPACE) {
+            styling.weight = W_REGULAR;
+        }
     }
     void MarkdownConfig::make_monospace(FontStyling& styling) {
         styling.family = F_MONOSPACE;
+        if (styling.weight != W_REGULAR) {
+            styling.weight = W_BOLD;
+        }
+        if (styling.style == S_ITALIC) {
+            styling.weight = W_REGULAR;
+        }
     }
 }

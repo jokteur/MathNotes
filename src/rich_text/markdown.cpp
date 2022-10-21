@@ -137,6 +137,7 @@ namespace RichText {
             break;
         }
         if (ptr != nullptr) {
+            m_last_block_ptr = ptr;
             if (enter) {
                 push_to_tree(ptr);
             }
@@ -204,8 +205,10 @@ namespace RichText {
 
     void MarkdownToWidgets::push_to_tree(AbstractWidgetPtr& node) {
         m_tree.push_back(node);
+        node->m_safe_string = m_safe_text;
+        if (m_current_ptr != nullptr)
+            set_infos(MarkdownConfig::SPECIAL, node, true);
         node->m_parent = m_current_ptr;
-        m_last_widget_ptr = node;
         if (m_current_ptr != nullptr) m_current_ptr->m_childrens.push_back(node);
         m_current_ptr = node;
     }
@@ -222,13 +225,21 @@ namespace RichText {
             m_current_ptr = m_current_ptr->m_parent;
         }
     }
-    void MarkdownToWidgets::set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr) {
-        auto& style = m_config.styles[type];
-        ptr->m_safe_string = m_safe_text;
-        ptr->m_style = style;
+    void MarkdownToWidgets::set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr, bool special_style) {
+        auto style = m_config.styles[type];
+        Style* current_style = nullptr;
+
+        if (special_style) {
+            ptr->m_special_chars_style = style;
+            current_style = &(ptr->m_special_chars_style);
+        }
+        else {
+            ptr->m_style = style;
+            current_style = &(ptr->m_style);
+        }
         // Inherit potential properties from parents
 #define INHERIT_PROPERTY(name_) \
-    if (!style.isset_##name_) { ptr->m_style.name_ = m_current_ptr->m_style.name_;}
+    if (!style.isset_##name_) { current_style->name_ = m_current_ptr->m_style.name_;}
         INHERIT_PROPERTY(font_size);
         INHERIT_PROPERTY(font_styling);
         INHERIT_PROPERTY(font_color);
@@ -244,13 +255,13 @@ namespace RichText {
         INHERIT_PROPERTY(bg_color);
 
         if (style.isset_font_strong && style.font_strong) {
-            m_config.make_bold(ptr->m_style.font_styling);
+            m_config.make_bold(current_style->font_styling);
         }
         if (style.isset_font_em && style.font_em) {
-            m_config.make_em(ptr->m_style.font_styling);
+            m_config.make_em(current_style->font_styling);
         }
         if (style.isset_font_monospace && style.font_monospace) {
-            m_config.make_monospace(ptr->m_style.font_styling);
+            m_config.make_monospace(current_style->font_styling);
         }
     }
 
@@ -481,8 +492,10 @@ namespace RichText {
         m_config = config;
         m_ui_state = ui_state;
         md_parse(m_text, m_text_size, &m_md, this);
-        if (m_last_widget_ptr != nullptr) {
-            // m_last_widget_ptr->m_raw_text_after = m_safe_text->size() - 1;
+
+        if (m_last_block_ptr != nullptr) {
+            m_last_block_ptr->m_raw_text_info.end = m_text_end_idx;
+            m_last_block_ptr->m_raw_text_info.post = m_safe_text->size() - 1;
         }
         return m_tree;
     }

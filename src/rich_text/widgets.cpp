@@ -31,7 +31,7 @@ namespace RichText {
 
     }
     void AbstractWidget::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
-        ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);    
+        ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
         if (isInsideRectY(m_position, boundaries)) {
             for (auto ptr : m_draw_chars) {
@@ -106,7 +106,7 @@ namespace RichText {
         }
     }
     void AbstractBlock::hk_build_widget(float x_offset) {
-        if (m_widget_dirty_before) {
+        if (m_widget_dirty) {
             m_wrap_chars.clear();
             m_draw_chars.clear();
 
@@ -129,7 +129,7 @@ namespace RichText {
             m_wrapper.setString(m_wrap_chars);
 
             if (success)
-                m_widget_dirty_before = false;
+                m_widget_dirty = false;
         }
     }
     void AbstractBlock::setWidth(float width) {
@@ -147,7 +147,7 @@ namespace RichText {
         m_draw_chars.clear();
 
         if (m_is_selected) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.pre, m_raw_text_info.begin, m_style);
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.pre, m_raw_text_info.begin, m_special_chars_style);
             if (!res) {
                 success = false;
             }
@@ -160,7 +160,7 @@ namespace RichText {
             }
         }
         if (m_is_selected) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.end, m_raw_text_info.post, m_style);
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.end, m_raw_text_info.post, m_special_chars_style);
             if (!res) {
                 success = false;
             }

@@ -26,7 +26,7 @@ namespace RichText {
         int m_text_size;
 
         AbstractWidgetPtr m_current_ptr = nullptr;
-        AbstractWidgetPtr m_last_widget_ptr = nullptr;
+        AbstractWidgetPtr m_last_block_ptr = nullptr;
 
         UIState_ptr m_ui_state = nullptr;
 
@@ -39,7 +39,7 @@ namespace RichText {
         void push_to_tree(AbstractWidgetPtr& node);
         void set_href(bool enter, const MD_ATTRIBUTE& src);
         void tree_up();
-        void set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr);
+        void set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr, bool special_style = false);
 
         void BLOCK_DOC(bool);
         AbstractWidgetPtr BLOCK_QUOTE(bool);
