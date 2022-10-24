@@ -36,6 +36,9 @@ namespace RichText {
         int block(MD_BLOCKTYPE type, void* detail, bool enter);
         int span(MD_SPANTYPE type, void* detail, int mark_begin, int mark_end, bool enter);
 
+        // Markers
+        void propagate_markers_to_blocks(AbstractWidgetPtr& ptr, int begin, int end);
+
         void push_to_tree(AbstractWidgetPtr& node);
         void set_href(bool enter, const MD_ATTRIBUTE& src);
         void tree_up();

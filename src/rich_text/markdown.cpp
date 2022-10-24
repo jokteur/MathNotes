@@ -51,6 +51,7 @@ namespace RichText {
     }
     int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, int size, int text_pos) {
         int prev_text_end_idx = m_text_end_idx;
+        propagate_markers_to_blocks(m_current_ptr, m_text_end_idx, text_pos);
         m_text_start_idx = text_pos;
         m_text_end_idx = m_text_start_idx + size;
 
@@ -185,6 +186,7 @@ namespace RichText {
         }
         if (ptr != nullptr) {
             if (enter) {
+                propagate_markers_to_blocks(ptr->m_parent, m_text_end_idx, mark_begin);
                 ptr->m_raw_text_info.pre = mark_begin;
                 ptr->m_raw_text_info.begin = mark_end;
                 m_text_end_idx = mark_end;
@@ -201,6 +203,78 @@ namespace RichText {
         }
 
         return 0;
+    }
+    void MarkdownToWidgets::propagate_markers_to_blocks(AbstractWidgetPtr& ptr, int start, int end) {
+        if (start == end)
+            return;
+        if (ptr == nullptr)
+            return;
+        if (ptr->m_category != C_BLOCK || ptr->m_type == T_BLOCK_P) {
+            propagate_markers_to_blocks(ptr->m_parent, start, end);
+        }
+        int mark_end = end - 1;
+        int counter = 0;
+        char delimiter = 0;
+        bool header_mode = false;
+
+        for (int i = end - 1;i >= start;i--) {
+            switch (m_text[i]) {
+            case '>':
+                if (ptr->m_type == T_BLOCK_QUOTE) {
+                    std::cout << "> for QUOTE" << std::endl;
+                    propagate_markers_to_blocks(ptr->m_parent, start, i);
+                    return;
+                }
+            case ' ':
+                if (delimiter == ' ') {
+                    counter++;
+                }
+                else {
+                    counter = 0;
+                    delimiter = ' ';
+                    break;
+                }
+                if (counter == 4 && ptr->m_type == T_BLOCK_CODE) {
+                    std::cout << "'    ' for CODE" << std::endl;
+                    propagate_markers_to_blocks(ptr->m_parent, start, i);
+                    return;
+                }
+                break;
+            case '`':
+                if (delimiter == '`') {
+                    counter++;
+                }
+                else {
+                    counter = 0;
+                    delimiter = '`';
+                    break;
+                }
+                if (counter == 3 && ptr->m_type == T_BLOCK_CODE) {
+                    std::cout << "``` for CODE" << std::endl;
+                    propagate_markers_to_blocks(ptr->m_parent, start, i);
+                    return;
+                }
+                break;
+            case '~':
+                if (delimiter == '~') {
+                    counter++;
+                }
+                else {
+                    counter = 0;
+                    delimiter = '~';
+                    break;
+                }
+                if (counter == 3 && ptr->m_type == T_BLOCK_CODE) {
+                    std::cout << "~~~ for CODE" << std::endl;
+                    propagate_markers_to_blocks(ptr->m_parent, start, i);
+                    return;
+                }
+                break;
+            case '=':
+            case '_':
+                break;
+            }
+        }
     }
 
     void MarkdownToWidgets::push_to_tree(AbstractWidgetPtr& node) {
