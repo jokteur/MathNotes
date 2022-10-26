@@ -39,4 +39,6 @@ namespace RichText {
         C_BLOCK,
         C_SPAN
     };
+
+    const char* type_to_name(Type type);
 }

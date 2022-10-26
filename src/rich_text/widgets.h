@@ -24,7 +24,7 @@ namespace RichText {
         int pre = 0;
         int begin = 0;
         int end = 0;
-        int post;
+        int post= 0;
     };
     using RawTextPtr = std::shared_ptr<RawTextInfo>;
 
@@ -69,6 +69,12 @@ namespace RichText {
         // Debug
         bool m_show_boundaries = false;
 
+        // Useful information to be able to make the correspondance btw
+        // widget and raw text
+        // To be constructed by MarkdownToWidgets
+        std::shared_ptr<std::vector<int>> m_textpos_to_lines = nullptr;
+        std::shared_ptr<std::vector<bool>> m_lines_selected = nullptr;
+
         // Internal
         SafeString m_safe_string;
         RawTextInfo m_raw_text_info;
@@ -87,6 +93,7 @@ namespace RichText {
         }
 
         bool m_widget_dirty = true;
+
 
         void hk_build_widget(float x_offset) override;
         void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
