@@ -24,7 +24,7 @@ namespace RichText {
         int pre = 0;
         int begin = 0;
         int end = 0;
-        int post= 0;
+        int post = 0;
     };
     using RawTextPtr = std::shared_ptr<RawTextInfo>;
 
@@ -100,6 +100,14 @@ namespace RichText {
         void hk_draw_background(Draw::DrawList& draw_list) override;
 
         void setWidth(float width) override;
+    };
+
+    struct InterText : public AbstractWidget {
+        InterText(UIState_ptr ui_state) : AbstractWidget(ui_state) {
+            m_category = C_SPAN;
+            m_type = T_INTERTEXT;
+        }
+        bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 
     struct AbstractSpan : public AbstractWidget {

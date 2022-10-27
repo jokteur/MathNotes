@@ -26,6 +26,7 @@ namespace RichText {
         int m_text_size;
 
         AbstractWidgetPtr m_current_ptr = nullptr;
+        AbstractWidgetPtr m_last_text_ptr = nullptr;
         AbstractWidgetPtr m_last_block_ptr = nullptr;
 
         UIState_ptr m_ui_state = nullptr;
@@ -37,6 +38,8 @@ namespace RichText {
         int span(MD_SPANTYPE type, void* detail, int mark_begin, int mark_end, bool enter);
 
         // Markers
+
+        void create_intertext_widgets(int start, int end);
         void propagate_begins_to_parents(AbstractWidgetPtr& ptr, int pre, int begin);
 
         void push_to_tree(AbstractWidgetPtr& node);

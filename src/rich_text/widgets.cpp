@@ -141,6 +141,21 @@ namespace RichText {
         }
     }
 
+
+    // Spans
+    bool InterText::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
+        bool success = true;
+        m_draw_chars.clear();
+
+        if (m_is_selected) {
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.begin, m_raw_text_info.end, m_special_chars_style);
+            if (!res) {
+                success = false;
+            }
+        }
+        return success;
+    }
+
     // Spans
     bool AbstractSpan::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;

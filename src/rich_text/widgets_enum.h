@@ -31,7 +31,8 @@ namespace RichText {
         T_SPAN_LATEX,
         T_SPAN_DISPLAY,
         // Text
-        T_TEXT
+        T_TEXT,
+        T_INTERTEXT
     };
     enum Category {
         C_NONAME,

@@ -50,8 +50,8 @@ namespace RichText {
         m_md.flags = md_flags;
     }
     int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, int size, int text_pos) {
-        int prev_text_end_idx = m_text_end_idx;
-        propagate_begins_to_parents(m_current_ptr, m_text_end_idx, text_pos);
+        // int prev_text_end_idx = m_text_end_idx;
+        create_intertext_widgets(m_text_end_idx, text_pos);
         m_text_start_idx = text_pos;
         m_text_end_idx = m_text_start_idx + size;
 
@@ -65,21 +65,22 @@ namespace RichText {
         }
         else {
             using namespace Fonts;
-            auto span = std::make_shared<TextString>(m_ui_state);
-            span->m_processed_text.append(str, size);
+            auto text = std::make_shared<TextString>(m_ui_state);
+            text->m_processed_text.append(str, size);
 
             // raw text infos
-            span->m_raw_text_info.pre = prev_text_end_idx;
-            span->m_raw_text_info.begin = m_text_start_idx;
-            span->m_raw_text_info.end = m_text_end_idx;
-            span->m_raw_text_info.post = m_text_end_idx;
-            span->m_safe_string = m_safe_text;
+            text->m_raw_text_info.pre = m_text_start_idx;
+            text->m_raw_text_info.begin = m_text_start_idx;
+            text->m_raw_text_info.end = m_text_end_idx;
+            text->m_raw_text_info.post = m_text_end_idx;
+            text->m_safe_string = m_safe_text;
 
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(span));
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(text));
 
-            auto ptr = std::static_pointer_cast<AbstractWidget>(span);
+            auto ptr = std::static_pointer_cast<AbstractWidget>(text);
             push_to_tree(ptr);
             tree_up();
+            m_last_text_ptr = ptr;
         }
         return 0;
     }
@@ -138,9 +139,9 @@ namespace RichText {
             break;
         }
         if (ptr != nullptr) {
-            m_last_block_ptr = ptr;
             if (enter) {
                 push_to_tree(ptr);
+                m_last_block_ptr = ptr;
             }
             else {
                 tree_up();
@@ -186,7 +187,7 @@ namespace RichText {
         }
         if (ptr != nullptr) {
             if (enter) {
-                propagate_begins_to_parents(ptr->m_parent, m_text_end_idx, mark_begin);
+                create_intertext_widgets(m_text_end_idx, mark_begin);
                 ptr->m_raw_text_info.pre = mark_begin;
                 ptr->m_raw_text_info.begin = mark_end;
                 m_text_end_idx = mark_end;
@@ -203,6 +204,32 @@ namespace RichText {
         }
 
         return 0;
+    }
+    void MarkdownToWidgets::create_intertext_widgets(int start, int end) {
+        if (start == end)
+            return;
+        int last_start = start;
+        for (int i = start; i < end;i++) {
+            if (m_text[i] == '\n') {
+                auto ptr = std::make_shared<InterText>(m_ui_state);
+                ptr->m_raw_text_info.begin = last_start;
+                ptr->m_raw_text_info.pre = last_start;
+                ptr->m_raw_text_info.end = i + 1;
+                ptr->m_raw_text_info.post = i + 1;
+                push_to_tree(std::static_pointer_cast<AbstractWidget>(ptr));
+                tree_up();
+                last_start = i + 1;
+            }
+        }
+        if (last_start < end) {
+            auto ptr = std::make_shared<InterText>(m_ui_state);
+            ptr->m_raw_text_info.begin = last_start;
+            ptr->m_raw_text_info.pre = last_start;
+            ptr->m_raw_text_info.end = end;
+            ptr->m_raw_text_info.post = end;
+            push_to_tree(std::static_pointer_cast<AbstractWidget>(ptr));
+            tree_up();
+        }
     }
     void MarkdownToWidgets::propagate_begins_to_parents(AbstractWidgetPtr& ptr, int pre, int begin) {
         if (pre == begin)
@@ -294,8 +321,8 @@ namespace RichText {
         if (m_current_ptr->m_parent != nullptr) {
             if (!m_current_ptr->m_childrens.empty() && m_current_ptr->m_category == C_BLOCK) {
                 // Set the widgets end from the last child
-                auto last_child = *(m_current_ptr->m_childrens.end()- 1);
-                m_current_ptr->m_raw_text_info.end = last_child->m_raw_text_info.post ;
+                auto last_child = *(m_current_ptr->m_childrens.end() - 1);
+                m_current_ptr->m_raw_text_info.end = last_child->m_raw_text_info.post;
                 m_current_ptr->m_raw_text_info.post = last_child->m_raw_text_info.post;
             }
             m_current_ptr = m_current_ptr->m_parent;
@@ -367,7 +394,7 @@ namespace RichText {
                     line_counter++;
                     lines_selected->push_back(true);
                 }
-                (*textpos_to_lines)[i] = line_counter;
+                textpos_to_lines->push_back(line_counter);
             }
             push_to_tree(ptr);
             // Build raw text line information
@@ -595,6 +622,21 @@ namespace RichText {
 
         md_parse(m_text, m_text_size, &m_md, this);
 
+        // There may be text left over after the processing (markdown markers),
+        // if we want to display them we must create them here
+        if (m_text_end_idx != m_text_size) {
+            // Sometimes, there are not last text widget, but we still want to
+            // insert into the last block widget
+            if (m_last_text_ptr != nullptr) {
+                m_current_ptr = m_last_text_ptr;
+                tree_up();
+            }
+            else {
+                m_current_ptr = m_last_block_ptr;
+            }
+            create_intertext_widgets(m_text_end_idx, m_text_size);
+        }
+
         int level = 0;
         for (auto ptr : m_tree) {
             // Find out level of widget
@@ -615,10 +657,6 @@ namespace RichText {
         }
         std::cout << "-----" << std::endl;
 
-        if (m_last_block_ptr != nullptr) {
-            m_last_block_ptr->m_raw_text_info.end = m_text_end_idx;
-            m_last_block_ptr->m_raw_text_info.post = m_safe_text->size() - 1;
-        }
         return m_tree;
     }
 }
