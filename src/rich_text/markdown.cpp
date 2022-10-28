@@ -209,15 +209,50 @@ namespace RichText {
         if (start == end)
             return;
         int last_start = start;
+        // This is the current parent pointer
+        // We might have markdown something like this
+        // > Header
+        // > ====
+        // >> Paragraph
+        // We the parser arrives at "Paragraph", the pre-text looks something like
+        // '\n> ====\n>> ', but '\n====' InterText belongs to Header, not Paragraph
+        // This means that if we detect '===' or '---', we need to attribute it to
+        // the closest header
+        auto current_ptr = m_current_ptr;
+        auto closest_block_parent = m_current_ptr;
+        while (closest_block_parent->m_category != C_BLOCK) {
+            closest_block_parent = closest_block_parent->m_parent;
+        }
+        bool header_mode = false;
         for (int i = start; i < end;i++) {
-            if (m_text[i] == '\n') {
+            if (m_text[i] == '=' || m_text[i] == '-') {
+                header_mode = true;
+            }
+            // The first '\n' is should not be an orphan
+            if (m_text[i] == '\n' && i != start) {
                 auto ptr = std::make_shared<InterText>(m_ui_state);
                 ptr->m_raw_text_info.begin = last_start;
                 ptr->m_raw_text_info.pre = last_start;
                 ptr->m_raw_text_info.end = i + 1;
                 ptr->m_raw_text_info.post = i + 1;
+                if (header_mode) {
+                    // Find the nearest header which is not
+                    // a direct parent of ptr
+                    auto it = m_tree.end() - 1;
+                    while (it != m_tree.begin()) {
+                        if ((*it)->m_type == T_BLOCK_H && *it != closest_block_parent) {
+                            m_current_ptr = *it;
+                            break;
+                        }
+                        it--;
+                    }
+                }
                 push_to_tree(std::static_pointer_cast<AbstractWidget>(ptr));
                 tree_up();
+                if (header_mode) {
+                    header_mode = false;
+                    m_current_ptr = current_ptr;
+                }
                 last_start = i + 1;
             }
         }
@@ -621,19 +656,18 @@ namespace RichText {
         m_ui_state = ui_state;
 
         md_parse(m_text, m_text_size, &m_md, this);
-
         // There may be text left over after the processing (markdown markers),
         // if we want to display them we must create them here
         if (m_text_end_idx != m_text_size) {
-            // Sometimes, there are not last text widget, but we still want to
+            // Sometimes, there are no last text widget, but we still want to
             // insert into the last block widget
-            if (m_last_text_ptr != nullptr) {
-                m_current_ptr = m_last_text_ptr;
-                tree_up();
-            }
-            else {
-                m_current_ptr = m_last_block_ptr;
-            }
+            // if (m_last_text_ptr != nullptr) {
+            //     m_current_ptr = m_last_text_ptr;
+            //     tree_up();
+            // }
+            // else {
+            m_current_ptr = m_last_block_ptr;
+            // }
             create_intertext_widgets(m_text_end_idx, m_text_size);
         }
 

@@ -93,7 +93,7 @@ namespace RichText {
         }
 
         bool m_widget_dirty = true;
-
+        std::vector<int> m_active_lines;
 
         void hk_build_widget(float x_offset) override;
         void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
