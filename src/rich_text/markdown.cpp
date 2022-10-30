@@ -16,11 +16,11 @@ namespace RichText {
     void MarkdownToWidgets::configure_parser() {
         m_md.abi_version = 0;
 
-        m_md.enter_block = [](MD_BLOCKTYPE t, void* detail, void* u) {
-            return ((MarkdownToWidgets*)u)->block(t, detail, true);
+        m_md.enter_block = [](MD_BLOCKTYPE t, void* detail, void* u, MD_SIZE line_beg) {
+            return ((MarkdownToWidgets*)u)->block(t, detail, true, line_beg);
         };
-        m_md.leave_block = [](MD_BLOCKTYPE t, void* detail, void* u) {
-            return ((MarkdownToWidgets*)u)->block(t, detail, false);
+        m_md.leave_block = [](MD_BLOCKTYPE t, void* detail, void* u, MD_SIZE line_end) {
+            return ((MarkdownToWidgets*)u)->block(t, detail, false, line_end);
         };
         m_md.enter_span = [](MD_SPANTYPE t, void* detail, MD_SIZE mark_begin, MD_SIZE mark_end, void* u) {
             return ((MarkdownToWidgets*)u)->span(t, detail, mark_begin, mark_end, true);
@@ -84,7 +84,7 @@ namespace RichText {
         }
         return 0;
     }
-    int MarkdownToWidgets::block(MD_BLOCKTYPE type, void* detail, bool enter) {
+    int MarkdownToWidgets::block(MD_BLOCKTYPE type, void* detail, bool enter, int pos) {
         AbstractWidgetPtr ptr = nullptr;
         switch (type) {
         case MD_BLOCK_DOC:
@@ -140,10 +140,12 @@ namespace RichText {
         }
         if (ptr != nullptr) {
             if (enter) {
+                ptr->m_line_beg = pos;
                 push_to_tree(ptr);
                 m_last_block_ptr = ptr;
             }
             else {
+                m_current_ptr->m_line_end = pos;
                 tree_up();
             }
         }
@@ -247,7 +249,8 @@ namespace RichText {
                         it--;
                     }
                 }
-                push_to_tree(std::static_pointer_cast<AbstractWidget>(ptr));
+                auto abstract_ptr = std::static_pointer_cast<AbstractWidget>(ptr);
+                push_to_tree(abstract_ptr);
                 tree_up();
                 if (header_mode) {
                     header_mode = false;
@@ -262,7 +265,8 @@ namespace RichText {
             ptr->m_raw_text_info.pre = last_start;
             ptr->m_raw_text_info.end = end;
             ptr->m_raw_text_info.post = end;
-            push_to_tree(std::static_pointer_cast<AbstractWidget>(ptr));
+            auto abstract_ptr = std::static_pointer_cast<AbstractWidget>(ptr);
+            push_to_tree(abstract_ptr);
             tree_up();
         }
     }
@@ -687,6 +691,7 @@ namespace RichText {
             std::cout << " Begin: " << ptr->m_raw_text_info.begin;
             std::cout << " End: " << ptr->m_raw_text_info.end;
             std::cout << " Post: " << ptr->m_raw_text_info.post;
+            std::cout << " B/E: " << ptr->m_line_beg << " " << ptr->m_line_end;
             std::cout << std::endl;
         }
         std::cout << "-----" << std::endl;

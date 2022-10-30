@@ -34,7 +34,7 @@ namespace RichText {
         std::string m_href;
 
         int text(MD_TEXTTYPE type, const char* str, int size, int text_pos);
-        int block(MD_BLOCKTYPE type, void* detail, bool enter);
+        int block(MD_BLOCKTYPE type, void* detail, bool enter, int pos);
         int span(MD_SPANTYPE type, void* detail, int mark_begin, int mark_end, bool enter);
 
         // Markers

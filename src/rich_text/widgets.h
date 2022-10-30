@@ -65,6 +65,8 @@ namespace RichText {
         ImVec2 m_dimensions;
         float m_scale = 1.f;
         float m_window_width = 1.f;
+        int m_line_beg = -1;
+        int m_line_end = -1;
 
         // Debug
         bool m_show_boundaries = false;
