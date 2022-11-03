@@ -16,11 +16,11 @@ namespace RichText {
     void MarkdownToWidgets::configure_parser() {
         m_md.abi_version = 0;
 
-        m_md.enter_block = [](MD_BLOCKTYPE t, void* detail, void* u, MD_SIZE line_beg) {
-            return ((MarkdownToWidgets*)u)->block(t, detail, true, line_beg);
+        m_md.enter_block = [](MD_BLOCKTYPE t, void* detail, void* u, int mark_beg) {
+            return ((MarkdownToWidgets*)u)->block(t, detail, true, mark_beg, -1);
         };
-        m_md.leave_block = [](MD_BLOCKTYPE t, void* detail, void* u, MD_SIZE line_end) {
-            return ((MarkdownToWidgets*)u)->block(t, detail, false, line_end);
+        m_md.leave_block = [](MD_BLOCKTYPE t, void* detail, void* u, int mark_end) {
+            return ((MarkdownToWidgets*)u)->block(t, detail, false, -1, mark_end);
         };
         m_md.enter_span = [](MD_SPANTYPE t, void* detail, MD_SIZE mark_begin, MD_SIZE mark_end, void* u) {
             return ((MarkdownToWidgets*)u)->span(t, detail, mark_begin, mark_end, true);
@@ -51,7 +51,7 @@ namespace RichText {
     }
     int MarkdownToWidgets::text(MD_TEXTTYPE type, const char* str, int size, int text_pos) {
         // int prev_text_end_idx = m_text_end_idx;
-        create_intertext_widgets(m_text_end_idx, text_pos);
+        // create_intertext_widgets(m_text_end_idx, text_pos);
         m_text_start_idx = text_pos;
         m_text_end_idx = m_text_start_idx + size;
 
@@ -78,13 +78,22 @@ namespace RichText {
             set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(text));
 
             auto ptr = std::static_pointer_cast<AbstractWidget>(text);
+
+            // Text are separated line by line by md_parse
+            // Only need to push the line number of the start of the text widget
+            // propagate_line_to_parents(ptr, get_line_number(ptr, m_text_start_idx));
             push_to_tree(ptr);
+            extend_pre(ptr);
+
+            // Do this after push, because need to know parents
+            propagate_begin_to_parents(ptr, m_text_start_idx);
+
             tree_up();
             m_last_text_ptr = ptr;
         }
         return 0;
     }
-    int MarkdownToWidgets::block(MD_BLOCKTYPE type, void* detail, bool enter, int pos) {
+    int MarkdownToWidgets::block(MD_BLOCKTYPE type, void* detail, bool enter, int mark_beg, int mark_end) {
         AbstractWidgetPtr ptr = nullptr;
         switch (type) {
         case MD_BLOCK_DOC:
@@ -140,12 +149,25 @@ namespace RichText {
         }
         if (ptr != nullptr) {
             if (enter) {
-                ptr->m_line_beg = pos;
+                // TODO: Need to create intertext widget if sibling.end < mark_beg
+                if (mark_beg > -1) {
+                    ptr->m_raw_text_info.pre = mark_beg;
+                    ptr->m_mark_beg = mark_beg;
+                }
                 push_to_tree(ptr);
+                extend_pre(ptr);
                 m_last_block_ptr = ptr;
             }
             else {
-                m_current_ptr->m_line_end = pos;
+                // For now, only header and p estimate correctly the end
+                if (mark_end > -1 && ptr->m_type == T_BLOCK_H) {
+                    ptr->m_raw_text_info.post = mark_end;
+                    ptr->m_mark_beg = mark_end;
+                }
+                // Means that block has no child and begin has not been updated
+                if (ptr->m_raw_text_info.begin == MAX_INT) {
+                    ptr->m_raw_text_info.begin = ptr->m_mark_beg;
+                }
                 tree_up();
             }
         }
@@ -189,15 +211,21 @@ namespace RichText {
         }
         if (ptr != nullptr) {
             if (enter) {
-                create_intertext_widgets(m_text_end_idx, mark_begin);
+                // propagate_lines_to_parents(ptr, m_text_end_idx, mark_begin);
+                // create_intertext_widgets(m_text_end_idx, mark_begin);
                 ptr->m_raw_text_info.pre = mark_begin;
                 ptr->m_raw_text_info.begin = mark_end;
                 m_text_end_idx = mark_end;
                 ptr->m_style.h_margins = ImVec2(0.f, 0.f);
                 ptr->m_style.v_margins = ImVec2(0.f, 0.f);
                 push_to_tree(ptr);
+                extend_pre(ptr);
+
+                // Do this after push to tree, because m_parent is needed
+                propagate_begin_to_parents(ptr, mark_begin);
             }
             else {
+                // propagate_lines_to_parents(ptr, mark_begin, mark_end);
                 ptr->m_raw_text_info.end = mark_begin;
                 ptr->m_raw_text_info.post = mark_end;
                 m_text_end_idx = mark_end;
@@ -207,139 +235,78 @@ namespace RichText {
 
         return 0;
     }
-    void MarkdownToWidgets::create_intertext_widgets(int start, int end) {
-        if (start == end)
-            return;
-        int last_start = start;
-        // This is the current parent pointer
-        // We might have markdown something like this
-        // > Header
-        // > ====
-        // >> Paragraph
-        // We the parser arrives at "Paragraph", the pre-text looks something like
-        // '\n> ====\n>> ', but '\n====' InterText belongs to Header, not Paragraph
-        // This means that if we detect '===' or '---', we need to attribute it to
-        // the closest header
-        auto current_ptr = m_current_ptr;
-        auto closest_block_parent = m_current_ptr;
-        while (closest_block_parent->m_category != C_BLOCK) {
-            closest_block_parent = closest_block_parent->m_parent;
-        }
-        bool header_mode = false;
-        for (int i = start; i < end;i++) {
-            if (m_text[i] == '=' || m_text[i] == '-') {
-                header_mode = true;
-            }
-            // The first '\n' is should not be an orphan
-            if (m_text[i] == '\n' && i != start) {
-                auto ptr = std::make_shared<InterText>(m_ui_state);
-                ptr->m_raw_text_info.begin = last_start;
-                ptr->m_raw_text_info.pre = last_start;
-                ptr->m_raw_text_info.end = i + 1;
-                ptr->m_raw_text_info.post = i + 1;
-                if (header_mode) {
-                    // Find the nearest header which is not
-                    // a direct parent of ptr
-                    auto it = m_tree.end() - 1;
-                    while (it != m_tree.begin()) {
-                        if ((*it)->m_type == T_BLOCK_H && *it != closest_block_parent) {
-                            m_current_ptr = *it;
-                            break;
-                        }
-                        it--;
-                    }
-                }
-                auto abstract_ptr = std::static_pointer_cast<AbstractWidget>(ptr);
-                push_to_tree(abstract_ptr);
-                tree_up();
-                if (header_mode) {
-                    header_mode = false;
-                    m_current_ptr = current_ptr;
-                }
-                last_start = i + 1;
-            }
-        }
-        if (last_start < end) {
-            auto ptr = std::make_shared<InterText>(m_ui_state);
-            ptr->m_raw_text_info.begin = last_start;
-            ptr->m_raw_text_info.pre = last_start;
-            ptr->m_raw_text_info.end = end;
-            ptr->m_raw_text_info.post = end;
-            auto abstract_ptr = std::static_pointer_cast<AbstractWidget>(ptr);
-            push_to_tree(abstract_ptr);
-            tree_up();
-        }
-    }
-    void MarkdownToWidgets::propagate_begins_to_parents(AbstractWidgetPtr& ptr, int pre, int begin) {
-        if (pre == begin)
-            return;
+    void MarkdownToWidgets::extend_pre(AbstractWidgetPtr& ptr) {
         if (ptr == nullptr)
             return;
-        if (ptr->m_category != C_BLOCK || ptr->m_type == T_BLOCK_P) {
-            propagate_begins_to_parents(ptr->m_parent, pre, begin);
+        if (ptr->m_child_number > 0) {
+            auto sibling = ptr->m_parent->m_childrens[ptr->m_child_number - 1];
+            int start = sibling->m_raw_text_info.post;
+            int end = ptr->m_raw_text_info.pre;
+            int breakpoint = start;
+            int i = start + 1;
+            for (;i <= end;i++) {
+                if (m_text[i] == '\n') {
+                    breakpoint = i;
+                    break;
+                }
+            }
+            if (i == end) {
+                breakpoint = end;
+            }
+            ptr->m_raw_text_info.pre = breakpoint;
+            sibling->m_raw_text_info.post = breakpoint;
         }
-        int mark_end = begin - 1;
-        int counter = 0;
-        char delimiter = 0;
-        bool header_mode = false;
-
-        for (int i = begin - 1;i >= pre;i--) {
-            switch (m_text[i]) {
-            case '>':
-                if (ptr->m_type == T_BLOCK_QUOTE) {
-                    ptr->m_raw_text_info.begin = i;
-                    propagate_begins_to_parents(ptr->m_parent, begin, i);
-                    return;
+        else if (ptr->m_raw_text_info.pre > 0) {
+            // Extend pre to start of current line if first child and direct
+            // child of block or a block itself
+            if (ptr->m_category == C_BLOCK || ptr->m_parent->m_category == C_BLOCK) {
+                int i = ptr->m_raw_text_info.pre;
+                for (;i >= 0;i--) {
+                    if (m_text[i] == '\n') {
+                        break;
+                    }
                 }
-            case ' ':
-                if (delimiter == ' ') {
-                    counter++;
-                }
-                else {
-                    counter = 0;
-                    delimiter = ' ';
+                i = i + 1;
+                ptr->m_raw_text_info.pre = i;
+            }
+        }
+    }
+    void MarkdownToWidgets::propagate_begin_to_parents(AbstractWidgetPtr ptr, int begin) {
+        if (ptr == nullptr)
+            return;
+        while (ptr != nullptr) {
+            if (ptr->m_category == C_BLOCK) {
+                // This means begin has previously been updated
+                if (ptr->m_raw_text_info.begin <= begin) {
                     break;
                 }
-                if (counter == 4 && ptr->m_type == T_BLOCK_CODE) {
-                    ptr->m_raw_text_info.begin = i;
-                    // std::cout << "'    ' for CODE" << std::endl;
-                    propagate_begins_to_parents(ptr->m_parent, begin, i);
-                    return;
+                if (ptr->m_raw_text_info.begin > begin) {
+                    ptr->m_raw_text_info.begin = begin;
                 }
-                break;
-            case '`':
-                if (delimiter == '`') {
-                    counter++;
+            }
+            ptr = ptr->m_parent;
+        }
+    }
+    inline void MarkdownToWidgets::estimate_end_from_child() {
+        if (m_current_ptr == nullptr)
+            return;
+        if (!m_current_ptr->m_childrens.empty()) {
+            auto last_child = *(m_current_ptr->m_childrens.end() - 1);
+            if (m_current_ptr->m_category == C_BLOCK) {
+                // Set the widgets end from the last child
+                if (last_child->m_raw_text_info.end > m_current_ptr->m_raw_text_info.end) {
+                    m_current_ptr->m_raw_text_info.end = last_child->m_raw_text_info.end;
                 }
-                else {
-                    counter = 0;
-                    delimiter = '`';
-                    break;
-                }
-                if (counter == 3 && ptr->m_type == T_BLOCK_CODE) {
-                    ptr->m_raw_text_info.begin = i;
-                    propagate_begins_to_parents(ptr->m_parent, begin, i);
-                    return;
-                }
-                break;
-            case '~':
-                if (delimiter == '~') {
-                    counter++;
+                if (last_child->m_raw_text_info.post > m_current_ptr->m_raw_text_info.post) {
+                    m_current_ptr->m_raw_text_info.post = last_child->m_raw_text_info.post;
                 }
                 else {
-                    counter = 0;
-                    delimiter = '~';
-                    break;
+                    last_child->m_raw_text_info.post = m_current_ptr->m_raw_text_info.post;
                 }
-                if (counter == 3 && ptr->m_type == T_BLOCK_CODE) {
-                    ptr->m_raw_text_info.begin = i;
-                    propagate_begins_to_parents(ptr->m_parent, begin, i);
-                    return;
-                }
-                break;
-            case '=':
-            case '_':
-                break;
+            }
+            // Hack when span contains an empty text line but with markers
+            else if (m_current_ptr->m_category == C_SPAN) {
+                m_current_ptr->m_raw_text_info.end = last_child->m_raw_text_info.post;
             }
         }
     }
@@ -352,18 +319,14 @@ namespace RichText {
         node->m_parent = m_current_ptr;
         if (m_current_ptr != nullptr) {
             m_current_ptr->m_childrens.push_back(node);
+            node->m_child_number = m_current_ptr->m_childrens.size() - 1;
             node->m_textpos_to_lines = m_current_ptr->m_textpos_to_lines;
         }
         m_current_ptr = node;
     }
     void MarkdownToWidgets::tree_up() {
         if (m_current_ptr->m_parent != nullptr) {
-            if (!m_current_ptr->m_childrens.empty() && m_current_ptr->m_category == C_BLOCK) {
-                // Set the widgets end from the last child
-                auto last_child = *(m_current_ptr->m_childrens.end() - 1);
-                m_current_ptr->m_raw_text_info.end = last_child->m_raw_text_info.post;
-                m_current_ptr->m_raw_text_info.post = last_child->m_raw_text_info.post;
-            }
+            estimate_end_from_child();
             m_current_ptr = m_current_ptr->m_parent;
         }
     }
@@ -435,6 +398,10 @@ namespace RichText {
                 }
                 textpos_to_lines->push_back(line_counter);
             }
+            ptr->m_raw_text_info.pre = 0;
+            ptr->m_raw_text_info.begin = 0;
+            ptr->m_raw_text_info.end = m_text_size;
+            ptr->m_raw_text_info.post = m_text_size;
             push_to_tree(ptr);
             // Build raw text line information
         }
@@ -672,7 +639,8 @@ namespace RichText {
             // else {
             m_current_ptr = m_last_block_ptr;
             // }
-            create_intertext_widgets(m_text_end_idx, m_text_size);
+            // estimate_previous_block_end(m_last_block_ptr, m_text_size, true);
+            // create_intertext_widgets(m_text_end_idx, m_text_size);
         }
 
         int level = 0;
@@ -691,7 +659,7 @@ namespace RichText {
             std::cout << " Begin: " << ptr->m_raw_text_info.begin;
             std::cout << " End: " << ptr->m_raw_text_info.end;
             std::cout << " Post: " << ptr->m_raw_text_info.post;
-            std::cout << " B/E: " << ptr->m_line_beg << " " << ptr->m_line_end;
+            std::cout << " B/E: " << ptr->m_text_pos_begin_estimate << " " << ptr->m_text_pos_end_estimate;
             std::cout << std::endl;
         }
         std::cout << "-----" << std::endl;

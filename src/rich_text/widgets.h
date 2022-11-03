@@ -20,11 +20,12 @@ namespace RichText {
     struct AbstractWidget;
     using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>;
 
+    int const MAX_INT = 2147483647;
     struct RawTextInfo {
-        int pre = 0;
-        int begin = 0;
-        int end = 0;
-        int post = 0;
+        int pre = MAX_INT; //INT_MAX
+        int begin = MAX_INT; //INT_MAX
+        int end = -1;
+        int post = -1;
     };
     using RawTextPtr = std::shared_ptr<RawTextInfo>;
 
@@ -44,6 +45,8 @@ namespace RichText {
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
+        bool virtual hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars);
+        bool virtual hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         // Draw hooks
@@ -59,14 +62,22 @@ namespace RichText {
 
         bool m_is_selected = true;
         WrapAlgorithm m_wrapper;
+        std::unordered_set<int> m_lines;
+
+        // Position of the pointer in m_childrens;
+        int m_child_number = -1;
+
+        int m_text_pos_begin_estimate = -1;
+        int m_text_pos_end_estimate = -1;
+        int m_mark_beg = -1;
+        int m_mark_end = -1;
+
 
         // Widget position and size
         ImVec2 m_position;
         ImVec2 m_dimensions;
         float m_scale = 1.f;
         float m_window_width = 1.f;
-        int m_line_beg = -1;
-        int m_line_end = -1;
 
         // Debug
         bool m_show_boundaries = false;
@@ -95,7 +106,6 @@ namespace RichText {
         }
 
         bool m_widget_dirty = true;
-        std::vector<int> m_active_lines;
 
         void hk_build_widget(float x_offset) override;
         void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;

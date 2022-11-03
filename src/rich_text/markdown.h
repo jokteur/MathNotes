@@ -34,13 +34,35 @@ namespace RichText {
         std::string m_href;
 
         int text(MD_TEXTTYPE type, const char* str, int size, int text_pos);
-        int block(MD_BLOCKTYPE type, void* detail, bool enter, int pos);
+        int block(MD_BLOCKTYPE type, void* detail, bool enter, int mark_beg, int mark_end);
         int span(MD_SPANTYPE type, void* detail, int mark_begin, int mark_end, bool enter);
 
         // Markers
+        inline int get_line_number(AbstractWidgetPtr& ptr, int text_pos);
 
+        /**
+         * @brief Deduces from text_beg and text_end which lines
+         * are covered by the widget
+         *
+         * @param ptr
+         * @param text_beg
+         * @param text_end
+         */
+        inline void propagate_lines_to_parents(AbstractWidgetPtr& ptr, int text_beg, int text_end);
+        // inline void set_
+        /**
+         * @brief Tells the parents which line it is using
+         *
+         * We use this function to build the complete picture of
+         * which block is covered by which line
+         * @param ptr current pointer
+         * @param line_number line number in the raw text
+         */
+        void propagate_line_to_parents(AbstractWidgetPtr& ptr, int line_number);
+        void extend_pre(AbstractWidgetPtr& ptr);
         void create_intertext_widgets(int start, int end);
-        void propagate_begins_to_parents(AbstractWidgetPtr& ptr, int pre, int begin);
+        void propagate_begin_to_parents(AbstractWidgetPtr ptr, int begin);
+        inline void estimate_end_from_child();
 
         void push_to_tree(AbstractWidgetPtr& node);
         void set_href(bool enter, const MD_ATTRIBUTE& src);

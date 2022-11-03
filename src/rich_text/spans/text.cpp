@@ -10,6 +10,7 @@ namespace RichText {
 
     bool TextString::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
         m_draw_chars.clear();
+        bool success = true;
 
         using namespace Fonts;
         FontRequestInfo font_request;
@@ -23,6 +24,8 @@ namespace RichText {
         if (m_safe_string == nullptr || font->im_font == nullptr) {
             return false;
         }
+
+        success = hk_add_pre_chars(wrap_chars);
 
         float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
         for (int i = 0;i < m_processed_text.size();i++) {
@@ -39,7 +42,8 @@ namespace RichText {
             m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
             wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
         }
-        return true;
+        success = hk_add_post_chars(wrap_chars);
+        return success;
     }
     float TextString::hk_set_position(float& cursor_y_pos, float& x_offset) {
         // Dimension is also directly calculated here
