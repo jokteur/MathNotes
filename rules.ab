@@ -1,0 +1,211 @@
+***
+*** Chapter 1. Headers
+***
+
+Header is a # followed by a space, with the number of # indicating the level (1-6)
+```
+# Simple header
+```
+
+```
+## Second-level header
+## sdfsdf
+```
+
+# Header
+## Sub-header
+
+
+
+Horizontal rule separation (with and without white-spaces before and after):
+---
+
+***
+*** Chapter 2. Lists
+***
+
+# Lists
+
+Must be a list marker, followed by a space. To be still part of an item,
+one must align with the first char of the item. You can have only one blank line in between.
+
+```AB
+- Item 1
+
+  Still in item 1
+- Item 2
+
+
+  Not item item 2 (too many blank lines)
+```
+
+## List-markers
+
+```AB
+-   bullet
++   bullet
+*   bullet
+
+x.  ordered
+x)  ordered
+(x) ordered
+
+x can be one of the following:
+1   decimal-enumerated     (limited to 999999999)
+a   lower alpha-enumerated (limited to zzz)
+A   upper alpha-enumerated (limited to ZZZ)
+i   lower roman-enumerated (limited to mmmcmxcix, i.e. 3999)
+I   upper roman-enumerated (limited to MMMCMXCIX, i.e. 3999)
+```
+
+Different type of markers in list interrupt current lists and create new lists.
+
+```AB
+- item
+1. item
+i. item
+```
+
+creates three different lists with each one list item.
+
+### Ambiguous cases
+
+If one needs to start a paragraph with a list marker, one can simply escape the first char.
+```AB
+\I. wanted to start a simple paragraph and not a list.
+```
+
+If another alpha-enumerated item is in the list, and the list is not interrupted in between the two
+items, then it is automatically alpha-enumerated.
+
+Example:
+```AB
+i. Item
+j. Item
+```
+produces an alpha-enumerated list.
+
+To decide between ambiguous cases (alpha or roman?), if no other list items allow for the arbitration,
+then the lowest decimal equivalent enumeration wins.
+
+Example:
+```AB
+i. Item
+```
+
+In this case, in roman `i` corresponds to 1 and in alpha `i` corresponds to 9, 
+so the list is roman-enumerated.
+
+
+### Tasks
+List markers can be followed by [ ], [x] or [v], thus creating tasks (empty, failed, succeeded)
+
+# Sub-list
+Lists can have lists in them (and any other blocks), which are called sublists. It is not possible
+to start with sublists. Sub-lists must have 4 spaces (or one tab) of indentation compared to the 
+parent list item.
+
+```AB
+- Item 1
+    a) Sub-list item
+    b) Sub-list item
+        i. Sub-sub-list item
+    c) Sub-list item
+- Item 2
+```
+
+It is not possible to begin with a sub-list, except if it is interrupted by a blockquote:
+```AB
+- - Not valid
+
+- > - Okay
+```
+
+***
+*** Chapter 3. Block quotes
+***
+
+Block Quotes (last char > must be followed by a space):
+
+```AB
+> First level
+>> Second level
+```
+
+Block quotes do not allow lazy line continuation as in Markdown.
+
+# Mixing block quotes and list items
+
+```AB
+> - Item 1
+>   > Start blockquote
+>   > continue blockquote
+> i. > - Valid list in blockquote in list in blockquote
+```
+
+***
+*** Chapter 4. Paragraphs
+***
+To separate paragraphs, one must insert blank lines (can be with withespace).
+Paragraph have the least precedence, so they can be interrupted by any other block.
+
+```AB
+My first paragraph
+
+My second paragraph
+with a second line.
+# Interrupted by a header
+```
+
+***
+*** Chapter 5. Code blocks
+***
+
+Three or more consecutive backticks can start a code block, with markup information on the first line.
+The closing consecutive backticks can't contain any chars except withespace beyond the line. \\ escape
+chars do not work in code blocks.
+
+````AB
+```html
+<p>html code</p>
+```
+````
+
+````
+```html
+<p>html code</p>
+```a               # Won't close the backticks
+````
+
+Code blocks are interrupted by the end of parents
+````AB
+> ```
+> code block
+Previous code block is interrupted by this paragraph
+````
+
+***
+*** Chapter 6. Raw blocks
+***
+
+One can have raw content, called raw blocks (like in djot):
+````AB
+```{=html}
+<video width="320" height="240" controls>
+   <source src="movie.mp4" type="video/mp4">
+</video>
+```
+````
+
+
+***
+*** Chapter 6. Special blocks
+***
+A special block starts with three consecutive : followed by a description on one line,
+ends with three consecutive
+
+```AB
+::: name-of-block
+
+:::
+```
