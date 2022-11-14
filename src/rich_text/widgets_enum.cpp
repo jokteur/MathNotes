@@ -1,8 +1,6 @@
 #include "widgets_enum.h"
 
 namespace RichText {
-
-
     const char* type_to_name(Type type) {
         switch (type) {
         case T_ROOT:

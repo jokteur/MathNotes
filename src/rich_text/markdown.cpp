@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "markdown.h"
+#include "markdown/markdown_interpreter.h"
 
 #include "blocks/paragraph.h"
 #include "blocks/header.h"
@@ -615,6 +616,44 @@ namespace RichText {
     AbstractWidgetPtr MarkdownToWidgets::SPAN_DEL(bool enter, int mark_begin, int mark_end) {
         return nullptr;
     }
+    void MarkdownToWidgets::tmp_show_tree() {
+        Markdown::Parser parser;
+
+        auto print_spaces = [](int level) {
+            for (int i = 0;i < level;i++)
+                std::cout << " ";
+        };
+
+        int level = 0;
+
+        parser.enter_block = [=, &level](Markdown::BLOCK_TYPE t, Markdown::BlockDetail* detail) {
+            print_spaces(level);
+            std::cout << Markdown::block_to_name(t) << std::endl;
+            level++;
+            return true;
+        };
+        parser.leave_block = [=, &level](Markdown::BLOCK_TYPE t, Markdown::BlockDetail* detail) {
+            level--;
+            return true;
+        };
+        parser.enter_span = [=, &level](Markdown::SPAN_TYPE t, Markdown::SpanDetail* detail) {
+            print_spaces(level);
+            std::cout << Markdown::span_to_name(t) << std::endl;
+            level++;
+            return true;
+        };
+        parser.leave_span = [=, &level](Markdown::SPAN_TYPE t, Markdown::SpanDetail* detail) {
+            level--;
+            return true;
+        };
+        parser.text = [=](Markdown::TEXT_TYPE t, const Markdown::OFFSET begin, const Markdown::OFFSET end) {
+            print_spaces(level + 1);
+            std::cout << Markdown::text_to_name(t) << std::endl;
+            return true;
+        };
+        std::cout << "---- Custom Markdown: " << std::endl;
+        Markdown::parse(m_text, m_text_size, &parser);
+    }
     std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, MarkdownConfig config) {
         m_text_start_idx = 0;
         m_text_end_idx = 0;
@@ -663,6 +702,8 @@ namespace RichText {
             std::cout << std::endl;
         }
         std::cout << "-----" << std::endl;
+
+        tmp_show_tree();
 
         return m_tree;
     }

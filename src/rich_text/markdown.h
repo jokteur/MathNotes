@@ -69,6 +69,8 @@ namespace RichText {
         void tree_up();
         void set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr, bool special_style = false);
 
+        void tmp_show_tree();
+
         void BLOCK_DOC(bool);
         AbstractWidgetPtr BLOCK_QUOTE(bool);
         AbstractWidgetPtr BLOCK_UL(const MD_BLOCK_UL_DETAIL*, bool);
