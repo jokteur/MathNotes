@@ -3,7 +3,7 @@
 #include <functional>
 
 // Implementation is inspired from http://github.com/mity/md4c
-namespace Markdown {
+namespace AB {
     /* A block represents a part of the herarchy like a paragraph
      * or a list
      */
@@ -21,9 +21,11 @@ namespace Markdown {
         BLOCK_HR,
         BLOCK_H,
 
+        BLOCK_SPECIAL,
+
         BLOCK_CODE,
-        BLOCK_HTML,
         BLOCK_P,
+
         BLOCK_TABLE,
         BLOCK_THEAD,
         BLOCK_TBODY,
@@ -41,16 +43,20 @@ namespace Markdown {
         SPAN_A,
         SPAN_IMG,
         SPAN_CODE,
-        SPAN_DEL,
         SPAN_LATEXMATH,
         SPAN_LATEXMATH_DISPLAY,
         SPAN_WIKILINK,
+        SPAN_SUP,
+        SPAN_SUB,
         SPAN_U,
+        SPAN_DEL,
         SPAN_HIGHLIGHT
     };
 
     enum TEXT_TYPE {
         TEXT_NORMAL = 0,
+
+        TEXT_LATEX,
 
         /* Everything that is not considered content by markdown and is used to give information
          * about a block, i.e. delimitation markers, whitespace, special chars TEXT_BLOCK_MARKER_HIDDEN
@@ -68,6 +74,14 @@ namespace Markdown {
     const char* span_to_name(SPAN_TYPE type);
     const char* text_to_name(TEXT_TYPE type);
 
+    std::string decimal_to_roman(int number);
+    std::string decimal_to_alpha(int number);
+
+    int roman_to_decimal(const std::string& str);
+    int alpha_to_decimal(const std::string& str);
+
+    bool validate_roman_str(const std::string& str);
+
     typedef unsigned int SIZE;
     typedef int OFFSET;
     typedef char CHAR;
@@ -81,10 +95,24 @@ namespace Markdown {
         std::string lang;
     };
 
-    struct BLockLiDetail : public BlockDetail {
-        bool is_task;
-        bool is_task_selected;
+    struct BlockOlDetail : public BlockDetail {
+        enum OL_TYPE { OL_ALPHABETIC, OL_ROMAN };
+        std::string pre_marker;
+        std::string post_marker;
+        OL_TYPE type;
     };
+
+    struct BlockUlDetail : public BlockDetail {
+        std::string marker;
+    };
+
+    struct BlockLiDetail : public BlockDetail {
+        enum TASK_STATE { TASK_EMPTY, TASK_FAIL, TASK_SUCCESS };
+        bool is_task;
+        std::string marker;
+        TASK_STATE task_state;
+    };
+
 
     struct BlockHDetail : public BlockDetail {
         unsigned char level; /* Header level (1 to 6) */

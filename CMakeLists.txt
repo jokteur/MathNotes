@@ -54,7 +54,7 @@ include_directories(external/stb_image)
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/core/*.cpp
-    src/markdown/*.cpp
+    src/ab/*.cpp
     src/rich_text/*.cpp
     src/rich_text/chars/*.cpp
     src/rich_text/spans/*.cpp

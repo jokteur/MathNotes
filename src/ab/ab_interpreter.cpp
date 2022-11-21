@@ -1,6 +1,6 @@
 /*
  * Part of this code is taken from MD4C: Markdown parser for C, http://github.com/mity/md4c
- * The licence for this code is given below:
+ * The licence for md4c is given below:
  *
  * Copyright (c) 2016-2020 Martin Mitas
  *
@@ -24,9 +24,9 @@
  *
  * Modifications by Jokteur, https://github.com/jokteur
  */
-#include "markdown_interpreter.h"
+#include "ab_interpreter.h"
 
-namespace Markdown {
+namespace AB {
     // TODO: correct utf8 implementation
     inline SIZE next_utf8_char(SIZE text_pos) {
         return text_pos + 1;
@@ -50,8 +50,6 @@ namespace Markdown {
             return "B_H";
         case BLOCK_CODE:
             return "B_CODE";
-        case BLOCK_HTML:
-            return "B_HTML";
         case BLOCK_P:
             return "B_P";
         case BLOCK_TABLE:
@@ -100,6 +98,8 @@ namespace Markdown {
         switch (type) {
         case TEXT_NORMAL:
             return "T_NORMAL";
+        case TEXT_LATEX:
+            return "T_LATEX";
         case TEXT_BLOCK_MARKER_HIDDEN:
             return "T_BLOCK_MARKER_HIDDEN";
         case TEXT_SPAN_MARKER_HIDDEN:
@@ -108,6 +108,141 @@ namespace Markdown {
             return "T_ESCAPE_CHAR_HIDDEN";
         };
         return "";
+    }
+
+    std::string decimal_to_roman(int number) {
+        if (number > 3999 || number < 1)
+            return "";
+
+    }
+    std::string decimal_to_alpha(int number) {
+        if (number < 1)
+            return "";
+
+        int tmp, power, order;
+        power = 26; order = 0; tmp = 26;
+        while (tmp <= number) {
+            order++;
+            power = tmp;
+            tmp *= 26;
+        }
+
+        std::vector<char> res;
+        for (int i = order; i >= 0;i--) {
+            int div = number / power;
+            number = number % power;
+            res.push_back(div);
+            power = power / 26;
+        }
+        int len = res.size();
+        for (int j = 0;j < len;j++) {
+            if (j == 0) {
+                if (res[0] == 0) {
+                    res[0] = 26;
+                    res[len - 1]--;
+                }
+            }
+            else {
+                if (res[len - j] == 0) {
+                    res[len - j] = 26;
+                    res[len - j - 1]--;
+                }
+            }
+        }
+        std::string str;
+        for (auto i : res) {
+            if (i > 0)
+                str += 64 + i;
+        }
+        return str;
+    }
+
+    int roman_value(const char c) {
+        switch (c) {
+        case 'I':
+        case 'i':
+            return 1;
+        case 'V':
+        case 'v':
+            return 5;
+        case 'X':
+        case 'x':
+            return 10;
+        case 'L':
+        case 'l':
+            return 50;
+        case 'C':
+        case 'c':
+            return 100;
+        case 'D':
+        case 'd':
+            return 500;
+        case 'M':
+        case 'm':
+            return 1000;
+        };
+        return 0;
+    }
+
+    int roman_to_decimal(const std::string& str) {
+        int res = 0;
+        for (int i = 0; i < str.length() - 1; ++i) {
+            if (roman_value(str[i]) < roman_value(str[i + 1]))
+                res -= roman_value(str[i]);
+            else
+                res += roman_value(str[i]);
+        }
+        res += roman_value(str[str.length() - 1]);
+        return res;
+    }
+    int alpha_to_decimal(const std::string& str) {
+        int res = 0;
+        int multiplier = 1;
+        for (int i = str.length() - 1;i >= 0;i--) {
+            char letter = str[i];
+            // Uppercase letter
+            if (letter >= 65 && letter <= 90) {
+                res += multiplier * (letter - 64);
+            }
+            // Lowercase letter
+            else if (letter >= 97 && letter <= 122) {
+                res += multiplier * (letter - 96);
+            }
+            else {
+                return -1;
+            }
+            multiplier *= 26;
+        }
+        return res;
+    }
+    bool validate_roman_str(const std::string& str) {
+        char prev = 0;
+        int counter = 0;
+        int prev_counter = 0;
+
+        static char* units[] = { "sdf" };
+
+        for (auto c : str) {
+            if (roman_value(c) == 0) {
+                return false;
+            }
+            if (prev == c) {
+                // Not powers of 10 should never repeat
+                if (c == 'V' || c == 'L' || c == 'D') {
+                    return false;
+                }
+                counter++;
+            }
+            else {
+                prev_counter = counter;
+                counter = 0;
+            }
+            if (counter > 3) {
+                return false;
+            }
+            if (c == 'X' && prev)
+                prev = c;
+        }
     }
 
     /*****************

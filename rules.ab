@@ -1,27 +1,121 @@
 ***
-*** Chapter 1. Headers
+*** Inline and basics
+***
+
+# Basic
+- Italic: `_italic_` or `{_italic_}` (the second is more explicit 
+and covers edge cases, like `part{_italic_})
+- Strong: `*strong*` or `{*strong*}
+- Verbatime / code: `` `verbatim` ``
+- Sub: H~2~O
+- Sup: 10^-34^
+- Highlighted: {=highlighted=}
+- Underline: {+insert+}
+- Deleted: {-deleted-}
+
+# Escaping characters
+Characters can be escaped using `\`. 
+E.g. `\*not strong` will not produce a strong inline.
+E.g. `\a` will just escape a, even if not needed in this context.
+
+# Attributes
+Generally, attributes can be specified with `{}`. These can have different behaviors
+depending on the context.
+
+Horizontal rule separation (with and without white-spaces before and after):
+`---`
+
+***
+*** References
+***
+
+# Labels and refs
+It is possible to labelize items and make reference to them. To labelize a header,
+simply use the attribute `{l:my label}` in the right context.
+
+## Refs
+
+To make references, one uses the syntax `[[my label]]` (like wiki links in Markdown).
+To make references to another document, one can use `[[document#label]]. If there is 
+a document with the same name as a label in current document and one wishes to use the
+current label, it is possible to solve the problem by specifying `[[#current label]]`
+(# alone designates current document)
+
+## Automatic enumeration
+Some things that can be automatically enumerated:
+
+- Chapters and headers
+- Figures
+- Tables
+- Block code
+- Drawings
+- Citations
+
+When making reference to them, the editor can take advantage of that.
+
+# Bibliography and citation
+It is possible to add a bibliography element and make reference to it by simply putting
+in a new line:
+```AB
+I want to make a citation [[my citation]]
+
+[c:my citation]: Foo bar, Markup languages proceedings, Volume 2, p.45, 2022
+```
+
+## Footnotes
+It is also possible to do standard footnotes, like in markdown:
+```AB
+I want a footnote [^foot].
+
+[^foot]: A note.
+
+***
+*** Links
+***
+
+```AB
+<https://example.com>
+A link inside [text](example.com).
+Another link which is defined [later][link]
+
+[link]: https://example.com
+```
+
+*** 
+*** Images
+***
+
+```AB
+![Image with title](image.png)
+![Image defined later][image]
+
+[image]: image.png
+```
+
+```
+
+***
+*** Headers
 ***
 
 Header is a # followed by a space, with the number of # indicating the level (1-6)
-```
-# Simple header
+```AB
+# Simple header {l:with label}
 ```
 
-```
+```AB
 ## Second-level header
-## sdfsdf
+## with a second line
 ```
 
+```AB
 # Header
 ## Sub-header
+```
 
-
-
-Horizontal rule separation (with and without white-spaces before and after):
----
 
 ***
-*** Chapter 2. Lists
+*** Lists
 ***
 
 # Lists
@@ -122,7 +216,7 @@ It is not possible to begin with a sub-list, except if it is interrupted by a bl
 ```
 
 ***
-*** Chapter 3. Block quotes
+*** Block quotes
 ***
 
 Block Quotes (last char > must be followed by a space):
@@ -144,7 +238,7 @@ Block quotes do not allow lazy line continuation as in Markdown.
 ```
 
 ***
-*** Chapter 4. Paragraphs
+*** Paragraphs
 ***
 To separate paragraphs, one must insert blank lines (can be with withespace).
 Paragraph have the least precedence, so they can be interrupted by any other block.
@@ -158,7 +252,7 @@ with a second line.
 ```
 
 ***
-*** Chapter 5. Code blocks
+*** Code blocks
 ***
 
 Three or more consecutive backticks can start a code block, with markup information on the first line.
@@ -185,7 +279,7 @@ Previous code block is interrupted by this paragraph
 ````
 
 ***
-*** Chapter 6. Raw blocks
+*** Raw blocks
 ***
 
 One can have raw content, called raw blocks (like in djot):
@@ -197,15 +291,62 @@ One can have raw content, called raw blocks (like in djot):
 ```
 ````
 
+***
+*** Latex Math
+***
+
+Inline is surrounded by $. E.g.: `$math$`
+with escaped character: $f(x) \$ = x^2$, will give this LaTex string: `f(x) $ = x^2`
+Any other \ is taken as is: `$\mathbf(x)$` (no need to escape \)
+
+As a block:
+```AB
+$$
+f(x) = x^2
+$$
+```
+
+Same escaping rules:
+```AB
+$$
+I write \$$
+$$
+```
 
 ***
-*** Chapter 6. Special blocks
+*** Tables
+***
+TODO
+
+
+***
+*** Special blocks
 ***
 A special block starts with three consecutive : followed by a description on one line,
-ends with three consecutive
+ends with three consecutive :.
 
 ```AB
 ::: name-of-block
-
+content
 :::
 ```
+
+Special blocks can be inside quotes and list. A special block inside a quote or list not
+closed will be closed when the parent block is closed.
+
+Here are special blocks used by MathNotes:
+
+# Figures
+
+```AB
+::: figure {ncols=2,nrows=3,center}
+![title of my image](image.png) any text written here is ignored
+![other image](image.png)
+
+Any text written here is taken as legend
+:::
+```
+One image per line. 
+
+It is possible to specify number of cols with the attribute ncols.
+Keywords center, left, right will align the images.
