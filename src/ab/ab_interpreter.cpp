@@ -148,6 +148,14 @@ namespace AB {
         std::vector<int> line_number_begs;
     };
 
+    static OFFSET find_next_line_off(Context* ctx, OFFSET off) {
+        OFFSET current_line_number = ctx->offset_to_line_number[off];
+        if (current_line_number >= ctx->line_number_begs.size())
+            return ctx->size;
+        else
+            return ctx->line_number_begs[current_line_number + 1];
+    }
+
     static void add_container(Context* ctx, OFFSET start, BLOCK_TYPE type, unsigned indent) {
         Container container;
         container.start = start;
@@ -158,7 +166,7 @@ namespace AB {
         ctx->current_container = &(*(ctx->containers.end() - 1));
         parent->children.push_back(ctx->current_container);
     }
-    /* To avoid `if (ctx->current_container == nullptr)`, we make
+    /* To avoid `if (ctx->current_container == nullptr)`, we have to make
     * sure to never call this function when current_container is BLOCK_DOCUMENT */
     static void close_current_container(Context* ctx, OFFSET end) {
         ctx->current_container->end = end;
@@ -178,38 +186,63 @@ namespace AB {
         *indent_pos = off;
         return indent - current_indent;
     }
-    static OFFSET find_next_line(Context* ctx, OFFSET off) {
-        OFFSET current_line_number = ctx->offset_to_line_number[off];
-        if (current_line_number >= ctx->line_number_begs.size())
-            return -1;
-        else
-            return ctx->line_number_begs[current_line_number + 1];
-    }
 
 
-    bool process_line(Context* ctx, OFFSET off, OFFSET* end, Line* line_start_block, Line* current_line) {
+    bool process_line(Context* ctx, OFFSET off, OFFSET* end) { //, Line* line_start_block, Line* current_line) {
         bool ret = true;
 
-        current_line->indent = find_line_indent(ctx, off, 0, end);
-        current_line->beg = off;
-        OFFSET end_of_line = ctx->line_number_begs[ctx->offset_to_line_number[off] + 1];
+        // current_line->indent = find_line_indent(ctx, off, 0, end);
+        // current_line->beg = off;
+        OFFSET end_of_line = find_next_line_off(ctx, off);
+        OFFSET start = off;
 
-        off = *end;
+        // off = *end;
 
-        int n_siblings = ctx->current_container->parent->children.size();
-        int current_indent = ctx->current_container->indent;
+        // int n_siblings = ctx->current_container->parent->children.size();
+        // int current_indent = ctx->current_container->indent;
         /* We do not count the ROOT doc as a parent (which is always there),
         * hence -1 */
-        int n_parents = -1;
+        // int n_parents = -1;
         Container* parent = ctx->current_container;
-        while (parent != nullptr) {
-            n_parents++;
-            parent = ctx->current_container->parent;
-        }
+        // while (parent != nullptr) {
+        //     n_parents++;
+        //     parent = ctx->current_container->parent;
+        // }
+
+        int whitespace_counter = 0;
+        std::string acc; // Acc is for accumulator
+        std::string acc_without_whitespace;
+        bool repeated_char = false;
+        bool potential_list = false;
+        bool potential_quote = false;
+        char prev_char = 0;
 
         while (CH(off) != '\n') {
+            if (CH(off) == '\\') {
+                off++;
+                // Make paragraph
+                break;
+            }
+            if (CH(off) == ' ') {
+                whitespace_counter++;
+            }
+            else if (CH(off) == '\t') {
+                whitespace_counter += 4;
+            }
+            if (CH(off) == prev_char)
+                repeated_char = true;
+            else
+                repeated_char = false;
+
+            acc += CH(off);
+
+            // if (ISANYOF(off, "-("))
+
+            prev_char = CH(off);
             off++;
         }
+
+        *end = off;
 
         return ret;
     abort:
@@ -230,10 +263,10 @@ namespace AB {
         ctx->containers.push_back(doc_container);
         ctx->current_container = &(*(ctx->containers.end() - 1));
 
-        // while (off < ctx->size) {
-        //     CHECK_AND_RET(process_line(ctx, off, &off, &line_start_block, &current_line));
-        //     // if (line_start_block == )    
-        // }
+        while (off < ctx->size) {
+            CHECK_AND_RET(process_line(ctx, off, &off));
+            //     // if (line_start_block == )    
+        }
 
         return ret;
     abort:

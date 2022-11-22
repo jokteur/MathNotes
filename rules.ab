@@ -113,6 +113,11 @@ Header is a # followed by a space, with the number of # indicating the level (1-
 ## Sub-header
 ```
 
+***
+*** blocks
+***
+If there are 4 whitespaces, then everything that follows (the line) is counted as a paragraph,
+except if we are in the case of a sub-list.
 
 ***
 *** Lists
@@ -120,8 +125,9 @@ Header is a # followed by a space, with the number of # indicating the level (1-
 
 # Lists
 
-Must be a list marker, followed by a space. To be still part of an item,
-one must align with the first char of the item. You can have only one blank line in between.
+Must be a list marker, preceeded by an optional space, and followed by a mandatory space.
+To be still part of an item, one must align with the first char of the item.
+You can have only one blank line in between.
 
 ```AB
 - Item 1
@@ -196,8 +202,9 @@ List markers can be followed by [ ], [x] or [v], thus creating tasks (empty, fai
 
 # Sub-list
 Lists can have lists in them (and any other blocks), which are called sublists. It is not possible
-to start with sublists. Sub-lists must have 4 spaces (or one tab) of indentation compared to the 
-parent list item.
+to start with sublists.
+Sub-lists must have 4 spaces (or one tab) of indentation compared to the 
+parent list item, i.e. a sub-list must be preceeded by 4 spaces, a sub-sub-list by 8 spaces, etc.
 
 ```AB
 - Item 1
@@ -210,7 +217,7 @@ parent list item.
 
 It is not possible to begin with a sub-list, except if it is interrupted by a blockquote:
 ```AB
-- - Not valid
+- - Not valid, the second dash is interpreted as text
 
 - > - Okay
 ```
@@ -219,7 +226,7 @@ It is not possible to begin with a sub-list, except if it is interrupted by a bl
 *** Block quotes
 ***
 
-Block Quotes (last char > must be followed by a space):
+Block Quotes:
 
 ```AB
 > First level
