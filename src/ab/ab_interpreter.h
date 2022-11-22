@@ -3,6 +3,7 @@
 #include <functional>
 
 #include "definitions.h"
+#include "helpers.h"
 
 // Implementation is inspired from http://github.com/mity/md4c
 namespace AB {
