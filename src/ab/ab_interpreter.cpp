@@ -115,44 +115,43 @@ namespace AB {
             return "";
 
     }
-    std::string decimal_to_alpha(int number) {
+    std::string decimal_to_str(int number) {
         if (number < 1)
             return "";
 
         int tmp, power, order;
-        power = 26; order = 0; tmp = 26;
-        while (tmp <= number) {
+        power = 1; order = 0; tmp = 26;
+        while (tmp < number) {
             order++;
             power = tmp;
             tmp *= 26;
         }
-
         std::vector<char> res;
         for (int i = order; i >= 0;i--) {
             int div = number / power;
             number = number % power;
             res.push_back(div);
-            power = power / 26;
+            power /= 26;
         }
-        int len = res.size();
-        for (int j = 0;j < len;j++) {
-            if (j == 0) {
-                if (res[0] == 0) {
-                    res[0] = 26;
-                    res[len - 1]--;
-                }
-            }
-            else {
-                if (res[len - j] == 0) {
-                    res[len - j] = 26;
-                    res[len - j - 1]--;
+        for (int i = res.size() - 1; i > 0;i--) {
+            if (res[i] == 0) {
+                res[i] = 26;
+                for (int j = i - 1; j >= 0; j--) {
+                    bool carry_done = res[j] != 0;
+                    if (carry_done)
+                        res[j] = (res[j] - 1) % 26;
+                    else
+                        res[j] = 25;
+                    if (carry_done)
+                        break;
                 }
             }
         }
         std::string str;
         for (auto i : res) {
-            if (i > 0)
+            if (i > 0) {
                 str += 64 + i;
+            }
         }
         return str;
     }
