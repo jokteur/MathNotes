@@ -617,7 +617,7 @@ namespace RichText {
         return nullptr;
     }
     void MarkdownToWidgets::tmp_show_tree() {
-        Markdown::Parser parser;
+        AB::Parser parser;
 
         auto print_spaces = [](int level) {
             for (int i = 0;i < level;i++)
@@ -626,33 +626,33 @@ namespace RichText {
 
         int level = 0;
 
-        parser.enter_block = [=, &level](Markdown::BLOCK_TYPE t, Markdown::BlockDetail* detail) {
+        parser.enter_block = [=, &level](AB::BLOCK_TYPE t, AB::BlockDetail* detail) {
             print_spaces(level);
-            std::cout << Markdown::block_to_name(t) << std::endl;
+            std::cout << AB::block_to_name(t) << std::endl;
             level++;
             return true;
         };
-        parser.leave_block = [=, &level](Markdown::BLOCK_TYPE t, Markdown::BlockDetail* detail) {
+        parser.leave_block = [=, &level](AB::BLOCK_TYPE t, AB::BlockDetail* detail) {
             level--;
             return true;
         };
-        parser.enter_span = [=, &level](Markdown::SPAN_TYPE t, Markdown::SpanDetail* detail) {
+        parser.enter_span = [=, &level](AB::SPAN_TYPE t, AB::SpanDetail* detail) {
             print_spaces(level);
-            std::cout << Markdown::span_to_name(t) << std::endl;
+            std::cout << AB::span_to_name(t) << std::endl;
             level++;
             return true;
         };
-        parser.leave_span = [=, &level](Markdown::SPAN_TYPE t, Markdown::SpanDetail* detail) {
+        parser.leave_span = [=, &level](AB::SPAN_TYPE t, AB::SpanDetail* detail) {
             level--;
             return true;
         };
-        parser.text = [=](Markdown::TEXT_TYPE t, const Markdown::OFFSET begin, const Markdown::OFFSET end) {
+        parser.text = [=](AB::TEXT_TYPE t, const AB::OFFSET begin, const AB::OFFSET end) {
             print_spaces(level + 1);
-            std::cout << Markdown::text_to_name(t) << std::endl;
+            std::cout << AB::text_to_name(t) << std::endl;
             return true;
         };
-        std::cout << "---- Custom Markdown: " << std::endl;
-        Markdown::parse(m_text, m_text_size, &parser);
+        std::cout << "---- Custom AB: " << std::endl;
+        AB::parse(m_text, m_text_size, &parser);
     }
     std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, MarkdownConfig config) {
         m_text_start_idx = 0;
