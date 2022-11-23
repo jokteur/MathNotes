@@ -90,45 +90,23 @@ namespace AB {
         unsigned indent = 0;
     };
 
+    static const int LIST_OPENER = 0x1;
+    static const int CODE_OPENER = 0x2;
+    static const int HR_OPENER = 0x4;
+    static const int H_OPENER = 0x8;
+    static const int P_OPENER = 0x10;
+    static const int QUOTE_OPENER = 0x20;
+    static const int DIV_OPENER = 0x40;
+    static const int DEFINITION_OPENER = 0x080;
+    static const int LATEX_OPENER = 0x100;
+
     struct Line {
-        LINETYPE type = LINE_BLANK;
+        int flag = 0;
+        OFFSET pre = 0;
         OFFSET beg = 0;
         OFFSET end = 0;
+        OFFSET post = 0;
         unsigned indent = 0;
-    };
-
-
-    /******************************************
-     ***  Processing Inlines (a.k.a Spans)  ***
-     ******************************************/
-
-     /* The mark structure.
-      *
-      * '\\': Maybe escape sequence.
-      * '\0': NULL char.
-      *  '*': Maybe (strong) emphasis start/end.
-      *  '_': Maybe (strong) emphasis start/end.
-      *  '~': Maybe strikethrough start/end (needs MD_FLAG_STRIKETHROUGH).
-      *  '`': Maybe code span start/end.
-      *  '&': Maybe start of entity.
-      *  ';': Maybe end of entity.
-      *  '<': Maybe start of raw HTML or autolink.
-      *  '>': Maybe end of raw HTML or autolink.
-      *  '[': Maybe start of link label or link text.
-      *  '!': Equivalent of '[' for image.
-      *  ']': Maybe end of link label or link text.
-      *  '@': Maybe permissive e-mail auto-link (needs MD_FLAG_PERMISSIVEEMAILAUTOLINKS).
-      *  ':': Maybe permissive URL auto-link (needs MD_FLAG_PERMISSIVEURLAUTOLINKS).
-      *  '.': Maybe permissive WWW auto-link (needs MD_FLAG_PERMISSIVEWWWAUTOLINKS).
-      *  'D': Dummy mark, it reserves a space for splitting a previous mark
-      *       (e.g. emphasis) or to make more space for storing some special data
-      *       related to the preceding mark (e.g. link).
-      */
-    struct Mark {
-        OFFSET prev;
-        OFFSET next;
-        CHAR ch;
-        unsigned char flags;
     };
 
     /**************
@@ -210,24 +188,14 @@ namespace AB {
         return true;
     }
 
-    static const int LIST_OPENER = 0x1;
-    static const int CODE_OPENER = 0x2;
-    static const int HR_OPENER = 0x4;
-    static const int H_OPENER = 0x8;
-    static const int P_OPENER = 0x10;
-    static const int QUOTE_OPENER = 0x20;
-    static const int DIV_OPENER = 0x40;
-    static const int DEFINITION_OPENER = 0x080;
-    static const int LATEX_OPENER = 0x100;
-
-    bool analyze_line(Context* ctx, OFFSET off, OFFSET* end) { //, Line* line_start_block, Line* current_line) {
+    bool analyze_line(Context* ctx, OFFSET off, OFFSET* end, Line* line) { //, Line* line_start_block, Line* current_line) {
         bool ret = true;
 
         // current_line->indent = find_line_indent(ctx, off, 0, end);
         // current_line->beg = off;
-        OFFSET end_of_line = find_next_line_off(ctx, off);
+        OFFSET line_end = find_next_line_off(ctx, off);
         OFFSET start = off;
-        OFFSET goto_end = end_of_line;
+        OFFSET goto_end = line_end;
 
         OFFSET block_pre = off;
         OFFSET block_beg = off;
@@ -266,7 +234,7 @@ namespace AB {
 #define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
 #define CHECK_INDENT(num) whitespace_counter - indent < (num)
 
-        while (off < end_of_line) {
+        while (off < line_end) {
             acc += CH(off);
 
             if (CH(off) == '\\') {
@@ -517,8 +485,9 @@ namespace AB {
         ctx->containers.push_back(doc_container);
         ctx->current_container = &(*(ctx->containers.end() - 1));
 
+        Line line;
         while (off < ctx->size) {
-            CHECK_AND_RET(analyze_line(ctx, off, &off));
+            CHECK_AND_RET(analyze_line(ctx, off, &off, &line));
             //     // if (line_start_block == )    
         }
 
