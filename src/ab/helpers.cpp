@@ -108,10 +108,13 @@ namespace AB {
 
         int res = 0;
         for (int i = 0; i < str.length() - 1; ++i) {
-            if (roman_value(str[i]) < roman_value(str[i + 1]))
-                res -= roman_value(str[i]);
+            int value = roman_value(str[i]);
+            if (value == 0)
+                return 0;
+            if (value < roman_value(str[i + 1]))
+                res -= value;
             else
-                res += roman_value(str[i]);
+                res += value;
         }
         res += roman_value(str[str.length() - 1]);
         return res;

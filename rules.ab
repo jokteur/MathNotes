@@ -1,8 +1,6 @@
-***
-*** Inline and basics
-***
+# Inline and basics
 
-# Basic
+## Basic
 - Italic: `_italic_` or `{_italic_}` (the second is more explicit 
 and covers edge cases, like `part{_italic_})
 - Strong: `*strong*` or `{*strong*}
@@ -13,27 +11,27 @@ and covers edge cases, like `part{_italic_})
 - Underline: {+insert+}
 - Deleted: {-deleted-}
 
-# Escaping characters
+## Escaping characters
 Characters can be escaped using `\`. 
 E.g. `\*not strong` will not produce a strong inline.
 E.g. `\a` will just escape a, even if not needed in this context.
 
-# Attributes
+## Attributes
 Generally, attributes can be specified with `{}`. These can have different behaviors
 depending on the context.
 
-Horizontal rule separation (with and without white-spaces before and after):
+Horizontal rule separation (with and without white-spaces before and after), more than two consecutive '-':
 `---`
 
-***
-*** References
-***
+-----------------
 
-# Labels and refs
+# References
+
+## Labels and refs
 It is possible to labelize items and make reference to them. To labelize a header,
 simply use the attribute `{l:my label}` in the right context.
 
-## Refs
+### Refs
 
 To make references, one uses the syntax `[[my label]]` (like wiki links in Markdown).
 To make references to another document, one can use `[[document#label]]. If there is 
@@ -41,7 +39,7 @@ a document with the same name as a label in current document and one wishes to u
 current label, it is possible to solve the problem by specifying `[[#current label]]`
 (# alone designates current document)
 
-## Automatic enumeration
+### Automatic enumeration
 Some things that can be automatically enumerated:
 
 - Chapters and headers
@@ -53,7 +51,7 @@ Some things that can be automatically enumerated:
 
 When making reference to them, the editor can take advantage of that.
 
-# Bibliography and citation
+## Bibliography and citation
 It is possible to add a bibliography element and make reference to it by simply putting
 in a new line:
 ```AB
@@ -62,16 +60,16 @@ I want to make a citation [[my citation]]
 [c:my citation]: Foo bar, Markup languages proceedings, Volume 2, p.45, 2022
 ```
 
-## Footnotes
+### Footnotes
 It is also possible to do standard footnotes, like in markdown:
 ```AB
 I want a footnote [^foot].
 
 [^foot]: A note.
 
-***
-*** Links
-***
+-----------------
+
+# Links
 
 ```AB
 <https://example.com>
@@ -81,9 +79,9 @@ Another link which is defined [later][link]
 [link]: https://example.com
 ```
 
-*** 
-*** Images
-***
+-----------------
+
+# Images
 
 ```AB
 ![Image with title](image.png)
@@ -92,11 +90,17 @@ Another link which is defined [later][link]
 [image]: image.png
 ```
 
-```
+-----------------
 
-***
-*** Headers
-***
+# Definitions
+
+A paragraph with the following regex ^\[.*\]: is considered as a definition.
+We can have footnotes, links, images and citation definitions.
+
+
+-----------------
+
+# Headers
 
 Header is a # followed by a space, with the number of # indicating the level (1-6)
 ```AB
@@ -113,15 +117,14 @@ Header is a # followed by a space, with the number of # indicating the level (1-
 ## Sub-header
 ```
 
-***
-*** blocks
-***
-If there are 4 whitespaces, then everything that follows (the line) is counted as a paragraph,
-except if we are in the case of a sub-list.
+-----------------
 
-***
-*** Lists
-***
+# Blocks
+
+If there are more than 4 whitespaces, then everything that follows (the line) is counted as a paragraph,
+except if we are in the case of a sub-list and list items.
+
+-----------------
 
 # Lists
 
@@ -200,7 +203,7 @@ so the list is roman-enumerated.
 ### Tasks
 List markers can be followed by [ ], [x] or [v], thus creating tasks (empty, failed, succeeded)
 
-# Sub-list
+## Sub-list
 Lists can have lists in them (and any other blocks), which are called sublists. It is not possible
 to start with sublists.
 Sub-lists must have 4 spaces (or one tab) of indentation compared to the 
@@ -221,10 +224,9 @@ It is not possible to begin with a sub-list, except if it is interrupted by a bl
 
 - > - Okay
 ```
+-----------------
 
-***
-*** Block quotes
-***
+# Block quotes
 
 Block Quotes:
 
@@ -235,7 +237,7 @@ Block Quotes:
 
 Block quotes do not allow lazy line continuation as in Markdown.
 
-# Mixing block quotes and list items
+## Mixing block quotes and list items
 
 ```AB
 > - Item 1
@@ -244,9 +246,10 @@ Block quotes do not allow lazy line continuation as in Markdown.
 > i. > - Valid list in blockquote in list in blockquote
 ```
 
-***
-*** Paragraphs
-***
+-----------------
+
+# Paragraphs
+
 To separate paragraphs, one must insert blank lines (can be with withespace).
 Paragraph have the least precedence, so they can be interrupted by any other block.
 
@@ -258,9 +261,9 @@ with a second line.
 # Interrupted by a header
 ```
 
-***
-*** Code blocks
-***
+-----------------
+
+# Code blocks
 
 Three or more consecutive backticks can start a code block, with markup information on the first line.
 The closing consecutive backticks can't contain any chars except withespace beyond the line. \\ escape
@@ -285,9 +288,9 @@ Code blocks are interrupted by the end of parents
 Previous code block is interrupted by this paragraph
 ````
 
-***
-*** Raw blocks
-***
+-----------------
+
+# Raw blocks
 
 One can have raw content, called raw blocks (like in djot):
 ````AB
@@ -298,9 +301,9 @@ One can have raw content, called raw blocks (like in djot):
 ```
 ````
 
-***
-*** Latex Math
-***
+-----------------
+
+# Latex Math
 
 Inline is surrounded by $. E.g.: `$math$`
 with escaped character: $f(x) \$ = x^2$, will give this LaTex string: `f(x) $ = x^2`
@@ -320,15 +323,16 @@ I write \$$
 $$
 ```
 
-***
-*** Tables
-***
+-----------------
+
+# Tables
+
 TODO
 
+-----------------
 
-***
-*** Special blocks
-***
+# Special Blocks
+
 A special block starts with three consecutive : followed by a description on one line,
 ends with three consecutive :.
 
@@ -343,7 +347,7 @@ closed will be closed when the parent block is closed.
 
 Here are special blocks used by MathNotes:
 
-# Figures
+## Figures
 
 ```AB
 ::: figure {ncols=2,nrows=3,center}

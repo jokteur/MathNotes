@@ -625,7 +625,6 @@ namespace RichText {
         };
 
         int level = 0;
-        AB::validate_roman_enumeration("MMMCMXCIX");
 
         parser.enter_block = [=, &level](AB::BLOCK_TYPE t, AB::BlockDetail* detail) {
             print_spaces(level);

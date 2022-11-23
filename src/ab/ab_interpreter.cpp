@@ -27,6 +27,8 @@
 #include "ab_interpreter.h"
 #include "internal_helpers.h"
 
+#include <iostream>
+
 #include <unordered_set>
 #include <unordered_map>
 
@@ -150,7 +152,7 @@ namespace AB {
 
     static OFFSET find_next_line_off(Context* ctx, OFFSET off) {
         OFFSET current_line_number = ctx->offset_to_line_number[off];
-        if (current_line_number >= ctx->line_number_begs.size())
+        if (current_line_number + 1 >= ctx->line_number_begs.size())
             return ctx->size;
         else
             return ctx->line_number_begs[current_line_number + 1];
@@ -173,28 +175,63 @@ namespace AB {
         ctx->current_container = ctx->current_container->parent;
     }
 
-    static unsigned find_line_indent(Context* ctx, OFFSET off, unsigned current_indent, OFFSET* indent_pos) {
-        unsigned indent = current_indent;
-
-        while (off < ctx->size && ISBLANK(off)) {
-            if (CH(off) == '\t')
-                indent += 4;
-            else
-                indent++;
-            off++;
+    /**
+     * Verifies if a str can be converted into a positiv number
+    */
+    bool verify_positiv_number(const std::string& str) {
+        if (str.empty())
+            return false;
+        if (str.length() == 1 && ISDIGIT_(str[0]))
+            return true;
+        for (int i = 0;i < str.length();i++) {
+            if (!ISDIGIT_(str[i]) || (i == 0 && str[i] == '0'))
+                return false;
         }
-        *indent_pos = off;
-        return indent - current_indent;
+        return true;
     }
 
+    int count_marks(Context* ctx, OFFSET off, char mark) {
+        int counter = 0;
+        while (CH(off) != '\n' && off < ctx->size) {
+            if (CH(off) == mark)
+                counter++;
+            else
+                break;
+            off++;
+        }
+        return counter;
+    }
+    bool check_for_whitespace(Context* ctx, OFFSET off) {
+        while (CH(off) != '\n' && off < ctx->size) {
+            if (!ISWHITESPACE(off))
+                return false;
+            off++;
+        }
+        return true;
+    }
 
-    bool process_line(Context* ctx, OFFSET off, OFFSET* end) { //, Line* line_start_block, Line* current_line) {
+    static const int LIST_OPENER = 0x1;
+    static const int CODE_OPENER = 0x2;
+    static const int HR_OPENER = 0x4;
+    static const int H_OPENER = 0x8;
+    static const int P_OPENER = 0x10;
+    static const int QUOTE_OPENER = 0x20;
+    static const int DIV_OPENER = 0x40;
+    static const int DEFINITION_OPENER = 0x080;
+    static const int LATEX_OPENER = 0x100;
+
+    bool analyze_line(Context* ctx, OFFSET off, OFFSET* end) { //, Line* line_start_block, Line* current_line) {
         bool ret = true;
 
         // current_line->indent = find_line_indent(ctx, off, 0, end);
         // current_line->beg = off;
         OFFSET end_of_line = find_next_line_off(ctx, off);
         OFFSET start = off;
+        OFFSET goto_end = end_of_line;
+
+        OFFSET block_pre = off;
+        OFFSET block_beg = off;
+        OFFSET block_end, block_post;
 
         // off = *end;
 
@@ -211,62 +248,255 @@ namespace AB {
 
         int whitespace_counter = 0;
         std::string acc; // Acc is for accumulator
-        std::string acc_without_whitespace;
 
-        static const int list_flag_opener = 0x1;
-        static const int code_flag_opener = 0x2;
-        static const int hr_flag_opener = 0x4;
-        static const int list_flag_opener = 0x8;
-
+        enum SOLVED { NONE, PARTIAL, FULL };
+        SOLVED block_solved = NONE;
+        char list_mark = 0;
         int opener_flags = 0;
-        bool repeated_char = false;
-        bool potential_list = false;
-        bool potential_quote = false;
-        char prev_char = 0;
+        int mark_counter = 0;
+        int indent = 0;
 
-        while (CH(off) != '\n') {
+#define MAKE_P() \
+    block_pre = off; block_beg = off; opener_flags = P_OPENER; \
+    block_solved = PARTIAL;
+#define MAKE_UL() \
+    opener_flags = LIST_OPENER; block_pre = off; block_beg = off + 2; \
+    goto_end = off + 2; block_solved = FULL;
+#define NEXT_LOOP() off++;
+#define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
+#define CHECK_INDENT(num) whitespace_counter - indent < (num)
+
+        while (off < end_of_line) {
+            acc += CH(off);
+
             if (CH(off) == '\\') {
-                off++;
-                // Make paragraph and go end of line
-                break;
+                if (off == start) {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+                else {
+                    NEXT_LOOP();
+                }
             }
+
+            if (CH(off) != ']' && opener_flags & DEFINITION_OPENER) {
+                NEXT_LOOP();
+                continue;
+            }
+
+            // Block detection
             if (CH(off) == ' ') {
                 whitespace_counter++;
             }
             else if (CH(off) == '\t') {
                 whitespace_counter += 4;
             }
-            if (CH(off) == prev_char)
-                repeated_char = true;
-            else
-                repeated_char = false;
-
-            if (CH(off) == '#') {
-                if (CH(off + 1) == ' ' && whitespace_counter < 4) {
-                    // Make header
+            else if (CH(off) == '#') {
+                int count = count_marks(ctx, off, '#');
+                if (CHECK_INDENT(4) && count > 0 && count < 7
+                    && CHECK_WS_OR_END(off + count)) {
+                    // Valid header
+                    mark_counter = count;
+                    opener_flags = H_OPENER;
+                    block_pre = off;
+                    block_beg = off + count;
+                    block_solved = FULL;
+                    break;
                 }
                 else {
-                    // Make paragraph and go end of line
+                    // Paragraph
+                    MAKE_P();
+                    break;
                 }
             }
             else if (CH(off) == '>') {
-                if (whitespace_counter < 2) {
-                    // Make quote
+                if (CHECK_INDENT(2)) {
+                    // Valid quote
+                    block_pre = off; block_beg = off;
+                    opener_flags = QUOTE_OPENER;
+                    goto_end = off + 1;
+                    block_solved = FULL;
+                    break;
                 }
                 else {
-                    // Make paragraph
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+            }
+            else if (CH(off) == '`') {
+                int backtick_counter = count_marks(ctx, off, '`');
+                if (CHECK_INDENT(4) && backtick_counter > 2) {
+                    // Valid code
+                    mark_counter = backtick_counter;
+                    block_pre = off;
+                    block_beg = off + backtick_counter;
+                    opener_flags = CODE_OPENER;
+                    block_solved = FULL;
+                    break;
+                }
+                else {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+            }
+            // Potential bullet lists
+            else if (CH(off) == '*') {
+                if (CHECK_WS_OR_END(off + 1) && !(opener_flags & LIST_OPENER)) {
+                    // Make list
+                    MAKE_UL();
+                    break;
+                }
+                else {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+            }
+            else if (CH(off) == '-') {
+                int count = count_marks(ctx, off, '-');
+                if (count > 2 && check_for_whitespace(ctx, off + count)) {
+                    opener_flags = HR_OPENER;
+                    block_pre = off;
+                    block_beg = off + count;
+                    block_solved = FULL;
+                    break;
+                }
+                else if (CHECK_WS_OR_END(off + 1) && !(opener_flags & LIST_OPENER)) {
+                    // Unordered list
+                    MAKE_UL();
+                    break;
+                }
+                else {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+
+            }
+            else if (CH(off) == '+') {
+                if (CHECK_WS_OR_END(off + 1) && !(opener_flags & LIST_OPENER)) {
+                    // Make list
+                    MAKE_UL();
+                    break;
+                }
+            }
+            // Potential ordered lists
+            else if (CH(off) == '(') {
+                if (opener_flags & LIST_OPENER) {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+                acc.clear();
+                list_mark = '(';
+                block_pre = off;
+                block_beg = off + 1;
+                opener_flags |= LIST_OPENER;
+            }
+            else if (ISANYOF2(off, ')', '.')) {
+                std::string str = acc.substr(0, acc.size() - 1);
+                if (str.length() > 0 && str.length() < 12 && CHECK_WS_OR_END(off + 1)) {
+                    // Potential list
+                    // The validity of enumeration should still be checked
+                    block_end = off;
+                    block_post = off + 2;
+                    opener_flags = LIST_OPENER;
+                    block_solved = PARTIAL;
+                    acc = str;
+                    break;
+                }
+                else {
+                    MAKE_P();
+                    break;
+                }
+            }
+            // Potential definitions or divs
+            else if (CH(off) == ':') {
+                int count = count_marks(ctx, off, ':');
+                if (CHECK_INDENT(4) && count == 3) {
+                    block_solved = FULL;
+                    block_pre = off;
+                    block_beg = off + count;
+                    opener_flags = DIV_OPENER;
+                    break;
+                }
+                else {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+
+            }
+            else if (CH(off) == '[') {
+                if (CHECK_INDENT(4)) {
+                    block_pre = off;
+                    block_beg = off + 1;
+                    opener_flags |= DEFINITION_OPENER;
+                    acc.clear();
+                }
+                else {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+            }
+            else if (CH(off) == ']') {
+                if (opener_flags & DEFINITION_OPENER && CH(off + 1) == ':') {
+                    block_solved = FULL;
+                    block_end = off;
+                    block_post = off + 2;
+                    opener_flags = DEFINITION_OPENER;
+                    break;
+                }
+                else {
+                    // Paragraph
+                    MAKE_P();
+                    break;
+                }
+            }
+            else if (CH(off) == '$') {
+                if (CHECK_INDENT(4) && CH(off + 1) == '$') {
+                    // TODO: need to find closure
+                    block_pre = off;
+                    block_beg = off + 2;
+                    block_solved = PARTIAL;
+                    opener_flags = LATEX_OPENER;
+                    break;
+                }
+                else {
+                    MAKE_P();
+                    break;
                 }
             }
 
-            acc += CH(off);
-
-            // if (ISANYOF(off, "-("))
-
-            prev_char = CH(off);
-            off++;
+            NEXT_LOOP();
         }
 
-        *end = off;
+        if (opener_flags & P_OPENER)
+            std::cout << "P ";
+        if (opener_flags & CODE_OPENER)
+            std::cout << "CODE ";
+        if (opener_flags & QUOTE_OPENER)
+            std::cout << "QUOTE ";
+        if (opener_flags & HR_OPENER)
+            std::cout << "HR ";
+        if (opener_flags & H_OPENER)
+            std::cout << "H ";
+        if (opener_flags & DIV_OPENER)
+            std::cout << "DIV ";
+        if (opener_flags & DEFINITION_OPENER)
+            std::cout << "DEF ";
+        if (opener_flags & LIST_OPENER)
+            std::cout << "LIST ";
+        if (opener_flags & LATEX_OPENER)
+            std::cout << "LATEX ";
+
+        std::cout << block_pre << " " << block_beg << " " << block_end << " " << block_end << std::endl;
+
+        *end = goto_end;
 
         return ret;
     abort:
@@ -288,7 +518,7 @@ namespace AB {
         ctx->current_container = &(*(ctx->containers.end() - 1));
 
         while (off < ctx->size) {
-            CHECK_AND_RET(process_line(ctx, off, &off));
+            CHECK_AND_RET(analyze_line(ctx, off, &off));
             //     // if (line_start_block == )    
         }
 

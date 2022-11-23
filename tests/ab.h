@@ -15,6 +15,7 @@ TEST_SUITE("AB") {
             CHECK(!AB::validate_alpha_enumeration("aBc", 3));
             CHECK(!AB::validate_alpha_enumeration("aaaz", 3));
             CHECK(!AB::validate_alpha_enumeration("ab.", 3));
+            CHECK(!AB::validate_alpha_enumeration("12", 3));
         }
     }
     TEST_CASE("Roman enumeration") {
@@ -34,6 +35,7 @@ TEST_SUITE("AB") {
             CHECK_MESSAGE(!AB::validate_roman_enumeration("MMMXD"), "Should have failed for MMMXD");
             CHECK_MESSAGE(!AB::validate_roman_enumeration("MMA"), "Should have failed for MMA");
             CHECK_MESSAGE(!AB::validate_roman_enumeration("MMDxi"), "Should have failed for MMDxi");
+            CHECK_MESSAGE(!AB::validate_roman_enumeration("ABC"), "Should have failed for ABC");
         }
     }
 }
