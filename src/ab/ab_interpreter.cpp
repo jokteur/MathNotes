@@ -212,6 +212,13 @@ namespace AB {
         int whitespace_counter = 0;
         std::string acc; // Acc is for accumulator
         std::string acc_without_whitespace;
+
+        static const int list_flag_opener = 0x1;
+        static const int code_flag_opener = 0x2;
+        static const int hr_flag_opener = 0x4;
+        static const int list_flag_opener = 0x8;
+
+        int opener_flags = 0;
         bool repeated_char = false;
         bool potential_list = false;
         bool potential_quote = false;
@@ -220,7 +227,7 @@ namespace AB {
         while (CH(off) != '\n') {
             if (CH(off) == '\\') {
                 off++;
-                // Make paragraph
+                // Make paragraph and go end of line
                 break;
             }
             if (CH(off) == ' ') {
@@ -233,6 +240,23 @@ namespace AB {
                 repeated_char = true;
             else
                 repeated_char = false;
+
+            if (CH(off) == '#') {
+                if (CH(off + 1) == ' ' && whitespace_counter < 4) {
+                    // Make header
+                }
+                else {
+                    // Make paragraph and go end of line
+                }
+            }
+            else if (CH(off) == '>') {
+                if (whitespace_counter < 2) {
+                    // Make quote
+                }
+                else {
+                    // Make paragraph
+                }
+            }
 
             acc += CH(off);
 
