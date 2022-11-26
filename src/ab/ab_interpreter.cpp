@@ -92,8 +92,6 @@ namespace AB {
     struct Container;
     typedef std::shared_ptr<Container> ContainerPtr;
     struct Container {
-        Boundaries bounds;
-
         bool closed = false;
 
         BLOCK_TYPE type;
@@ -116,6 +114,7 @@ namespace AB {
 
     struct LineInfo {
         int flags = 0;
+        BLOCK_TYPE type;
         Boundaries b_bounds;
         OFFSET start = 0;
         OFFSET end = 0;
@@ -184,12 +183,17 @@ namespace AB {
         ctx->current_container = *(ctx->containers.end() - 1);
         parent->children.push_back(ctx->current_container);
     }
+
+    static void update_last_bounds(ContainerPtr& container, OFFSET end, OFFSET post) {
+        auto last_bounds = container->content_boundaries.end() - 1;
+        last_bounds->end = end;
+        last_bounds->post = post;
+    }
     /* To avoid `if (ctx->current_container == nullptr)`, we have to make
     * sure to never call this function when current_container is BLOCK_DOCUMENT */
     static void close_current_container(Context* ctx, OFFSET end, OFFSET post) {
-        ctx->current_container->bounds.end = end;
+        update_last_bounds(ctx->current_container, end, post);
         ctx->current_container->closed = true;
-        ctx->current_container->bounds.post = post;
         ctx->current_container = ctx->current_container->parent;
     }
 
@@ -252,10 +256,10 @@ namespace AB {
 
 #define MAKE_P() \
     line->b_bounds.pre = off; line->b_bounds.beg = off; line->flags = P_OPENER; \
-    line->b_solved = LineInfo::PARTIAL;
+    line->b_solved = LineInfo::PARTIAL; line->type = BLOCK_P;
 #define MAKE_UL() \
     line->flags = LIST_OPENER; line->b_bounds.pre = off; line->b_bounds.beg = off + 2; \
-    goto_end = off + 2; line->b_solved = LineInfo::FULL; \
+    goto_end = off + 2; line->b_solved = LineInfo::FULL; line->type = BLOCK_UL; \
     line->li_pre_marker = CH(off);
 #define NEXT_LOOP() off++;
 #define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
@@ -303,6 +307,7 @@ namespace AB {
                     line->b_bounds.pre = off;
                     line->b_bounds.beg = off + count;
                     line->b_solved = LineInfo::FULL;
+                    line->type = BLOCK_H;
                     break;
                 }
                 else {
@@ -318,6 +323,7 @@ namespace AB {
                     line->flags = QUOTE_OPENER;
                     goto_end = off + 1;
                     line->b_solved = LineInfo::FULL;
+                    line->type = BLOCK_QUOTE;
                     break;
                 }
                 else {
@@ -335,6 +341,7 @@ namespace AB {
                     line->b_bounds.beg = off + backtick_counter;
                     line->flags = CODE_OPENER;
                     line->b_solved = LineInfo::FULL;
+                    line->type = BLOCK_CODE;
                     break;
                 }
                 else {
@@ -363,6 +370,7 @@ namespace AB {
                     line->b_bounds.pre = off;
                     line->b_bounds.beg = off + count;
                     line->b_solved = LineInfo::FULL;
+                    line->type = BLOCK_HR;
                     break;
                 }
                 else if (CHECK_WS_OR_END(off + 1) && !(line->flags & LIST_OPENER)) {
@@ -423,6 +431,7 @@ namespace AB {
                     line->b_solved = LineInfo::FULL;
                     line->b_bounds.pre = off;
                     line->b_bounds.beg = off + count;
+                    line->type == BLOCK_DIV;
                     line->flags = DIV_OPENER;
                     break;
                 }
@@ -452,6 +461,7 @@ namespace AB {
                     line->b_bounds.end = off;
                     line->b_bounds.post = off + 2;
                     line->flags = DEFINITION_OPENER;
+                    line->type = BLOCK_DEF;
                     break;
                 }
                 else {
@@ -467,6 +477,7 @@ namespace AB {
                     line->b_bounds.beg = off + 2;
                     line->b_solved = LineInfo::PARTIAL;
                     line->flags = LATEX_OPENER;
+                    line->type = BLOCK_LATEX;
                     break;
                 }
                 else {
@@ -480,7 +491,7 @@ namespace AB {
 #define MAKE_P_FROM_LIST() \
     off = line->first_non_blank; goto_end = line->end; \
     line->b_bounds.pre = off; line->b_bounds.beg = off; \
-    line->flags = P_OPENER; line->b_solved = LineInfo::PARTIAL;
+    line->flags = P_OPENER; line->b_solved = LineInfo::PARTIAL; line->type = BLOCK_P;
 
         // Still need to verify if ordered list has valid enumeration
         if (line->flags & LIST_OPENER && line->b_solved == LineInfo::PARTIAL) {
@@ -493,11 +504,17 @@ namespace AB {
                     || alpha_to_decimal(acc) > 0 && acc.length() < 4) {
                     line->b_solved = LineInfo::FULL;
                     line->li_number = acc;
+                    line->type = BLOCK_OL;
                 }
                 else {
                     MAKE_P_FROM_LIST();
                 }
             }
+        }
+        if (line->flags == 0) {
+            line->flags = P_OPENER;
+            line->b_bounds.pre = start;
+            line->b_bounds.beg = line->end;
         }
 
         *end = goto_end;
@@ -580,8 +597,7 @@ namespace AB {
             }
 
             ContainerPtr container = std::make_shared<Container>();
-            container->bounds.pre = line->b_bounds.pre;
-            container->bounds.beg = line->b_bounds.pre;
+            container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.pre, line->end, line->end });
             if (line->li_number.empty()) {
                 auto detail = std::make_shared<BlockUlDetail>();
                 container->type = BLOCK_UL;
@@ -603,8 +619,6 @@ namespace AB {
 
         // We can now add our list item
         ContainerPtr container = std::make_shared<Container>();
-        container->bounds.pre = line->b_bounds.pre;
-        container->bounds.beg = line->b_bounds.beg;
         container->type = BLOCK_LI;
         container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
         auto detail = std::make_shared<BlockLiDetail>();
@@ -633,54 +647,57 @@ namespace AB {
         // if we are closing this block
         if (above_container != nullptr && above_container->type == BLOCK_CODE && !above_container->closed) {
             // TODO: match number of ticks
-            if (line->flags & CODE_OPENER && check_for_whitespace_after(ctx, line->b_bounds.beg)) {
-                std::cout << "CODE close " << line->b_bounds.pre << " " << line->end << std::endl;
+            if (line->flags & CODE_OPENER && check_for_whitespace_after(ctx, line->b_bounds.beg))
                 close_current_container(ctx, line->b_bounds.pre, line->end);
-            }
-            else {
-                std::cout << "CODE continue " << line->b_bounds.pre << " " << line->end <<
-                    " '" << to_string(ctx, line->b_bounds.pre, line->end) << "'" << std::endl;
+            else
                 above_container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.pre, line->end, line->end });
-            }
+
             return true;
         }
         if (line->blank_line) {
             close_current_container(ctx, line->start, line->start);
             return true;
         }
+        if (!prev_line->blank_line && above_container == ctx->current_container && prev_line->flags != line->flags) {
+            close_current_container(ctx, prev_line->end, prev_line->end);
+        }
 
-        if (line->flags & CODE_OPENER) {
+        if (line->flags & P_OPENER) {
+            if (above_container != nullptr && above_container->type == BLOCK_P) {
+                update_last_bounds(above_container, line->end, line->end);
+            }
+            else {
+                ContainerPtr container = std::make_shared<Container>();
+                container->type = BLOCK_P;
+                container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.pre, line->end, line->end });
+                add_container(ctx, container);
+            }
+        }
+        else if (line->flags & CODE_OPENER) {
             ContainerPtr container = std::make_shared<Container>();
             container->type = BLOCK_CODE;
-            container->bounds.pre = line->b_bounds.pre;
-            container->bounds.beg = line->end + 1;
+            container->content_boundaries.push_back({ line->b_bounds.pre, line->end + 1, line->end + 1, line->end + 1 });
             auto detail = std::make_shared<BlockCodeDetail>();
             detail->lang = to_string(ctx, line->b_bounds.beg, line->end);
             detail->num_ticks = line->b_bounds.beg - line->b_bounds.pre;
             container->detail = detail;
-            std::cout << "CODE start " << line->b_bounds.pre << " " << line->b_bounds.beg << " '" << detail->lang << "'" << std::endl;
             add_container(ctx, container);
         }
         else if (line->flags & HR_OPENER) {
             ContainerPtr container = std::make_shared<Container>();
             container->type = BLOCK_HR;
-            container->bounds.pre = line->b_bounds.pre;
-            container->bounds.beg = line->b_bounds.beg;
-            std::cout << "HR " << line->b_bounds.pre << " " << line->end << std::endl;
+            container->content_boundaries.push_back({ line->b_bounds.pre, line->end, line->end, line->end });
             add_container(ctx, container);
             close_current_container(ctx, line->end, line->end);
         }
         else if (line->flags & QUOTE_OPENER) {
             if (above_container != nullptr && above_container->type == BLOCK_QUOTE) {
                 above_container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
-                std::cout << "QUOTE continue " << line->b_bounds.pre << " " << line->b_bounds.beg << " " << line->end << std::endl;
             }
             else {
                 ContainerPtr container = std::make_shared<Container>();
                 container->type = BLOCK_QUOTE;
-                container->bounds.pre = line->b_bounds.pre;
-                container->bounds.beg = line->b_bounds.beg;
-                std::cout << "QUOTE " << line->b_bounds.pre << " " << line->b_bounds.beg << std::endl;
+                container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->b_bounds.beg, line->b_bounds.beg });
                 add_container(ctx, container);
             }
         }
@@ -699,19 +716,15 @@ namespace AB {
                 if (detail->level == level) {
                     new_header = false;
                     above_container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
-                    std::cout << "H continue" << std::endl;
                 }
             }
             if (new_header) {
                 ContainerPtr container = std::make_shared<Container>();
                 container->type = BLOCK_H;
-                container->bounds.pre = line->b_bounds.pre;
-                container->bounds.beg = line->b_bounds.beg;
+                container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
                 auto detail = std::make_shared<BlockHDetail>();
                 detail->level = level;
                 container->detail = detail;
-                container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
-                std::cout << "H start " << line->b_bounds.pre << " " << line->b_bounds.beg << " " << level << std::endl;
                 add_container(ctx, container);
             }
         }
@@ -721,8 +734,11 @@ namespace AB {
         }
 
         // Move onto next above container
-        if (above_container != nullptr && !above_container->children.empty()) {
-            prev_line->current_container = *(above_container->children.end() - 1);
+        if (above_container != nullptr) {
+            if (!above_container->children.empty())
+                prev_line->current_container = *(above_container->children.end() - 1);
+            else
+                prev_line->current_container = nullptr;
         }
         return ret;
     abort:
@@ -752,7 +768,7 @@ namespace AB {
                 current_line = LineInfo();
                 prev_line.current_container = find_root_parent(ctx, ctx->current_container);
                 if (ctx->current_container->type == BLOCK_LI) {
-                    current_line.indent = ctx->current_container->bounds.beg - ctx->current_container->bounds.pre;
+                    // current_line.indent = ctx->current_container->bounds.beg - ctx->current_container->bounds.pre;
                 }
                 off++;
             }
@@ -786,6 +802,26 @@ namespace AB {
         /* First, process all the blocks that we
         * can find */
         CHECK_AND_RET(parse_blocks(ctx));
+
+        for (auto ptr : ctx->containers) {
+            // Find out level of widget
+            // Not efficient but do not care
+            int level = 0;
+            auto tmp_ptr = ptr;
+            while (tmp_ptr->parent != nullptr) {
+                tmp_ptr = tmp_ptr->parent;
+                std::cout << "  ";
+                level++;
+            }
+            std::cout << block_to_name(ptr->type);
+            for (auto bound : ptr->content_boundaries) {
+                std::cout << " {" << bound.pre;
+                std::cout << ", " << bound.beg;
+                std::cout << ", " << bound.end;
+                std::cout << ", " << bound.post << "} ";
+            }
+            std::cout << std::endl;
+        }
 
     abort:
         return ret;

@@ -23,6 +23,9 @@ namespace AB {
         BLOCK_H,
 
         BLOCK_SPECIAL,
+        BLOCK_DIV,
+        BLOCK_DEF,
+        BLOCK_LATEX,
 
         BLOCK_CODE,
         BLOCK_P,
