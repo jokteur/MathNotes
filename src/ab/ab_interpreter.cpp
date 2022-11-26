@@ -22,12 +22,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *
- * Modifications by Jokteur, https://github.com/jokteur
+ * Terrible modifications by Jokteur, https://github.com/jokteur
  */
 #include "ab_interpreter.h"
 #include "internal_helpers.h"
 
 #include <iostream>
+#include <memory>
 
 #include <unordered_set>
 #include <unordered_map>
@@ -81,12 +82,25 @@ namespace AB {
     /**************************
      ***  Processing Block  ***
      **************************/
+    struct Boundaries {
+        OFFSET pre = 0;
+        OFFSET beg = 0;
+        OFFSET end = 0;
+        OFFSET post = 0;
+    };
+
+    struct Container;
+    typedef std::shared_ptr<Container> ContainerPtr;
     struct Container {
-        OFFSET start = 0;
-        OFFSET end = -1;
+        Boundaries bounds;
+
+        bool closed = false;
+
         BLOCK_TYPE type;
-        Container* parent = nullptr;
-        std::vector<Container*> children;
+        std::shared_ptr<BlockDetail> detail;
+        ContainerPtr parent = nullptr;
+        std::vector<ContainerPtr> children;
+        std::vector<Boundaries> content_boundaries;
         unsigned indent = 0;
     };
 
@@ -100,13 +114,22 @@ namespace AB {
     static const int DEFINITION_OPENER = 0x080;
     static const int LATEX_OPENER = 0x100;
 
-    struct Line {
-        int flag = 0;
-        OFFSET pre = 0;
-        OFFSET beg = 0;
+    struct LineInfo {
+        int flags = 0;
+        Boundaries b_bounds;
+        OFFSET start = 0;
         OFFSET end = 0;
-        OFFSET post = 0;
+        OFFSET first_non_blank = 0;
+        enum SOLVED { NONE, PARTIAL, FULL };
+        SOLVED b_solved = NONE;
         unsigned indent = 0;
+        bool blank_line = true;
+        ContainerPtr current_container = nullptr;
+
+        // List information
+        char li_pre_marker = 0;
+        char li_post_marker = 0;
+        std::string li_number;
     };
 
     /**************
@@ -121,35 +144,52 @@ namespace AB {
         SIZE size;
         const Parser* parser;
 
-        std::vector<Container> containers;
-        Container* current_container;
+        std::vector<ContainerPtr> containers;
+        ContainerPtr current_container;
 
         std::vector<int> offset_to_line_number;
         std::vector<int> line_number_begs;
     };
+
+    static std::string to_string(Context* ctx, OFFSET start, OFFSET end) {
+        std::string out;
+        for (OFFSET i = start;i < end;i++) {
+            out += CH(i);
+        }
+        return out;
+    }
 
     static OFFSET find_next_line_off(Context* ctx, OFFSET off) {
         OFFSET current_line_number = ctx->offset_to_line_number[off];
         if (current_line_number + 1 >= ctx->line_number_begs.size())
             return ctx->size;
         else
-            return ctx->line_number_begs[current_line_number + 1];
+            return ctx->line_number_begs[current_line_number + 1] - 1;
     }
 
-    static void add_container(Context* ctx, OFFSET start, BLOCK_TYPE type, unsigned indent) {
-        Container container;
-        container.start = start;
-        Container* parent = ctx->current_container;
-        container.parent = parent;
-        container.indent = indent;
+    ContainerPtr find_root_parent(Context* ctx, ContainerPtr& container) {
+        ContainerPtr parent = container;
+        while (parent->parent != nullptr) {
+            if (parent->parent->type == BLOCK_DOC)
+                break;
+            parent = parent->parent;
+        }
+        return parent;
+    }
+
+    static void add_container(Context* ctx, ContainerPtr& container) {
+        ContainerPtr parent = ctx->current_container;
+        container->parent = parent;
         ctx->containers.push_back(container);
-        ctx->current_container = &(*(ctx->containers.end() - 1));
+        ctx->current_container = *(ctx->containers.end() - 1);
         parent->children.push_back(ctx->current_container);
     }
     /* To avoid `if (ctx->current_container == nullptr)`, we have to make
     * sure to never call this function when current_container is BLOCK_DOCUMENT */
-    static void close_current_container(Context* ctx, OFFSET end) {
-        ctx->current_container->end = end;
+    static void close_current_container(Context* ctx, OFFSET end, OFFSET post) {
+        ctx->current_container->bounds.end = end;
+        ctx->current_container->closed = true;
+        ctx->current_container->bounds.post = post;
         ctx->current_container = ctx->current_container->parent;
     }
 
@@ -179,7 +219,7 @@ namespace AB {
         }
         return counter;
     }
-    bool check_for_whitespace(Context* ctx, OFFSET off) {
+    bool check_for_whitespace_after(Context* ctx, OFFSET off) {
         while (CH(off) != '\n' && off < ctx->size) {
             if (!ISWHITESPACE(off))
                 return false;
@@ -188,54 +228,47 @@ namespace AB {
         return true;
     }
 
-    bool analyze_line(Context* ctx, OFFSET off, OFFSET* end, Line* line) { //, Line* line_start_block, Line* current_line) {
+    bool analyze_line(Context* ctx, OFFSET off, OFFSET* end, LineInfo* line) {
         bool ret = true;
 
-        // current_line->indent = find_line_indent(ctx, off, 0, end);
-        // current_line->beg = off;
-        OFFSET line_end = find_next_line_off(ctx, off);
+        line->end = find_next_line_off(ctx, off);
+        OFFSET goto_end = line->end;
         OFFSET start = off;
-        OFFSET goto_end = line_end;
+        line->first_non_blank = line->end;
 
-        OFFSET block_pre = off;
-        OFFSET block_beg = off;
-        OFFSET block_end, block_post;
+        line->b_bounds.pre = off;
+        line->b_bounds.beg = off;
+        line->b_bounds.end = -1;
+        line->b_bounds.post = -1;
 
-        // off = *end;
-
-        // int n_siblings = ctx->current_container->parent->children.size();
-        // int current_indent = ctx->current_container->indent;
-        /* We do not count the ROOT doc as a parent (which is always there),
-        * hence -1 */
-        // int n_parents = -1;
-        Container* parent = ctx->current_container;
-        // while (parent != nullptr) {
-        //     n_parents++;
-        //     parent = ctx->current_container->parent;
-        // }
-
+        line->blank_line = true;
         int whitespace_counter = 0;
         std::string acc; // Acc is for accumulator
 
-        enum SOLVED { NONE, PARTIAL, FULL };
-        SOLVED block_solved = NONE;
         char list_mark = 0;
-        int opener_flags = 0;
+        char list_mark_end = 0;
+        line->flags = 0;
         int mark_counter = 0;
-        int indent = 0;
 
 #define MAKE_P() \
-    block_pre = off; block_beg = off; opener_flags = P_OPENER; \
-    block_solved = PARTIAL;
+    line->b_bounds.pre = off; line->b_bounds.beg = off; line->flags = P_OPENER; \
+    line->b_solved = LineInfo::PARTIAL;
 #define MAKE_UL() \
-    opener_flags = LIST_OPENER; block_pre = off; block_beg = off + 2; \
-    goto_end = off + 2; block_solved = FULL;
+    line->flags = LIST_OPENER; line->b_bounds.pre = off; line->b_bounds.beg = off + 2; \
+    goto_end = off + 2; line->b_solved = LineInfo::FULL; \
+    line->li_pre_marker = CH(off);
 #define NEXT_LOOP() off++;
 #define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
-#define CHECK_INDENT(num) whitespace_counter - indent < (num)
+#define CHECK_WS_BEFORE(off) line->first_non_blank >= (off)
+#define CHECK_INDENT(num) whitespace_counter - line->indent < (num)
 
-        while (off < line_end) {
+        while (off < line->end) {
             acc += CH(off);
+
+            if (!(ISWHITESPACE(off) || CH(off) == '\n') && line->blank_line) {
+                line->blank_line = false;
+                line->first_non_blank = off;
+            }
 
             if (CH(off) == '\\') {
                 if (off == start) {
@@ -248,7 +281,7 @@ namespace AB {
                 }
             }
 
-            if (CH(off) != ']' && opener_flags & DEFINITION_OPENER) {
+            if (CH(off) != ']' && line->flags & DEFINITION_OPENER) {
                 NEXT_LOOP();
                 continue;
             }
@@ -266,10 +299,10 @@ namespace AB {
                     && CHECK_WS_OR_END(off + count)) {
                     // Valid header
                     mark_counter = count;
-                    opener_flags = H_OPENER;
-                    block_pre = off;
-                    block_beg = off + count;
-                    block_solved = FULL;
+                    line->flags = H_OPENER;
+                    line->b_bounds.pre = off;
+                    line->b_bounds.beg = off + count;
+                    line->b_solved = LineInfo::FULL;
                     break;
                 }
                 else {
@@ -281,10 +314,10 @@ namespace AB {
             else if (CH(off) == '>') {
                 if (CHECK_INDENT(2)) {
                     // Valid quote
-                    block_pre = off; block_beg = off;
-                    opener_flags = QUOTE_OPENER;
+                    line->b_bounds.pre = off; line->b_bounds.beg = off + 1;
+                    line->flags = QUOTE_OPENER;
                     goto_end = off + 1;
-                    block_solved = FULL;
+                    line->b_solved = LineInfo::FULL;
                     break;
                 }
                 else {
@@ -295,13 +328,13 @@ namespace AB {
             }
             else if (CH(off) == '`') {
                 int backtick_counter = count_marks(ctx, off, '`');
-                if (CHECK_INDENT(4) && backtick_counter > 2) {
+                if (CHECK_INDENT(4) && backtick_counter > 2 && CHECK_WS_BEFORE(off)) {
                     // Valid code
                     mark_counter = backtick_counter;
-                    block_pre = off;
-                    block_beg = off + backtick_counter;
-                    opener_flags = CODE_OPENER;
-                    block_solved = FULL;
+                    line->b_bounds.pre = off;
+                    line->b_bounds.beg = off + backtick_counter;
+                    line->flags = CODE_OPENER;
+                    line->b_solved = LineInfo::FULL;
                     break;
                 }
                 else {
@@ -312,7 +345,7 @@ namespace AB {
             }
             // Potential bullet lists
             else if (CH(off) == '*') {
-                if (CHECK_WS_OR_END(off + 1) && !(opener_flags & LIST_OPENER)) {
+                if (CHECK_WS_OR_END(off + 1) && !(line->flags & LIST_OPENER)) {
                     // Make list
                     MAKE_UL();
                     break;
@@ -325,14 +358,14 @@ namespace AB {
             }
             else if (CH(off) == '-') {
                 int count = count_marks(ctx, off, '-');
-                if (count > 2 && check_for_whitespace(ctx, off + count)) {
-                    opener_flags = HR_OPENER;
-                    block_pre = off;
-                    block_beg = off + count;
-                    block_solved = FULL;
+                if (count > 2 && check_for_whitespace_after(ctx, off + count)) {
+                    line->flags = HR_OPENER;
+                    line->b_bounds.pre = off;
+                    line->b_bounds.beg = off + count;
+                    line->b_solved = LineInfo::FULL;
                     break;
                 }
-                else if (CHECK_WS_OR_END(off + 1) && !(opener_flags & LIST_OPENER)) {
+                else if (CHECK_WS_OR_END(off + 1) && !(line->flags & LIST_OPENER)) {
                     // Unordered list
                     MAKE_UL();
                     break;
@@ -345,7 +378,7 @@ namespace AB {
 
             }
             else if (CH(off) == '+') {
-                if (CHECK_WS_OR_END(off + 1) && !(opener_flags & LIST_OPENER)) {
+                if (CHECK_WS_OR_END(off + 1) && !(line->flags & LIST_OPENER)) {
                     // Make list
                     MAKE_UL();
                     break;
@@ -353,26 +386,28 @@ namespace AB {
             }
             // Potential ordered lists
             else if (CH(off) == '(') {
-                if (opener_flags & LIST_OPENER) {
+                if (line->flags & LIST_OPENER) {
                     // Paragraph
                     MAKE_P();
                     break;
                 }
                 acc.clear();
                 list_mark = '(';
-                block_pre = off;
-                block_beg = off + 1;
-                opener_flags |= LIST_OPENER;
+                line->b_bounds.pre = off;
+                line->b_bounds.beg = off + 1;
+                line->flags |= LIST_OPENER;
+                line->li_pre_marker = '(';
             }
             else if (ISANYOF2(off, ')', '.')) {
                 std::string str = acc.substr(0, acc.size() - 1);
                 if (str.length() > 0 && str.length() < 12 && CHECK_WS_OR_END(off + 1)) {
                     // Potential list
                     // The validity of enumeration should still be checked
-                    block_end = off;
-                    block_post = off + 2;
-                    opener_flags = LIST_OPENER;
-                    block_solved = PARTIAL;
+                    line->b_bounds.end = off;
+                    line->b_bounds.post = off + 2;
+                    line->flags = LIST_OPENER;
+                    line->b_solved = LineInfo::PARTIAL;
+                    line->li_post_marker = CH(off);
                     acc = str;
                     break;
                 }
@@ -385,10 +420,10 @@ namespace AB {
             else if (CH(off) == ':') {
                 int count = count_marks(ctx, off, ':');
                 if (CHECK_INDENT(4) && count == 3) {
-                    block_solved = FULL;
-                    block_pre = off;
-                    block_beg = off + count;
-                    opener_flags = DIV_OPENER;
+                    line->b_solved = LineInfo::FULL;
+                    line->b_bounds.pre = off;
+                    line->b_bounds.beg = off + count;
+                    line->flags = DIV_OPENER;
                     break;
                 }
                 else {
@@ -400,9 +435,9 @@ namespace AB {
             }
             else if (CH(off) == '[') {
                 if (CHECK_INDENT(4)) {
-                    block_pre = off;
-                    block_beg = off + 1;
-                    opener_flags |= DEFINITION_OPENER;
+                    line->b_bounds.pre = off;
+                    line->b_bounds.beg = off + 1;
+                    line->flags |= DEFINITION_OPENER;
                     acc.clear();
                 }
                 else {
@@ -412,11 +447,11 @@ namespace AB {
                 }
             }
             else if (CH(off) == ']') {
-                if (opener_flags & DEFINITION_OPENER && CH(off + 1) == ':') {
-                    block_solved = FULL;
-                    block_end = off;
-                    block_post = off + 2;
-                    opener_flags = DEFINITION_OPENER;
+                if (line->flags & DEFINITION_OPENER && CH(off + 1) == ':') {
+                    line->b_solved = LineInfo::FULL;
+                    line->b_bounds.end = off;
+                    line->b_bounds.post = off + 2;
+                    line->flags = DEFINITION_OPENER;
                     break;
                 }
                 else {
@@ -426,12 +461,12 @@ namespace AB {
                 }
             }
             else if (CH(off) == '$') {
-                if (CHECK_INDENT(4) && CH(off + 1) == '$') {
+                if (CHECK_INDENT(4) && CH(off + 1) == '$' && CHECK_WS_BEFORE(off)) {
                     // TODO: need to find closure
-                    block_pre = off;
-                    block_beg = off + 2;
-                    block_solved = PARTIAL;
-                    opener_flags = LATEX_OPENER;
+                    line->b_bounds.pre = off;
+                    line->b_bounds.beg = off + 2;
+                    line->b_solved = LineInfo::PARTIAL;
+                    line->flags = LATEX_OPENER;
                     break;
                 }
                 else {
@@ -439,33 +474,256 @@ namespace AB {
                     break;
                 }
             }
-
             NEXT_LOOP();
         }
 
-        if (opener_flags & P_OPENER)
-            std::cout << "P ";
-        if (opener_flags & CODE_OPENER)
-            std::cout << "CODE ";
-        if (opener_flags & QUOTE_OPENER)
-            std::cout << "QUOTE ";
-        if (opener_flags & HR_OPENER)
-            std::cout << "HR ";
-        if (opener_flags & H_OPENER)
-            std::cout << "H ";
-        if (opener_flags & DIV_OPENER)
-            std::cout << "DIV ";
-        if (opener_flags & DEFINITION_OPENER)
-            std::cout << "DEF ";
-        if (opener_flags & LIST_OPENER)
-            std::cout << "LIST ";
-        if (opener_flags & LATEX_OPENER)
-            std::cout << "LATEX ";
+#define MAKE_P_FROM_LIST() \
+    off = line->first_non_blank; goto_end = line->end; \
+    line->b_bounds.pre = off; line->b_bounds.beg = off; \
+    line->flags = P_OPENER; line->b_solved = LineInfo::PARTIAL;
 
-        std::cout << block_pre << " " << block_beg << " " << block_end << " " << block_end << std::endl;
+        // Still need to verify if ordered list has valid enumeration
+        if (line->flags & LIST_OPENER && line->b_solved == LineInfo::PARTIAL) {
+            if (list_mark == '(' && list_mark_end != ')') {
+                MAKE_P_FROM_LIST();
+            }
+            else {
+                if ((verify_positiv_number(acc) && acc.length() < 10)
+                    || validate_roman_enumeration(acc)
+                    || alpha_to_decimal(acc) > 0 && acc.length() < 4) {
+                    line->b_solved = LineInfo::FULL;
+                    line->li_number = acc;
+                }
+                else {
+                    MAKE_P_FROM_LIST();
+                }
+            }
+        }
 
         *end = goto_end;
 
+        return ret;
+    abort:
+        return ret;
+    }
+
+    bool make_list_item(Context* ctx, LineInfo* line, LineInfo* prev_line, ContainerPtr& above_container) {
+        bool is_ul = line->li_number.empty();
+        char pre_marker = line->li_pre_marker;
+        char post_marker = line->li_post_marker;
+        bool is_above_ol = above_container != nullptr && above_container->type == BLOCK_OL;
+        bool is_above_ul = above_container != nullptr && above_container->type == BLOCK_UL;
+
+        BlockOlDetail::OL_TYPE type;
+        int alpha = -1; int roman = -1;
+        if (!is_ul) {
+            alpha = alpha_to_decimal(line->li_number);
+            roman = roman_to_decimal(line->li_number);
+            if (verify_positiv_number(line->li_number)) {
+                type = BlockOlDetail::OL_NUMERIC;
+            }
+            // With this simple rule, we can decide between cases that are valid in both roman
+            // and alpha case, e.g. 'i)'
+            else if (alpha > 0 && roman > 0) {
+                if (alpha < roman)
+                    type = BlockOlDetail::OL_ALPHABETIC;
+                else
+                    type = BlockOlDetail::OL_ROMAN;
+            }
+            else if (roman > 0) {
+                type = BlockOlDetail::OL_ROMAN;
+            }
+            else {
+                type = BlockOlDetail::OL_ALPHABETIC;
+            }
+        }
+
+        bool make_new_container = false;
+        // No current list going on
+        if (!is_above_ul && !is_above_ol) {
+            make_new_container = true;
+        }
+        else if (is_above_ul) {
+            auto detail = std::static_pointer_cast<BlockUlDetail>(above_container->detail);
+            //Try to find if current list, but different markers or enumeration
+            if (pre_marker != detail->marker)
+                make_new_container = true;
+        }
+        else if (is_above_ol && !is_ul) {
+            auto detail = std::static_pointer_cast<BlockOlDetail>(above_container->detail);
+            if (detail->pre_marker != pre_marker || detail->post_marker != post_marker)
+                make_new_container = true;
+
+            // By default, we choose the enumeration type of the one that is lowest in decimal
+            // However, if we are already in a list that is either alpha or roman, then the 
+            // current list item must inherit the alpha or roman property 
+            if (type != BlockOlDetail::OL_NUMERIC) {
+                if (detail->type == BlockOlDetail::OL_ALPHABETIC && roman > 0 && alpha > 0)
+                    type = BlockOlDetail::OL_ALPHABETIC;
+                else if (detail->type == BlockOlDetail::OL_ROMAN && roman > 0 && alpha > 0)
+                    type = BlockOlDetail::OL_ROMAN;
+            }
+            if (type != detail->type)
+                make_new_container = true;
+        }
+        else if (is_above_ol && is_ul) {
+            make_new_container = true;
+        }
+
+        if (make_new_container) {
+            // Close previous list item
+            if (is_above_ul || is_above_ol) {
+                // Close LI
+                close_current_container(ctx, prev_line->end, prev_line->end);
+                // Close OL or UL
+                close_current_container(ctx, prev_line->end, prev_line->end);
+            }
+
+            ContainerPtr container = std::make_shared<Container>();
+            container->bounds.pre = line->b_bounds.pre;
+            container->bounds.beg = line->b_bounds.pre;
+            if (line->li_number.empty()) {
+                auto detail = std::make_shared<BlockUlDetail>();
+                container->type = BLOCK_UL;
+                detail->marker = pre_marker;
+                container->detail = detail;
+            }
+            else {
+                auto detail = std::make_shared<BlockOlDetail>();
+                container->type = BLOCK_OL;
+                detail->pre_marker = pre_marker;
+                detail->post_marker = post_marker;
+                detail->type = type;
+                detail->lower_case = ISLOWER(line->b_bounds.beg);
+                container->detail = detail;
+            }
+            std::cout << "New List / Roman" << roman << " Alpha: " << alpha << std::endl;
+            add_container(ctx, container);
+        }
+
+        // We can now add our list item
+        ContainerPtr container = std::make_shared<Container>();
+        container->bounds.pre = line->b_bounds.pre;
+        container->bounds.beg = line->b_bounds.beg;
+        container->type = BLOCK_LI;
+        container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
+        auto detail = std::make_shared<BlockLiDetail>();
+        if (!is_ul)
+            detail->number = line->li_number;
+        line->indent = line->b_bounds.beg - line->b_bounds.pre;
+        std::cout << "New LI " << line->b_bounds.pre << " " << line->b_bounds.beg << " " << line->li_number <<
+            " Indent: " << line->indent << std::endl;
+        add_container(ctx, container);
+        return true;
+    }
+
+    bool process_line(Context* ctx, LineInfo* line, LineInfo* prev_line) {
+        bool ret = true;
+        if (line->flags & P_OPENER)
+            std::cout << "P ";
+        if (line->flags & DIV_OPENER)
+            std::cout << "DIV ";
+        if (line->flags & DEFINITION_OPENER)
+            std::cout << "DEF ";
+        if (line->flags & LATEX_OPENER)
+            std::cout << "LATEX ";
+
+        ContainerPtr above_container = prev_line->current_container;
+        // If the current container is a non-closed BLOCK_CODE, everything should be ignored, except
+        // if we are closing this block
+        if (above_container != nullptr && above_container->type == BLOCK_CODE && !above_container->closed) {
+            // TODO: match number of ticks
+            if (line->flags & CODE_OPENER && check_for_whitespace_after(ctx, line->b_bounds.beg)) {
+                std::cout << "CODE close " << line->b_bounds.pre << " " << line->end << std::endl;
+                close_current_container(ctx, line->b_bounds.pre, line->end);
+            }
+            else {
+                std::cout << "CODE continue " << line->b_bounds.pre << " " << line->end <<
+                    " '" << to_string(ctx, line->b_bounds.pre, line->end) << "'" << std::endl;
+                above_container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.pre, line->end, line->end });
+            }
+            return true;
+        }
+        if (line->blank_line) {
+            close_current_container(ctx, line->start, line->start);
+            return true;
+        }
+
+        if (line->flags & CODE_OPENER) {
+            ContainerPtr container = std::make_shared<Container>();
+            container->type = BLOCK_CODE;
+            container->bounds.pre = line->b_bounds.pre;
+            container->bounds.beg = line->end + 1;
+            auto detail = std::make_shared<BlockCodeDetail>();
+            detail->lang = to_string(ctx, line->b_bounds.beg, line->end);
+            detail->num_ticks = line->b_bounds.beg - line->b_bounds.pre;
+            container->detail = detail;
+            std::cout << "CODE start " << line->b_bounds.pre << " " << line->b_bounds.beg << " '" << detail->lang << "'" << std::endl;
+            add_container(ctx, container);
+        }
+        else if (line->flags & HR_OPENER) {
+            ContainerPtr container = std::make_shared<Container>();
+            container->type = BLOCK_HR;
+            container->bounds.pre = line->b_bounds.pre;
+            container->bounds.beg = line->b_bounds.beg;
+            std::cout << "HR " << line->b_bounds.pre << " " << line->end << std::endl;
+            add_container(ctx, container);
+            close_current_container(ctx, line->end, line->end);
+        }
+        else if (line->flags & QUOTE_OPENER) {
+            if (above_container != nullptr && above_container->type == BLOCK_QUOTE) {
+                above_container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
+                std::cout << "QUOTE continue " << line->b_bounds.pre << " " << line->b_bounds.beg << " " << line->end << std::endl;
+            }
+            else {
+                ContainerPtr container = std::make_shared<Container>();
+                container->type = BLOCK_QUOTE;
+                container->bounds.pre = line->b_bounds.pre;
+                container->bounds.beg = line->b_bounds.beg;
+                std::cout << "QUOTE " << line->b_bounds.pre << " " << line->b_bounds.beg << std::endl;
+                add_container(ctx, container);
+            }
+        }
+        else if (line->flags & H_OPENER) {
+            bool new_header = true;
+            int level = line->b_bounds.beg - line->b_bounds.pre;
+            // Headers can be empty, e.g. `##`
+            // In this case, the mandatory space after is not taken into account
+            // When there is the mandatory space, b_beg should begin one char after
+            if (line->b_bounds.beg < line->end) {
+                line->b_bounds.beg++;
+            }
+
+            if (above_container != nullptr && above_container->type == BLOCK_H) {
+                auto detail = std::static_pointer_cast<BlockHDetail>(above_container->detail);
+                if (detail->level == level) {
+                    new_header = false;
+                    above_container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
+                    std::cout << "H continue" << std::endl;
+                }
+            }
+            if (new_header) {
+                ContainerPtr container = std::make_shared<Container>();
+                container->type = BLOCK_H;
+                container->bounds.pre = line->b_bounds.pre;
+                container->bounds.beg = line->b_bounds.beg;
+                auto detail = std::make_shared<BlockHDetail>();
+                detail->level = level;
+                container->detail = detail;
+                container->content_boundaries.push_back({ line->b_bounds.pre, line->b_bounds.beg, line->end, line->end });
+                std::cout << "H start " << line->b_bounds.pre << " " << line->b_bounds.beg << " " << level << std::endl;
+                add_container(ctx, container);
+            }
+        }
+        else if (line->flags & LIST_OPENER) {
+            // Lists are not trivial to handle, there are a lot of edge cases
+            make_list_item(ctx, line, prev_line, above_container);
+        }
+
+        // Move onto next above container
+        if (above_container != nullptr && !above_container->children.empty()) {
+            prev_line->current_container = *(above_container->children.end() - 1);
+        }
         return ret;
     abort:
         return ret;
@@ -475,20 +733,29 @@ namespace AB {
         bool ret = true;
 
         OFFSET off = 0;
-        Line line_start_block;
-        Line current_line;
-        Line pivot_line;
+        LineInfo current_line;
+        LineInfo prev_line;
 
         /* Add doc container */
-        Container doc_container;
-        doc_container.type = BLOCK_DOC;
+        ContainerPtr doc_container = std::make_shared<Container>();
+        doc_container->type = BLOCK_DOC;
         ctx->containers.push_back(doc_container);
-        ctx->current_container = &(*(ctx->containers.end() - 1));
+        ctx->current_container = *(ctx->containers.end() - 1);
 
-        Line line;
+        LineInfo line;
         while (off < ctx->size) {
-            CHECK_AND_RET(analyze_line(ctx, off, &off, &line));
-            //     // if (line_start_block == )    
+            CHECK_AND_RET(analyze_line(ctx, off, &off, &current_line));
+            CHECK_AND_RET(process_line(ctx, &current_line, &prev_line));
+
+            if (off == current_line.end) {
+                prev_line = current_line;
+                current_line = LineInfo();
+                prev_line.current_container = find_root_parent(ctx, ctx->current_container);
+                if (ctx->current_container->type == BLOCK_LI) {
+                    current_line.indent = ctx->current_container->bounds.beg - ctx->current_container->bounds.pre;
+                }
+                off++;
+            }
         }
 
         return ret;
@@ -505,7 +772,7 @@ namespace AB {
             ctx->offset_to_line_number.push_back(line_counter);
             if (ctx->text[i] == '\n') {
                 line_counter++;
-                if (i + 1 < ctx->size)
+                if (i + 1 <= ctx->size)
                     ctx->line_number_begs.push_back(i + 1);
             }
         }
