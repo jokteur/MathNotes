@@ -116,14 +116,10 @@ namespace AB {
         int flags = 0;
         BLOCK_TYPE type = BLOCK_DOC;
         Boundaries b_bounds;
-        OFFSET start = 0;
         OFFSET end = 0;
         OFFSET first_non_blank = 0;
-        enum SOLVED { NONE, PARTIAL, FULL };
-        SOLVED b_solved = NONE;
         unsigned indent = 0;
         bool blank_line = true;
-        int depth = 0;
         ContainerPtr current_container = nullptr;
 
         // List information
@@ -262,12 +258,14 @@ namespace AB {
         seg->flags = 0;
         int mark_counter = 0;
 
+        enum SOLVED { NONE, PARTIAL, FULL };
+        SOLVED b_solved = NONE;
 #define MAKE_P() \
     seg->b_bounds.pre = off; seg->b_bounds.beg = off; seg->flags = P_OPENER; \
-    seg->b_solved = SegmentInfo::PARTIAL; seg->type = BLOCK_P;
+    b_solved = PARTIAL; seg->type = BLOCK_P;
 #define MAKE_UL() \
     seg->flags = LIST_OPENER; seg->b_bounds.pre = off; seg->b_bounds.beg = off + 2; \
-    goto_end = off + 2; seg->b_solved = SegmentInfo::FULL; seg->type = BLOCK_UL; \
+    goto_end = off + 2; b_solved = FULL; seg->type = BLOCK_UL; \
     seg->li_pre_marker = CH(off);
 #define NEXT_LOOP() off++;
 #define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
@@ -314,7 +312,7 @@ namespace AB {
                     seg->flags = H_OPENER;
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + count;
-                    seg->b_solved = SegmentInfo::FULL;
+                    b_solved = FULL;
                     seg->type = BLOCK_H;
                     break;
                 }
@@ -330,7 +328,7 @@ namespace AB {
                     seg->b_bounds.pre = off; seg->b_bounds.beg = off + 1;
                     seg->flags = QUOTE_OPENER;
                     goto_end = off + 1;
-                    seg->b_solved = SegmentInfo::FULL;
+                    b_solved = FULL;
                     seg->type = BLOCK_QUOTE;
                     break;
                 }
@@ -348,7 +346,7 @@ namespace AB {
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + backtick_counter;
                     seg->flags = CODE_OPENER;
-                    seg->b_solved = SegmentInfo::FULL;
+                    b_solved = FULL;
                     seg->type = BLOCK_CODE;
                     break;
                 }
@@ -377,7 +375,7 @@ namespace AB {
                     seg->flags = HR_OPENER;
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + count;
-                    seg->b_solved = SegmentInfo::FULL;
+                    b_solved = FULL;
                     seg->type = BLOCK_HR;
                     break;
                 }
@@ -422,7 +420,7 @@ namespace AB {
                     seg->b_bounds.end = off;
                     seg->b_bounds.post = off + 2;
                     seg->flags = LIST_OPENER;
-                    seg->b_solved = SegmentInfo::PARTIAL;
+                    b_solved = PARTIAL;
                     seg->li_post_marker = CH(off);
                     acc = str;
                     break;
@@ -436,7 +434,7 @@ namespace AB {
             else if (CH(off) == ':') {
                 int count = count_marks(ctx, off, ':');
                 if (CHECK_INDENT(4) && count == 3) {
-                    seg->b_solved = SegmentInfo::FULL;
+                    b_solved = FULL;
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + count;
                     seg->type == BLOCK_DIV;
@@ -465,7 +463,7 @@ namespace AB {
             }
             else if (CH(off) == ']') {
                 if (seg->flags & DEFINITION_OPENER && CH(off + 1) == ':') {
-                    seg->b_solved = SegmentInfo::FULL;
+                    b_solved = FULL;
                     seg->b_bounds.end = off;
                     seg->b_bounds.post = off + 2;
                     seg->flags = DEFINITION_OPENER;
@@ -483,7 +481,7 @@ namespace AB {
                     // TODO: need to find closure
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + 2;
-                    seg->b_solved = SegmentInfo::PARTIAL;
+                    b_solved = PARTIAL;
                     seg->flags = LATEX_OPENER;
                     seg->type = BLOCK_LATEX;
                     break;
@@ -499,10 +497,10 @@ namespace AB {
 #define MAKE_P_FROM_LIST() \
     off = seg->first_non_blank; goto_end = seg->end; \
     seg->b_bounds.pre = off; seg->b_bounds.beg = off; \
-    seg->flags = P_OPENER; seg->b_solved = SegmentInfo::PARTIAL; seg->type = BLOCK_P;
+    seg->flags = P_OPENER; b_solved = PARTIAL; seg->type = BLOCK_P;
 
         // Still need to verify if ordered list has valid enumeration
-        if (seg->flags & LIST_OPENER && seg->b_solved == SegmentInfo::PARTIAL) {
+        if (seg->flags & LIST_OPENER && b_solved == PARTIAL) {
             if (list_mark == '(' && list_mark_end != ')') {
                 MAKE_P_FROM_LIST();
             }
@@ -510,7 +508,7 @@ namespace AB {
                 if ((verify_positiv_number(acc) && acc.length() < 10)
                     || validate_roman_enumeration(acc)
                     || alpha_to_decimal(acc) > 0 && acc.length() < 4) {
-                    seg->b_solved = SegmentInfo::FULL;
+                    b_solved = FULL;
                     seg->li_number = acc;
                     seg->type = BLOCK_OL;
                 }
@@ -539,8 +537,9 @@ namespace AB {
         bool is_ul = seg->li_number.empty();
         char pre_marker = seg->li_pre_marker;
         char post_marker = seg->li_post_marker;
-        bool is_above_ol = above_container != nullptr && above_container->type == BLOCK_OL;
-        bool is_above_ul = above_container != nullptr && above_container->type == BLOCK_UL;
+        ContainerPtr above_list = (above_container != nullptr) ? above_container->parent : nullptr;
+        bool is_above_ol = above_container != nullptr && above_list->type == BLOCK_OL;
+        bool is_above_ul = above_container != nullptr && above_list->type == BLOCK_UL;
 
         BlockOlDetail::OL_TYPE type;
         int alpha = -1; int roman = -1;
@@ -566,21 +565,21 @@ namespace AB {
             }
         }
 
-        bool make_new_container = false;
+        bool make_new_list = false;
         // No current list going on
         if (!is_above_ul && !is_above_ol) {
-            make_new_container = true;
+            make_new_list = true;
         }
         else if (is_above_ul) {
-            auto detail = std::static_pointer_cast<BlockUlDetail>(above_container->detail);
+            auto detail = std::static_pointer_cast<BlockUlDetail>(above_list->detail);
             //Try to find if current list, but different markers or enumeration
             if (pre_marker != detail->marker)
-                make_new_container = true;
+                make_new_list = true;
         }
         else if (is_above_ol && !is_ul) {
-            auto detail = std::static_pointer_cast<BlockOlDetail>(above_container->detail);
+            auto detail = std::static_pointer_cast<BlockOlDetail>(above_list->detail);
             if (detail->pre_marker != pre_marker || detail->post_marker != post_marker)
-                make_new_container = true;
+                make_new_list = true;
 
             // By default, we choose the enumeration type of the one that is lowest in decimal
             // However, if we are already in a list that is either alpha or roman, then the 
@@ -592,26 +591,26 @@ namespace AB {
                     type = BlockOlDetail::OL_ROMAN;
             }
             if (type != detail->type)
-                make_new_container = true;
+                make_new_list = true;
         }
         else if (is_above_ol && is_ul) {
-            make_new_container = true;
+            make_new_list = true;
         }
 
-        if (make_new_container) {
-            // Close previous list item
-            if (is_above_ul || is_above_ol) {
-                // Close LI
-                close_current_container(ctx, prev_seg->end, prev_seg->end);
-                // Close OL or UL
-                close_current_container(ctx, prev_seg->end, prev_seg->end);
+        // Close previous list item
+        if (is_above_ul || is_above_ol) {
+            for (auto ptr : above_container->children) {
+                ptr->closed = true;
             }
+            ctx->current_container->closed = true;
+            ctx->current_container = above_container->parent->parent;
+        }
+        if (make_new_list) {
 
-            BlockDetailPtr detail_ptr;
             if (seg->li_number.empty()) {
                 auto detail = std::make_shared<BlockUlDetail>();
                 detail->marker = pre_marker;
-                detail_ptr = detail;
+                add_container(ctx, seg, BLOCK_UL, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail);
             }
             else {
                 auto detail = std::make_shared<BlockOlDetail>();
@@ -619,13 +618,12 @@ namespace AB {
                 detail->post_marker = post_marker;
                 detail->type = type;
                 detail->lower_case = ISLOWER(seg->b_bounds.beg);
-                detail_ptr = detail;
+                add_container(ctx, seg, BLOCK_OL, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail);
             }
             std::cout << "New List / Roman" << roman << " Alpha: " << alpha << std::endl;
-            add_container(ctx, seg, BLOCK_OL, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail_ptr);
-            seg->depth++;
         }
-
+        else
+            ctx->current_container = above_list;
         // We can now add our list item
         auto detail = std::make_shared<BlockLiDetail>();
         if (!is_ul)
@@ -663,18 +661,18 @@ namespace AB {
             ctx->current_container = above_container->parent;
         }
 
-        // if (seg->blank_line) {
-        //     if (ctx->current_container->type != BLOCK_DOC)
-        //         close_current_container(ctx, above_seg->end, above_seg->end);
-        //     ContainerPtr container = std::make_shared<Container>();
-        //     container->type = BLOCK_HIDDEN;
-        //     container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
-        //     add_container(ctx, container);
-        //     return true;
-        // }
+        bool make_new_block = (above_container != nullptr && above_container->closed) ? true : false;
+
+        if (seg->blank_line) {
+            if (ctx->current_container->type != BLOCK_DOC)
+                close_current_container(ctx, above_seg->end, above_seg->end);
+            add_container(ctx, seg, BLOCK_HIDDEN, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
+            close_current_container(ctx, seg->end, seg->end);
+            return true;
+        }
 
         if (seg->flags & P_OPENER) {
-            if (above_container != nullptr && above_container->type == BLOCK_P) {
+            if (above_container != nullptr && above_container->type == BLOCK_P && !make_new_block) {
                 above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
             }
             else {
@@ -694,7 +692,7 @@ namespace AB {
         }
         else if (seg->flags & QUOTE_OPENER) {
             bool new_block = true;
-            if (above_container != nullptr && above_container->type == BLOCK_QUOTE) {
+            if (above_container != nullptr && above_container->type == BLOCK_QUOTE && !make_new_block) {
                 new_block = false;
                 above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end });
             }
@@ -721,7 +719,7 @@ namespace AB {
 
             if (above_container != nullptr && above_container->type == BLOCK_H) {
                 auto detail = std::static_pointer_cast<BlockHDetail>(above_container->detail);
-                if (detail->level == level) {
+                if (detail->level == level && !make_new_block) {
                     new_header = false;
                     above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end });
                 }
@@ -740,15 +738,6 @@ namespace AB {
             make_list_item(ctx, seg, above_seg, above_container);
         }
 
-        seg->depth++;
-
-        // Move onto next above container
-        // if (above_container != nullptr) {
-        //     if (!above_container->children.empty())
-        //         above_seg->current_container = *(above_container->children.end() - 1);
-        //     else
-        //         above_seg->current_container = nullptr;
-        // }
         return ret;
     abort:
         return ret;
