@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <functional>
+#include <memory>
 
 #include "definitions.h"
 #include "helpers.h"
@@ -10,6 +11,7 @@
 namespace AB {
     struct BlockDetail {
     };
+    typedef std::shared_ptr<BlockDetail> BlockDetailPtr;
 
     struct BlockCodeDetail : public BlockDetail {
         std::string lang;

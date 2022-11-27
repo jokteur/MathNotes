@@ -7,6 +7,8 @@ namespace AB {
             return "DOCUMENT";
         case BLOCK_QUOTE:
             return "B_QUOTE";
+        case BLOCK_HIDDEN:
+            return "B_HIDDEN";
         case BLOCK_UL:
             return "B_UL";
         case BLOCK_OL:
