@@ -116,8 +116,10 @@ namespace AB {
         int flags = 0;
         BLOCK_TYPE type = BLOCK_DOC;
         Boundaries b_bounds;
+        OFFSET start = 0;
         OFFSET end = 0;
         OFFSET first_non_blank = 0;
+        OFFSET num_blank_before = 0;
         unsigned indent = 0;
         bool blank_line = true;
         ContainerPtr current_container = nullptr;
@@ -188,16 +190,10 @@ namespace AB {
         parent->children.push_back(ctx->current_container);
     }
 
-    static void close_container(ContainerPtr container, OFFSET end, OFFSET post) {
-        auto last_bounds = container->content_boundaries.end() - 1;
-        last_bounds->end = end;
-        last_bounds->post = post;
-        container->closed = true;
-    }
     /* To avoid `if (ctx->current_container == nullptr)`, we have to make
     * sure to never call this function when current_container is BLOCK_DOCUMENT */
-    static void close_current_container(Context* ctx, OFFSET end, OFFSET post) {
-        close_container(ctx->current_container, end, post);
+    static void close_current_container(Context* ctx) {
+        ctx->current_container->closed = true;
         ctx->current_container = ctx->current_container->parent;
     }
 
@@ -241,7 +237,7 @@ namespace AB {
 
         seg->end = find_next_line_off(ctx, off);
         OFFSET goto_end = seg->end;
-        OFFSET start = off;
+        seg->start = off;
         seg->first_non_blank = seg->end;
 
         seg->b_bounds.pre = off;
@@ -270,7 +266,6 @@ namespace AB {
 #define NEXT_LOOP() off++;
 #define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
 #define CHECK_WS_BEFORE(off) seg->first_non_blank >= (off)
-#define CHECK_INDENT(num) whitespace_counter - seg->indent < (num)
 
         while (off < seg->end) {
             acc += CH(off);
@@ -281,7 +276,7 @@ namespace AB {
             }
 
             if (CH(off) == '\\') {
-                if (off == start) {
+                if (off == seg->start) {
                     // Paragraph
                     MAKE_P();
                     break;
@@ -305,7 +300,7 @@ namespace AB {
             }
             else if (CH(off) == '#') {
                 int count = count_marks(ctx, off, '#');
-                if (CHECK_INDENT(4) && count > 0 && count < 7
+                if (CHECK_WS_BEFORE(off) && count > 0 && count < 7
                     && CHECK_WS_OR_END(off + count)) {
                     // Valid header
                     mark_counter = count;
@@ -323,24 +318,27 @@ namespace AB {
                 }
             }
             else if (CH(off) == '>') {
-                if (CHECK_INDENT(2)) {
+                if (CHECK_WS_BEFORE(off)) {
                     // Valid quote
                     seg->b_bounds.pre = off; seg->b_bounds.beg = off + 1;
                     seg->flags = QUOTE_OPENER;
                     goto_end = off + 1;
                     b_solved = FULL;
                     seg->type = BLOCK_QUOTE;
+                    if (off < ctx->size && CH(off + 1) == ' ') {
+                        seg->b_bounds.beg = off + 2;
+                        goto_end = off + 2;
+                    }
                     break;
                 }
                 else {
-                    // Paragraph
                     MAKE_P();
                     break;
                 }
             }
             else if (CH(off) == '`') {
                 int backtick_counter = count_marks(ctx, off, '`');
-                if (CHECK_INDENT(4) && backtick_counter > 2 && CHECK_WS_BEFORE(off)) {
+                if (backtick_counter > 2 && CHECK_WS_BEFORE(off)) {
                     // Valid code
                     mark_counter = backtick_counter;
                     seg->b_bounds.pre = off;
@@ -358,7 +356,7 @@ namespace AB {
             }
             // Potential bullet lists
             else if (CH(off) == '*') {
-                if (CHECK_WS_OR_END(off + 1) && !(seg->flags & LIST_OPENER)) {
+                if (CHECK_WS_BEFORE(off) && CHECK_WS_OR_END(off + 1) && !(seg->flags & LIST_OPENER)) {
                     // Make list
                     MAKE_UL();
                     break;
@@ -371,7 +369,7 @@ namespace AB {
             }
             else if (CH(off) == '-') {
                 int count = count_marks(ctx, off, '-');
-                if (count > 2 && check_for_whitespace_after(ctx, off + count)) {
+                if (CHECK_WS_BEFORE(off) && count > 2 && check_for_whitespace_after(ctx, off + count)) {
                     seg->flags = HR_OPENER;
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + count;
@@ -379,7 +377,7 @@ namespace AB {
                     seg->type = BLOCK_HR;
                     break;
                 }
-                else if (CHECK_WS_OR_END(off + 1) && !(seg->flags & LIST_OPENER)) {
+                else if (CHECK_WS_BEFORE(off) && CHECK_WS_OR_END(off + 1) && !(seg->flags & LIST_OPENER)) {
                     // Unordered list
                     MAKE_UL();
                     break;
@@ -392,7 +390,7 @@ namespace AB {
 
             }
             else if (CH(off) == '+') {
-                if (CHECK_WS_OR_END(off + 1) && !(seg->flags & LIST_OPENER)) {
+                if (CHECK_WS_BEFORE(off) && CHECK_WS_OR_END(off + 1) && !(seg->flags & LIST_OPENER)) {
                     // Make list
                     MAKE_UL();
                     break;
@@ -406,7 +404,6 @@ namespace AB {
                     break;
                 }
                 acc.clear();
-                list_mark = '(';
                 seg->b_bounds.pre = off;
                 seg->b_bounds.beg = off + 1;
                 seg->flags |= LIST_OPENER;
@@ -417,8 +414,10 @@ namespace AB {
                 if (str.length() > 0 && str.length() < 12 && CHECK_WS_OR_END(off + 1)) {
                     // Potential list
                     // The validity of enumeration should still be checked
-                    seg->b_bounds.end = off;
-                    seg->b_bounds.post = off + 2;
+                    seg->b_bounds.pre = seg->first_non_blank;
+                    seg->b_bounds.beg = off;
+                    if (off < ctx->size && CH(off + 1) == ' ')
+                        seg->b_bounds.beg = off + 1;
                     seg->flags = LIST_OPENER;
                     b_solved = PARTIAL;
                     seg->li_post_marker = CH(off);
@@ -433,11 +432,11 @@ namespace AB {
             // Potential definitions or divs
             else if (CH(off) == ':') {
                 int count = count_marks(ctx, off, ':');
-                if (CHECK_INDENT(4) && count == 3) {
+                if (count == 3 && CHECK_WS_BEFORE(off)) {
                     b_solved = FULL;
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + count;
-                    seg->type == BLOCK_DIV;
+                    seg->type = BLOCK_DIV;
                     seg->flags = DIV_OPENER;
                     break;
                 }
@@ -449,17 +448,10 @@ namespace AB {
 
             }
             else if (CH(off) == '[') {
-                if (CHECK_INDENT(4)) {
-                    seg->b_bounds.pre = off;
-                    seg->b_bounds.beg = off + 1;
-                    seg->flags |= DEFINITION_OPENER;
-                    acc.clear();
-                }
-                else {
-                    // Paragraph
-                    MAKE_P();
-                    break;
-                }
+                seg->b_bounds.pre = off;
+                seg->b_bounds.beg = off + 1;
+                seg->flags |= DEFINITION_OPENER;
+                acc.clear();
             }
             else if (CH(off) == ']') {
                 if (seg->flags & DEFINITION_OPENER && CH(off + 1) == ':') {
@@ -477,7 +469,7 @@ namespace AB {
                 }
             }
             else if (CH(off) == '$') {
-                if (CHECK_INDENT(4) && CH(off + 1) == '$' && CHECK_WS_BEFORE(off)) {
+                if (CH(off + 1) == '$' && CHECK_WS_BEFORE(off)) {
                     // TODO: need to find closure
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + 2;
@@ -501,7 +493,7 @@ namespace AB {
 
         // Still need to verify if ordered list has valid enumeration
         if (seg->flags & LIST_OPENER && b_solved == PARTIAL) {
-            if (list_mark == '(' && list_mark_end != ')') {
+            if (seg->li_pre_marker == '(' && list_mark_end != ')') {
                 MAKE_P_FROM_LIST();
             }
             else {
@@ -520,11 +512,14 @@ namespace AB {
         if (seg->flags == 0) {
             seg->flags = P_OPENER;
             seg->type = BLOCK_P;
-            seg->b_bounds.pre = start;
-            seg->b_bounds.beg = start;
+            seg->b_bounds.pre = seg->start;
+            seg->b_bounds.beg = seg->start;
             seg->b_bounds.end = seg->end;
             seg->b_bounds.post = seg->end;
         }
+
+        if (seg->first_non_blank != seg->end)
+            seg->num_blank_before = seg->first_non_blank - seg->start;
 
         *end = goto_end;
 
@@ -606,7 +601,6 @@ namespace AB {
             ctx->current_container = above_container->parent->parent;
         }
         if (make_new_list) {
-
             if (seg->li_number.empty()) {
                 auto detail = std::make_shared<BlockUlDetail>();
                 detail->marker = pre_marker;
@@ -628,14 +622,14 @@ namespace AB {
         auto detail = std::make_shared<BlockLiDetail>();
         if (!is_ul)
             detail->number = seg->li_number;
-        seg->indent = seg->b_bounds.beg - seg->b_bounds.pre;
+        seg->indent = seg->b_bounds.beg - seg->start;
         std::cout << "New LI " << seg->b_bounds.pre << " " << seg->b_bounds.beg << " " << seg->li_number <<
             " Indent: " << seg->indent << std::endl;
         add_container(ctx, seg, BLOCK_LI, { seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end }, detail);
         return true;
     }
 
-    bool process_segment(Context* ctx, SegmentInfo* seg, SegmentInfo* above_seg) {
+    bool process_segment(Context* ctx, OFFSET* off, SegmentInfo* seg, SegmentInfo* above_seg) {
         bool ret = true;
 
         ContainerPtr above_container = nullptr;
@@ -645,32 +639,50 @@ namespace AB {
             seg->current_container = above_container;
         }
 
+#define IS_LIST(cont) ((cont)->type == BLOCK_OL || (cont)->type == BLOCK_UL || (cont)->type == BLOCK_LI)
 
         // If the current container is a non-closed BLOCK_CODE, everything should be ignored, except
         // if we are closing this block
         if (above_container != nullptr && above_container->type == BLOCK_CODE && !above_container->closed) {
             // TODO: match number of ticks
             if (seg->flags & CODE_OPENER && check_for_whitespace_after(ctx, seg->b_bounds.beg))
-                close_current_container(ctx, seg->b_bounds.pre, seg->end);
+                close_current_container(ctx);
             else
                 above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
             return true;
         }
 
-        if (above_seg != nullptr && above_seg->flags != seg->flags && above_container->parent != nullptr) {
-            ctx->current_container = above_container->parent;
+        if (above_seg != nullptr && above_seg->flags & LIST_OPENER) {
+            std::cout << "Found above indent of " << above_seg->indent << std::endl;
         }
 
-        bool make_new_block = (above_container != nullptr && above_container->closed) ? true : false;
+        if (above_seg != nullptr && above_seg->flags != seg->flags && above_container->parent != nullptr) {
+            ctx->current_container = above_container->parent;
+            while (IS_LIST(ctx->current_container))
+                ctx->current_container = ctx->current_container->parent;
+        }
 
         if (seg->blank_line) {
-            if (ctx->current_container->type != BLOCK_DOC)
-                close_current_container(ctx, above_seg->end, above_seg->end);
+            auto type = ctx->current_container->type;
+            if (type != BLOCK_DOC && type != BLOCK_QUOTE)
+                close_current_container(ctx);
             add_container(ctx, seg, BLOCK_HIDDEN, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
-            close_current_container(ctx, seg->end, seg->end);
+            close_current_container(ctx);
             return true;
         }
 
+        int above_indent = 0;
+        if (above_seg != nullptr)
+            above_indent = above_seg->indent;
+        int indent = seg->num_blank_before - above_indent;
+
+        if ((indent > 3 && !(seg->flags & LIST_OPENER)) ||
+            indent > 1 && (seg->flags & QUOTE_OPENER)) {
+            seg->flags = P_OPENER;
+            *off = seg->end;
+        }
+
+        bool make_new_block = (above_container != nullptr && above_container->closed) ? true : false;
         if (seg->flags & P_OPENER) {
             if (above_container != nullptr && above_container->type == BLOCK_P && !make_new_block) {
                 above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
@@ -688,7 +700,7 @@ namespace AB {
         }
         else if (seg->flags & HR_OPENER) {
             add_container(ctx, seg, BLOCK_HR, { seg->b_bounds.pre, seg->end, seg->end, seg->end });
-            close_current_container(ctx, seg->end, seg->end);
+            close_current_container(ctx);
         }
         else if (seg->flags & QUOTE_OPENER) {
             bool new_block = true;
@@ -704,7 +716,7 @@ namespace AB {
                 if (!new_block)
                     ctx->current_container = above_container;
                 add_container(ctx, nullptr, BLOCK_HIDDEN, { seg->end, seg->end, seg->end, seg->end });
-                close_current_container(ctx, seg->end, seg->end);
+                close_current_container(ctx);
             }
         }
         else if (seg->flags & H_OPENER) {
@@ -724,7 +736,7 @@ namespace AB {
                     above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end });
                 }
                 else {
-                    close_current_container(ctx, above_seg->end, above_seg->end);
+                    close_current_container(ctx);
                 }
             }
             if (new_header) {
@@ -776,7 +788,7 @@ namespace AB {
                 above_segment = nullptr;
 
             CHECK_AND_RET(analyze_segment(ctx, off, &off, &current_seg));
-            CHECK_AND_RET(process_segment(ctx, &current_seg, above_segment));
+            CHECK_AND_RET(process_segment(ctx, &off, &current_seg, above_segment));
 
             history->push_back(current_seg);
 
