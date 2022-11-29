@@ -251,10 +251,7 @@ namespace AB {
         int whitespace_counter = 0;
         std::string acc; // Acc is for accumulator
 
-        char list_mark = 0;
-        char list_mark_end = 0;
         seg->flags = 0;
-        int mark_counter = 0;
 
         enum SOLVED { NONE, PARTIAL, FULL };
         SOLVED b_solved = NONE;
@@ -262,12 +259,13 @@ namespace AB {
     seg->b_bounds.pre = off; seg->b_bounds.beg = off; seg->flags = P_OPENER; \
     b_solved = PARTIAL; seg->type = BLOCK_P;
 #define MAKE_UL() \
-    seg->flags = LIST_OPENER; seg->b_bounds.pre = off; seg->b_bounds.beg = off + 2; \
+    seg->flags = LIST_OPENER; seg->b_bounds.pre = seg->start; \
+    seg->b_bounds.beg = (off + 1 == seg->end) ? off + 1 : off + 2; \
     goto_end = off + 2; b_solved = FULL; seg->type = BLOCK_UL; \
     seg->li_pre_marker = CH(off);
 #define NEXT_LOOP() off++;
 #define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
-#define CHECK_WS_BEFORE(off) seg->first_non_blank >= (off)
+#define CHECK_WS_BEFORE(off) (seg->first_non_blank >= (off))
 
         while (off < seg->end) {
             acc += CH(off);
@@ -275,6 +273,8 @@ namespace AB {
             if (!(ISWHITESPACE(off) || CH(off) == '\n') && seg->blank_line) {
                 seg->blank_line = false;
                 seg->first_non_blank = off;
+                if (!(seg->flags & DEFINITION_OPENER))
+                    acc = CH(off);
             }
 
             if (CH(off) == '\\') {
@@ -305,9 +305,8 @@ namespace AB {
                 if (CHECK_WS_BEFORE(off) && count > 0 && count < 7
                     && CHECK_WS_OR_END(off + count)) {
                     // Valid header
-                    mark_counter = count;
                     seg->flags = H_OPENER;
-                    seg->b_bounds.pre = off;
+                    seg->b_bounds.pre = seg->start;
                     seg->b_bounds.beg = off + count;
                     b_solved = FULL;
                     seg->type = BLOCK_H;
@@ -322,7 +321,7 @@ namespace AB {
             else if (CH(off) == '>') {
                 if (CHECK_WS_BEFORE(off)) {
                     // Valid quote
-                    seg->b_bounds.pre = off; seg->b_bounds.beg = off + 1;
+                    seg->b_bounds.pre = seg->start; seg->b_bounds.beg = off + 1;
                     seg->flags = QUOTE_OPENER;
                     goto_end = off + 1;
                     b_solved = FULL;
@@ -342,9 +341,8 @@ namespace AB {
                 int backtick_counter = count_marks(ctx, off, '`');
                 if (backtick_counter > 2 && CHECK_WS_BEFORE(off)) {
                     // Valid code
-                    mark_counter = backtick_counter;
-                    seg->b_bounds.pre = off;
-                    seg->b_bounds.beg = off + backtick_counter;
+                    seg->b_bounds.pre = seg->start;
+                    seg->b_bounds.beg = seg->end;
                     seg->flags = CODE_OPENER;
                     b_solved = FULL;
                     seg->type = BLOCK_CODE;
@@ -400,14 +398,13 @@ namespace AB {
             }
             // Potential ordered lists
             else if (CH(off) == '(') {
-                if (seg->flags & LIST_OPENER) {
+                if (seg->flags & LIST_OPENER || !CHECK_WS_BEFORE(off)) {
                     // Paragraph
                     MAKE_P();
                     break;
                 }
+                b_solved = PARTIAL;
                 acc.clear();
-                seg->b_bounds.pre = off;
-                seg->b_bounds.beg = off + 1;
                 seg->flags |= LIST_OPENER;
                 seg->li_pre_marker = '(';
             }
@@ -416,10 +413,13 @@ namespace AB {
                 if (str.length() > 0 && str.length() < 12 && CHECK_WS_OR_END(off + 1)) {
                     // Potential list
                     // The validity of enumeration should still be checked
-                    seg->b_bounds.pre = seg->first_non_blank;
-                    seg->b_bounds.beg = off;
-                    if (off < ctx->size && CH(off + 1) == ' ')
-                        seg->b_bounds.beg = off + 1;
+                    seg->b_bounds.pre = seg->start;
+                    seg->b_bounds.beg = off + 1;
+                    goto_end = off + 1;
+                    if (off + 1 < ctx->size && CH(off + 1) == ' ') {
+                        seg->b_bounds.beg = off + 2;
+                        goto_end = off + 2;
+                    }
                     seg->flags = LIST_OPENER;
                     b_solved = PARTIAL;
                     seg->li_post_marker = CH(off);
@@ -493,12 +493,12 @@ namespace AB {
     seg->b_bounds.pre = off; seg->b_bounds.beg = off; \
     seg->flags = P_OPENER; b_solved = PARTIAL; seg->type = BLOCK_P;
 
-        // Still need to verify if ordered list has valid enumeration
         if (seg->flags & LIST_OPENER && b_solved == PARTIAL) {
-            if (seg->li_pre_marker == '(' && list_mark_end != ')') {
+            if (seg->li_pre_marker == '(' && seg->li_post_marker != ')') {
                 MAKE_P_FROM_LIST();
             }
             else {
+                // Still need to verify if ordered list has valid enumeration
                 if ((verify_positiv_number(acc) && acc.length() < 10)
                     || validate_roman_enumeration(acc)
                     || alpha_to_decimal(acc) > 0 && acc.length() < 4) {
@@ -725,7 +725,7 @@ namespace AB {
                 above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
             }
             else {
-                add_container(ctx, seg, BLOCK_P, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
+                add_container(ctx, seg, BLOCK_P, { seg->start, seg->first_non_blank, seg->end, seg->end });
             }
         }
         else if (seg->flags & CODE_OPENER) {
