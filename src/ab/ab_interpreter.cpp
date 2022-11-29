@@ -182,8 +182,10 @@ namespace AB {
         container->detail = detail;
         ContainerPtr parent = ctx->current_container;
         container->parent = parent;
-        if (seg != nullptr)
+        if (seg != nullptr) {
             seg->current_container = container;
+            seg->type = block_type;
+        }
 
         ctx->containers.push_back(container);
         ctx->current_container = *(ctx->containers.end() - 1);
@@ -604,7 +606,7 @@ namespace AB {
             if (seg->li_number.empty()) {
                 auto detail = std::make_shared<BlockUlDetail>();
                 detail->marker = pre_marker;
-                add_container(ctx, seg, BLOCK_UL, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail);
+                add_container(ctx, nullptr, BLOCK_UL, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail);
             }
             else {
                 auto detail = std::make_shared<BlockOlDetail>();
@@ -612,9 +614,8 @@ namespace AB {
                 detail->post_marker = post_marker;
                 detail->type = type;
                 detail->lower_case = ISLOWER(seg->b_bounds.beg);
-                add_container(ctx, seg, BLOCK_OL, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail);
+                add_container(ctx, nullptr, BLOCK_OL, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail);
             }
-            std::cout << "New List / Roman" << roman << " Alpha: " << alpha << std::endl;
         }
         else
             ctx->current_container = above_list;
@@ -622,22 +623,26 @@ namespace AB {
         auto detail = std::make_shared<BlockLiDetail>();
         if (!is_ul)
             detail->number = seg->li_number;
-        seg->indent = seg->b_bounds.beg - seg->start;
-        std::cout << "New LI " << seg->b_bounds.pre << " " << seg->b_bounds.beg << " " << seg->li_number <<
-            " Indent: " << seg->indent << std::endl;
         add_container(ctx, seg, BLOCK_LI, { seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end }, detail);
+        ctx->current_container->indent = seg->b_bounds.beg - seg->start;
         return true;
     }
 
-    bool process_segment(Context* ctx, OFFSET* off, SegmentInfo* seg, SegmentInfo* above_seg) {
+    bool process_segment(Context* ctx, OFFSET* off, SegmentInfo* seg, std::vector<SegmentInfo>* above_history, int& depth) {
         bool ret = true;
 
         ContainerPtr above_container = nullptr;
+        SegmentInfo* above_seg = nullptr;
+        if (depth < above_history->size())
+            above_seg = &(*(above_history->begin() + depth));
+
         if (above_seg != nullptr) {
             above_container = above_seg->current_container;
             // Unless a new container is created, current segment inherits from above segments container
             seg->current_container = above_container;
         }
+        bool clear_history = false;
+        bool make_new_block = (above_container != nullptr && above_container->closed) ? true : false;
 
 #define IS_LIST(cont) ((cont)->type == BLOCK_OL || (cont)->type == BLOCK_UL || (cont)->type == BLOCK_LI)
 
@@ -649,40 +654,72 @@ namespace AB {
                 close_current_container(ctx);
             else
                 above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
-            return true;
+            goto skip;
         }
 
-        if (above_seg != nullptr && above_seg->flags & LIST_OPENER) {
-            std::cout << "Found above indent of " << above_seg->indent << std::endl;
+        // To contextualize the current segment, we need to use the above segment
+        if (above_seg != nullptr) {
+            // We check if somewhere in the above segment tree, if there is a list item laying around
+            bool has_list = false;
+            ContainerPtr potential_list = above_container;
+            while (potential_list != nullptr) {
+                if (IS_LIST(potential_list)) {
+                    has_list = true;
+                    break;
+                }
+                potential_list = potential_list->parent;
+            }
+
+            // If there is a list item, we check if we can match the indentation of current segment
+            // to the list item
+            bool added_to_li = false;
+            if (has_list && !(seg->flags & LIST_OPENER)) {
+                int indent = seg->num_blank_before - potential_list->indent;
+
+                if ((indent > 3) || indent > 1 && (seg->flags & QUOTE_OPENER)) {
+                    seg->flags = P_OPENER;
+                }
+                // If indent is positive, we are part of list item 
+                if (indent >= 0) {
+                    depth++;
+                    if (depth < above_history->size())
+                        above_seg = &(*(above_history->begin() + depth));
+                    above_container = above_seg->current_container;
+                    added_to_li = true;
+
+                    // Need to update text pos info on li/ul/ol parents
+                    if (IS_LIST(potential_list)) {
+                        potential_list->content_boundaries.push_back({ seg->start, seg->first_non_blank, seg->end, seg->end });
+                        potential_list->parent->content_boundaries.push_back({ seg->start, seg->start, seg->end, seg->end });;
+                    }
+
+                }
+            }
+
+            // If flags from current and above do not match, then we have to close the current
+            // container and clear the previous segment history
+            if (above_seg->flags != seg->flags && above_container->parent != nullptr) {
+                clear_history = true;
+                ctx->current_container = above_container->parent;
+                while (!added_to_li && IS_LIST(ctx->current_container))
+                    ctx->current_container = ctx->current_container->parent;
+            }
         }
-
-        if (above_seg != nullptr && above_seg->flags != seg->flags && above_container->parent != nullptr) {
-            ctx->current_container = above_container->parent;
-            while (IS_LIST(ctx->current_container))
-                ctx->current_container = ctx->current_container->parent;
-        }
-
-        if (seg->blank_line) {
-            auto type = ctx->current_container->type;
-            if (type != BLOCK_DOC && type != BLOCK_QUOTE)
-                close_current_container(ctx);
-            add_container(ctx, seg, BLOCK_HIDDEN, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
-            close_current_container(ctx);
-            return true;
-        }
-
-        int above_indent = 0;
-        if (above_seg != nullptr)
-            above_indent = above_seg->indent;
-        int indent = seg->num_blank_before - above_indent;
-
-        if ((indent > 3 && !(seg->flags & LIST_OPENER)) ||
-            indent > 1 && (seg->flags & QUOTE_OPENER)) {
+        else if ((seg->num_blank_before > 3 && !(seg->flags & LIST_OPENER)) ||
+            seg->num_blank_before > 1 && (seg->flags & QUOTE_OPENER)) {
             seg->flags = P_OPENER;
             *off = seg->end;
         }
 
-        bool make_new_block = (above_container != nullptr && above_container->closed) ? true : false;
+        if (seg->blank_line) {
+            auto type = ctx->current_container->type;
+            if (type != BLOCK_LI && type != BLOCK_DOC && type != BLOCK_QUOTE)
+                close_current_container(ctx);
+            add_container(ctx, nullptr, BLOCK_HIDDEN, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
+            close_current_container(ctx);
+            goto skip;
+        }
+
         if (seg->flags & P_OPENER) {
             if (above_container != nullptr && above_container->type == BLOCK_P && !make_new_block) {
                 above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
@@ -750,8 +787,12 @@ namespace AB {
             make_list_item(ctx, seg, above_seg, above_container);
         }
 
+        if (clear_history)
+            above_history->clear();
         return ret;
-    abort:
+    skip:
+        if (clear_history)
+            above_history->clear();
         return ret;
     }
 
@@ -788,7 +829,7 @@ namespace AB {
                 above_segment = nullptr;
 
             CHECK_AND_RET(analyze_segment(ctx, off, &off, &current_seg));
-            CHECK_AND_RET(process_segment(ctx, &off, &current_seg, above_segment));
+            CHECK_AND_RET(process_segment(ctx, &off, &current_seg, prev_history, depth));
 
             history->push_back(current_seg);
 
