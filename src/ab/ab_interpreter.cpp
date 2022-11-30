@@ -530,7 +530,12 @@ namespace AB {
         return ret;
     }
 
-    bool make_list_item(Context* ctx, SegmentInfo* seg, SegmentInfo* prev_seg, ContainerPtr& above_container) {
+    bool make_list_item(Context* ctx, SegmentInfo* seg, SegmentInfo* prev_seg, OFFSET off) {
+        ContainerPtr above_container = nullptr;
+        SegmentInfo* above_seg = nullptr;
+        if (above_seg != nullptr)
+            above_container = above_seg->current_container;
+
         bool is_ul = seg->li_number.empty();
         char pre_marker = seg->li_pre_marker;
         char post_marker = seg->li_post_marker;
@@ -619,16 +624,22 @@ namespace AB {
         }
         else
             ctx->current_container = above_list;
+
         // We can now add our list item
         auto detail = std::make_shared<BlockLiDetail>();
         if (!is_ul)
             detail->number = seg->li_number;
         add_container(ctx, seg, BLOCK_LI, { seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end }, detail);
         ctx->current_container->indent = seg->b_bounds.beg - seg->start;
+        // We add a hidden block if the list item is empty
+        if (seg->end <= off) {
+            add_container(ctx, seg, BLOCK_HIDDEN, { seg->end, seg->end, seg->end, seg->end });
+            close_current_container(ctx);
+        }
         return true;
     }
 
-    bool process_segment(Context* ctx, OFFSET* off, SegmentInfo* seg, std::vector<SegmentInfo>* above_history, int& depth) {
+    bool process_segment(Context* ctx, OFFSET* off, SegmentInfo* seg, std::vector<SegmentInfo>* above_history, std::vector<SegmentInfo>* current_history, int& depth) {
         bool ret = true;
 
         ContainerPtr above_container = nullptr;
@@ -643,6 +654,8 @@ namespace AB {
         }
         bool clear_history = false;
         bool make_new_block = (above_container != nullptr && above_container->closed) ? true : false;
+        ContainerPtr potential_list = above_container;
+        bool has_list_above = false;
 
 #define IS_LIST(cont) ((cont)->type == BLOCK_OL || (cont)->type == BLOCK_UL || (cont)->type == BLOCK_LI)
 
@@ -660,11 +673,9 @@ namespace AB {
         // To contextualize the current segment, we need to use the above segment
         if (above_seg != nullptr) {
             // We check if somewhere in the above segment tree, if there is a list item laying around
-            bool has_list = false;
-            ContainerPtr potential_list = above_container;
             while (potential_list != nullptr) {
                 if (IS_LIST(potential_list)) {
-                    has_list = true;
+                    has_list_above = true;
                     break;
                 }
                 potential_list = potential_list->parent;
@@ -673,7 +684,7 @@ namespace AB {
             // If there is a list item, we check if we can match the indentation of current segment
             // to the list item
             bool added_to_li = false;
-            if (has_list && !(seg->flags & LIST_OPENER)) {
+            if (has_list_above && !(seg->flags & LIST_OPENER)) {
                 int indent = seg->num_blank_before - potential_list->indent;
 
                 if ((indent > 3) || indent > 1 && (seg->flags & QUOTE_OPENER)) {
@@ -682,9 +693,12 @@ namespace AB {
                 // If indent is positive, we are part of list item 
                 if (indent >= 0) {
                     depth++;
+                    // Rewrite history to match list structure
+                    current_history->push_back(*above_seg);
                     if (depth < above_history->size())
                         above_seg = &(*(above_history->begin() + depth));
                     above_container = above_seg->current_container;
+                    seg->current_container = above_container;
                     added_to_li = true;
 
                     // Need to update text pos info on li/ul/ol parents
@@ -692,7 +706,9 @@ namespace AB {
                         potential_list->content_boundaries.push_back({ seg->start, seg->first_non_blank, seg->end, seg->end });
                         potential_list->parent->content_boundaries.push_back({ seg->start, seg->start, seg->end, seg->end });;
                     }
-
+                    // LI will have pre = seg->start, beg = seg->first_non_blank
+                    // This line ensures that the following block does not count the LI spaces
+                    seg->b_bounds.pre = seg->first_non_blank;
                 }
             }
 
@@ -732,11 +748,11 @@ namespace AB {
             auto detail = std::make_shared<BlockCodeDetail>();
             detail->lang = to_string(ctx, seg->b_bounds.beg, seg->end);
             detail->num_ticks = seg->b_bounds.beg - seg->b_bounds.pre;
-            add_container(ctx, seg, BLOCK_CODE, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end }, detail);
+            add_container(ctx, seg, BLOCK_CODE, { seg->start, seg->start, seg->end, seg->end }, detail);
             seg->current_container = ctx->current_container;
         }
         else if (seg->flags & HR_OPENER) {
-            add_container(ctx, seg, BLOCK_HR, { seg->b_bounds.pre, seg->end, seg->end, seg->end });
+            add_container(ctx, seg, BLOCK_HR, { seg->start, seg->end, seg->end, seg->end });
             close_current_container(ctx);
         }
         else if (seg->flags & QUOTE_OPENER) {
@@ -784,7 +800,7 @@ namespace AB {
         }
         else if (seg->flags & LIST_OPENER) {
             // Lists are not trivial to handle, there are a lot of edge cases
-            make_list_item(ctx, seg, above_seg, above_container);
+            make_list_item(ctx, seg, above_seg, *off);
         }
 
         if (clear_history)
@@ -829,7 +845,7 @@ namespace AB {
                 above_segment = nullptr;
 
             CHECK_AND_RET(analyze_segment(ctx, off, &off, &current_seg));
-            CHECK_AND_RET(process_segment(ctx, &off, &current_seg, prev_history, depth));
+            CHECK_AND_RET(process_segment(ctx, &off, &current_seg, prev_history, history, depth));
 
             history->push_back(current_seg);
 
@@ -849,10 +865,6 @@ namespace AB {
                 history_pivot = !history_pivot;
                 depth = -1;
 
-                // prev_seg.current_container = find_root_parent(ctx, ctx->current_container);
-                // if (ctx->current_container->type == BLOCK_LI) {
-                    // current_line.indent = ctx->current_container->bounds.beg - ctx->current_container->bounds.pre;
-                // }
                 off++;
             }
             depth++;
