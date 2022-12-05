@@ -10,8 +10,6 @@
 #include "translations/translate.h"
 #include "imgui_stdlib.h"
 
-// namespace py = pybind11;
-
 void setFonts(UIState_ptr state) {
     using namespace Fonts;
     using Fs = FontStyling;
@@ -76,7 +74,6 @@ void MainApp::InitializationBeforeLoop() {
     defineStyle();
 }
 void MainApp::AfterLoop() {
-    // ImPlot::DestroyContext();
 }
 
 void MainApp::FrameUpdate() {
