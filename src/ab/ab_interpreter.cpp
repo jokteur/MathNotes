@@ -145,6 +145,9 @@ namespace AB {
         std::vector<ContainerPtr> containers;
         ContainerPtr current_container;
 
+        std::vector<SegmentInfo*>* seg_above_history;
+        std::vector<SegmentInfo*>* seg_history;
+
         std::vector<int> offset_to_line_number;
         std::vector<int> line_number_begs;
     };
@@ -235,7 +238,7 @@ namespace AB {
         return true;
     }
 
-    bool analyze_segment(Context* ctx, OFFSET off, OFFSET* end, SegmentInfo* seg) {
+    bool analyze_segment(Context* ctx, OFFSET off, OFFSET* end, SegmentInfo* seg, SegmentInfo* above_segment, int* depth) {
         bool ret = true;
 
         seg->end = find_next_line_off(ctx, off);
@@ -250,6 +253,10 @@ namespace AB {
 
         seg->blank_line = true;
         int whitespace_counter = 0;
+        int indent = 0;
+        if (above_segment != nullptr)
+            indent = above_segment->indent;
+
         std::string acc; // Acc is for accumulator
 
         seg->flags = 0;
@@ -267,6 +274,7 @@ namespace AB {
 #define NEXT_LOOP() off++;
 #define CHECK_WS_OR_END(off) ((off) >= ctx->size || ((off) < ctx->size && ISWHITESPACE((off))) || CH((off)) == '\n')
 #define CHECK_WS_BEFORE(off) (seg->first_non_blank >= (off))
+#define CHECK_INDENT(allowed_ws) (off - seg->start < indent + (allowed_ws))
 
         while (off < seg->end) {
             acc += CH(off);
@@ -304,7 +312,7 @@ namespace AB {
             else if (CH(off) == '#') {
                 int count = count_marks(ctx, off, '#');
                 if (CHECK_WS_BEFORE(off) && count > 0 && count < 7
-                    && CHECK_WS_OR_END(off + count)) {
+                    && CHECK_WS_OR_END(off + count) && CHECK_INDENT(3)) {
                     // Valid header
                     seg->flags = H_OPENER;
                     seg->b_bounds.pre = seg->start;
@@ -320,7 +328,7 @@ namespace AB {
                 }
             }
             else if (CH(off) == '>') {
-                if (CHECK_WS_BEFORE(off)) {
+                if (CHECK_WS_BEFORE(off) && CHECK_INDENT(1)) {
                     // Valid quote
                     seg->b_bounds.pre = seg->start; seg->b_bounds.beg = off + 1;
                     seg->flags = QUOTE_OPENER;
@@ -340,7 +348,7 @@ namespace AB {
             }
             else if (CH(off) == '`') {
                 int backtick_counter = count_marks(ctx, off, '`');
-                if (backtick_counter > 2 && CHECK_WS_BEFORE(off)) {
+                if (backtick_counter > 2 && CHECK_WS_BEFORE(off) && CHECK_INDENT(3)) {
                     // Valid code
                     seg->b_bounds.pre = seg->start;
                     seg->b_bounds.beg = seg->end;
@@ -435,7 +443,7 @@ namespace AB {
             // Potential definitions or divs
             else if (CH(off) == ':') {
                 int count = count_marks(ctx, off, ':');
-                if (count == 3 && CHECK_WS_BEFORE(off)) {
+                if (count == 3 && CHECK_WS_BEFORE(off) && CHECK_INDENT(3)) {
                     b_solved = FULL;
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + count;
@@ -451,10 +459,15 @@ namespace AB {
 
             }
             else if (CH(off) == '[') {
-                seg->b_bounds.pre = off;
-                seg->b_bounds.beg = off + 1;
-                seg->flags |= DEFINITION_OPENER;
-                acc.clear();
+                if (CHECK_INDENT(3)) {
+                    seg->b_bounds.pre = off;
+                    seg->b_bounds.beg = off + 1;
+                    seg->flags |= DEFINITION_OPENER;
+                    acc.clear();
+                }
+                else {
+                    MAKE_P();
+                }
             }
             else if (CH(off) == ']') {
                 if (seg->flags & DEFINITION_OPENER && CH(off + 1) == ':') {
@@ -472,7 +485,7 @@ namespace AB {
                 }
             }
             else if (CH(off) == '$') {
-                if (CH(off + 1) == '$' && CHECK_WS_BEFORE(off)) {
+                if (CH(off + 1) == '$' && CHECK_WS_BEFORE(off) && CHECK_INDENT(3)) {
                     // TODO: need to find closure
                     seg->b_bounds.pre = off;
                     seg->b_bounds.beg = off + 2;
@@ -637,6 +650,23 @@ namespace AB {
             add_container(ctx, seg, current_history, BLOCK_HIDDEN, { seg->end, seg->end, seg->end, seg->end });
         }
         return true;
+    }
+
+    bool process_segment2(Context* ctx, OFFSET* off, SegmentInfo* seg, SegmentInfo* above_seg, int& depth) {
+        bool ret = true;
+
+        ContainerPtr above_container = nullptr;
+        if (above_seg != nullptr)
+            above_container = above_seg->current_container;
+
+        bool clear_history = false;
+
+        if (above_seg->flags != seg->flags && above_container->parent != nullptr) {
+            clear_history = true;
+            ctx->current_container = above_container->parent;
+            // while (!added_to_li && IS_LIST(ctx->current_container))
+            //     ctx->current_container = ctx->current_container->parent;
+        }
     }
 
     bool process_segment(Context* ctx, OFFSET* off, SegmentInfo* seg, std::vector<SegmentInfo>* above_history, std::vector<SegmentInfo>* current_history, int& depth, std::unordered_set<SegmentInfo*>& flagged_li) {
@@ -847,8 +877,8 @@ namespace AB {
             else
                 above_segment = nullptr;
 
-            CHECK_AND_RET(analyze_segment(ctx, off, &off, &current_seg));
-            CHECK_AND_RET(process_segment(ctx, &off, &current_seg, prev_history, history, depth, flagged_li));
+            CHECK_AND_RET(analyze_segment(ctx, off, &off, &current_seg, &above_segment, &depth));
+            CHECK_AND_RET(process_segment2(ctx, &off, &current_seg, depth));
 
             // We arrived at a the end of a line
             if (off >= current_seg.end) {
