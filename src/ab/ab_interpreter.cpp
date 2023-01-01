@@ -144,6 +144,7 @@ namespace AB {
 
         std::vector<ContainerPtr> containers;
         ContainerPtr current_container;
+        ContainerPtr above_container = nullptr;
 
         std::vector<SegmentInfo*>* seg_above_history;
         std::vector<SegmentInfo*>* seg_history;
@@ -189,6 +190,22 @@ namespace AB {
             seg->current_container = container;
             seg->type = block_type;
             current_history->push_back(*seg);
+        }
+
+        ctx->containers.push_back(container);
+        ctx->current_container = *(ctx->containers.end() - 1);
+        parent->children.push_back(ctx->current_container);
+    }
+    static void add_container2(Context* ctx, SegmentInfo* seg, BLOCK_TYPE block_type, const Boundaries& bounds, std::shared_ptr<BlockDetail> detail = nullptr) {
+        ContainerPtr container = std::make_shared<Container>();
+        container->type = block_type;
+        container->content_boundaries.push_back(bounds);
+        container->detail = detail;
+        ContainerPtr parent = ctx->current_container;
+        container->parent = parent;
+        if (seg != nullptr) {
+            seg->current_container = container;
+            seg->type = block_type;
         }
 
         ctx->containers.push_back(container);
@@ -652,21 +669,74 @@ namespace AB {
         return true;
     }
 
-    bool process_segment2(Context* ctx, OFFSET* off, SegmentInfo* seg, SegmentInfo* above_seg, int& depth) {
+    bool process_segment2(Context* ctx, OFFSET* off, SegmentInfo* seg, int& depth) {
         bool ret = true;
 
-        ContainerPtr above_container = nullptr;
-        if (above_seg != nullptr)
-            above_container = above_seg->current_container;
+        ContainerPtr above_container = ctx->above_container;
 
-        bool clear_history = false;
+        // if (above_seg->flags != seg->flags && above_container->parent != nullptr) {
+        //     clear_history = true;
+        //     ctx->current_container = above_container->parent;
+        //     // while (!added_to_li && IS_LIST(ctx->current_container))
+        //     //     ctx->current_container = ctx->current_container->parent;
+        // }
 
-        if (above_seg->flags != seg->flags && above_container->parent != nullptr) {
-            clear_history = true;
-            ctx->current_container = above_container->parent;
-            // while (!added_to_li && IS_LIST(ctx->current_container))
-            //     ctx->current_container = ctx->current_container->parent;
+        // If the current container is a non-closed BLOCK_CODE, everything should be ignored, except
+        // if we are closing this block
+        if (above_container != nullptr && above_container->type == BLOCK_CODE && !above_container->closed) {
+            // TODO: match number of ticks
+            // seg->flags = CODE_OPENER
+            if (seg->flags & CODE_OPENER && check_for_whitespace_after(ctx, seg->b_bounds.beg))
+                close_current_container(ctx);
+            else
+                above_container->content_boundaries.push_back({ seg->start, seg->start, seg->end, seg->end });
+            goto skip;
         }
+
+        if (seg->blank_line) {
+            auto type = ctx->current_container->type;
+            if (type != BLOCK_LI && type != BLOCK_DOC && type != BLOCK_QUOTE)
+                close_current_container(ctx);
+            add_container2(ctx, seg, BLOCK_HIDDEN, { seg->b_bounds.pre, seg->b_bounds.pre, seg->end, seg->end });
+        }
+        else if (seg->flags & P_OPENER) {
+            if (above_container != nullptr && above_container->type == BLOCK_P) {
+                above_container->content_boundaries.push_back({ seg->start, seg->first_non_blank, seg->end, seg->end });
+            }
+            else {
+                add_container2(ctx, seg, BLOCK_P, { seg->start, seg->first_non_blank, seg->end, seg->end });
+            }
+        }
+        else if (seg->flags & CODE_OPENER) {
+            auto detail = std::make_shared<BlockCodeDetail>();
+            detail->lang = to_string(ctx, seg->b_bounds.beg, seg->end);
+            detail->num_ticks = seg->b_bounds.beg - seg->b_bounds.pre;
+            add_container2(ctx, seg, BLOCK_CODE, { seg->start, seg->end, seg->end, seg->end }, detail);
+            seg->current_container = ctx->current_container;
+        }
+        else if (seg->flags & QUOTE_OPENER) {
+            bool new_block = true;
+            if (above_container != nullptr && above_container->type == BLOCK_QUOTE) {
+                new_block = false;
+                above_container->content_boundaries.push_back({ seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end });
+            }
+            else {
+                add_container2(ctx, seg, BLOCK_QUOTE, { seg->b_bounds.pre, seg->b_bounds.beg, seg->end, seg->end });
+            }
+
+            // In the case an empty quote has been added (i.e. '>\n'), we add an empty block inside the quote
+
+            // Empty blocks should be validated only after
+            // TODO LOOK HERE
+            if (seg->end == seg->b_bounds.beg) {
+                if (!new_block)
+                    ctx->current_container = above_container;
+                add_container2(ctx, seg, BLOCK_HIDDEN, { seg->end, seg->end, seg->end, seg->end });
+            }
+        }
+        return ret;
+    skip:
+        return ret;
     }
 
     bool process_segment(Context* ctx, OFFSET* off, SegmentInfo* seg, std::vector<SegmentInfo>* above_history, std::vector<SegmentInfo>* current_history, int& depth, std::unordered_set<SegmentInfo*>& flagged_li) {
