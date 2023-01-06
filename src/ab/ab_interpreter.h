@@ -13,12 +13,12 @@ namespace AB {
     };
     typedef std::shared_ptr<BlockDetail> BlockDetailPtr;
 
-    struct BlockCodeDetail : public BlockDetail {
+    struct BlockCodeDetail: public BlockDetail {
         std::string lang;
         int num_ticks;
     };
 
-    struct BlockOlDetail : public BlockDetail {
+    struct BlockOlDetail: public BlockDetail {
         enum OL_TYPE { OL_NUMERIC, OL_ALPHABETIC, OL_ROMAN };
         char pre_marker;
         char post_marker;
@@ -26,11 +26,11 @@ namespace AB {
         OL_TYPE type;
     };
 
-    struct BlockUlDetail : public BlockDetail {
+    struct BlockUlDetail: public BlockDetail {
         char marker;
     };
 
-    struct BlockLiDetail : public BlockDetail {
+    struct BlockLiDetail: public BlockDetail {
         enum TASK_STATE { TASK_EMPTY, TASK_FAIL, TASK_SUCCESS };
         bool is_task;
         std::string number;
@@ -38,7 +38,7 @@ namespace AB {
     };
 
 
-    struct BlockHDetail : public BlockDetail {
+    struct BlockHDetail: public BlockDetail {
         unsigned char level; /* Header level (1 to 6) */
     };
     // TODO, tables
@@ -53,15 +53,15 @@ namespace AB {
         OFFSET end;
         OFFSET post;
     };
-    struct SpanADetail : public SpanDetail {
+    struct SpanADetail: public SpanDetail {
         std::string href;
         std::string title;
     };
-    struct SpanImgDetail : public SpanDetail {
+    struct SpanImgDetail: public SpanDetail {
         std::string src;
         std::string title;
     };
-    struct SpanWikiLink : public SpanDetail {
+    struct SpanWikiLink: public SpanDetail {
         std::string target;
     };
 
