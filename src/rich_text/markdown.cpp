@@ -264,10 +264,6 @@ namespace RichText {
                 }
                 textpos_to_lines->push_back(line_counter);
             }
-            // ptr->m_raw_text_info.pre = 0;
-            // ptr->m_raw_text_info.begin = 0;
-            // ptr->m_raw_text_info.end = m_text_size;
-            // ptr->m_raw_text_info.post = m_text_size;
             push_to_tree(ptr);
             // Build raw text line information
         }

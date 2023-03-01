@@ -54,12 +54,6 @@ namespace RichText {
         AbstractWidgetPtr BLOCK_H(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockHDetail& d);
         AbstractWidgetPtr BLOCK_CODE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockCodeDetail&);
         AbstractWidgetPtr BLOCK_P(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
-        // AbstractWidgetPtr BLOCK_TABLE(const MD_BLOCK_TABLE_DETAIL*, bool);
-        // AbstractWidgetPtr BLOCK_THEAD(bool);
-        // AbstractWidgetPtr BLOCK_TBODY(bool);
-        // AbstractWidgetPtr BLOCK_TR(bool);
-        // AbstractWidgetPtr BLOCK_TH(const MD_BLOCK_TD_DETAIL*, bool);
-        // AbstractWidgetPtr BLOCK_TD(const MD_BLOCK_TD_DETAIL*, bool);
 
         AbstractWidgetPtr SPAN_EM(bool e, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractWidgetPtr SPAN_STRONG(bool e, const std::vector<AB::Boundaries>&, const AB::Attributes&);
