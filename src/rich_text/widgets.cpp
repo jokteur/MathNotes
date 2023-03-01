@@ -10,22 +10,22 @@ namespace RichText {
     }
     bool AbstractWidget::hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
-        if (m_is_selected && m_type != T_BLOCK_QUOTE) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.pre, m_raw_text_info.begin, m_special_chars_style);
-            if (!res) {
-                success = false;
-            }
-        }
+        // if (m_is_selected && m_type != T_BLOCK_QUOTE) {
+        //     auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.pre, m_raw_text_info.begin, m_special_chars_style);
+        //     if (!res) {
+        //         success = false;
+        //     }
+        // }
         return success;
     }
     bool AbstractWidget::hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
-        if (m_is_selected && m_raw_text_info.end > -1) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.end, m_raw_text_info.post, m_special_chars_style);
-            if (!res) {
-                success = false;
-            }
-        }
+        // if (m_is_selected && m_raw_text_info.end > -1) {
+        //     auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.end, m_raw_text_info.post, m_special_chars_style);
+        //     if (!res) {
+        //         success = false;
+        //     }
+        // }
         return success;
     }
     float AbstractWidget::hk_set_position(float& cursor_y_pos, float& x_offset) {
@@ -169,12 +169,12 @@ namespace RichText {
         bool success = true;
         m_draw_chars.clear();
 
-        if (m_is_selected) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.begin, m_raw_text_info.end, m_special_chars_style);
-            if (!res) {
-                success = false;
-            }
-        }
+        // if (m_is_selected) {
+        //     auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.begin, m_raw_text_info.end, m_special_chars_style);
+        //     if (!res) {
+        //         success = false;
+        //     }
+        // }
         return success;
     }
 

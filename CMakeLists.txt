@@ -50,11 +50,17 @@ add_subdirectory(external/doctest)
 # ---------------
 include_directories(external/stb_image)
 
+# ---------
+# AB parser
+# ---------
+add_subdirectory(external/ab-parser)
+include_directories(external/ab-parser/include)
+include_directories(external/ab-parser)
+
 # Sources of program
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/core/*.cpp
-    src/ab/*.cpp
     src/rich_text/*.cpp
     src/rich_text/chars/*.cpp
     src/rich_text/spans/*.cpp
@@ -70,7 +76,7 @@ add_library(${PROJECT_NAME}_lib ${source_list})
 # Main program executable
 add_executable(${PROJECT_NAME} src/main.cpp ${APP_ICON_RESOURCE_WINDOWS})
 
-set(LIB_LINK microtex-imgui ${CAIRO_LIBRARIES} md4c md4c-html)
+set(LIB_LINK microtex-imgui ${CAIRO_LIBRARIES} md4c md4c-html AB-PARSER)
 target_link_libraries(${PROJECT_NAME}_lib ${LIB_LINK})
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${LIB_LINK})
 

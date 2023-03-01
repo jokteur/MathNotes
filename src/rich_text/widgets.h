@@ -2,6 +2,7 @@
 
 #include <tempo.h>
 #include <unordered_set>
+#include "ab_parser.h"
 
 #include "types.h"
 #include "ui/drawable.h"
@@ -21,22 +22,22 @@ namespace RichText {
     using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>;
 
     int const MAX_INT = 2147483647;
-    struct RawTextInfo {
+    struct TextBoundaries {
         int pre = MAX_INT; //INT_MAX
         int begin = MAX_INT; //INT_MAX
         int end = -1;
         int post = -1;
     };
-    using RawTextPtr = std::shared_ptr<RawTextInfo>;
+    using RawTextPtr = std::shared_ptr<TextBoundaries>;
 
-    struct AbstractWidget : public Drawable {
+    struct AbstractWidget: public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<WrapCharPtr> m_wrap_chars;
     public:
         Type m_type;
         Category m_category;
-        AbstractWidget(UIState_ptr ui_state) : Drawable(ui_state) {}
+        AbstractWidget(UIState_ptr ui_state): Drawable(ui_state) {}
         ~AbstractWidget() {};
 
         // Informations about the tree structure
@@ -67,10 +68,8 @@ namespace RichText {
         // Position of the pointer in m_childrens;
         int m_child_number = -1;
 
-        int m_text_pos_begin_estimate = -1;
-        int m_text_pos_end_estimate = -1;
-        int m_mark_beg = -1;
-        int m_mark_end = -1;
+        std::vector<AB::Boundaries> m_text_boundaries;
+        AB::Attributes m_attributes;
 
 
         // Widget position and size
@@ -90,7 +89,6 @@ namespace RichText {
 
         // Internal
         SafeString m_safe_string;
-        RawTextInfo m_raw_text_info;
 
         // Events
         void virtual onClick() {}
@@ -99,9 +97,9 @@ namespace RichText {
         void virtual setWidth(float width);
     };
 
-    struct AbstractBlock : public AbstractWidget {
+    struct AbstractBlock: public AbstractWidget {
     public:
-        AbstractBlock(UIState_ptr ui_state) : AbstractWidget(ui_state) {
+        AbstractBlock(UIState_ptr ui_state): AbstractWidget(ui_state) {
             m_category = C_BLOCK;
         }
 
@@ -114,24 +112,24 @@ namespace RichText {
         void setWidth(float width) override;
     };
 
-    struct InterText : public AbstractWidget {
-        InterText(UIState_ptr ui_state) : AbstractWidget(ui_state) {
+    struct InterText: public AbstractWidget {
+        InterText(UIState_ptr ui_state): AbstractWidget(ui_state) {
             m_category = C_SPAN;
             m_type = T_INTERTEXT;
         }
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 
-    struct AbstractSpan : public AbstractWidget {
+    struct AbstractSpan: public AbstractWidget {
         std::string m_processed_text;
-        AbstractSpan(UIState_ptr ui_state) : AbstractWidget(ui_state) {
+        AbstractSpan(UIState_ptr ui_state): AbstractWidget(ui_state) {
             m_category = C_SPAN;
         }
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 
-    struct RootNode : public AbstractWidget {
-        RootNode(UIState_ptr ui_state) : AbstractWidget(ui_state) {
+    struct RootNode: public AbstractWidget {
+        RootNode(UIState_ptr ui_state): AbstractWidget(ui_state) {
             m_type = T_ROOT;
             m_category = C_ROOT;
         }

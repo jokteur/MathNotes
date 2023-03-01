@@ -4,13 +4,7 @@
 #include "ui/draw_commands.h"
 
 namespace RichText {
-    RichTextWidget::RichTextWidget(std::shared_ptr<UIState> ui_state) : Drawable(ui_state) {
-        unsigned flags = 0;
-        flags |= MD_FLAG_LATEXMATHSPANS | MD_FLAG_PERMISSIVEAUTOLINKS;
-        flags |= MD_FLAG_PERMISSIVEURLAUTOLINKS | MD_FLAG_PERMISSIVEWWWAUTOLINKS;
-        flags |= MD_FLAG_STRIKETHROUGH | MD_FLAG_TABLES | MD_FLAG_TASKLISTS;
-        flags |= MD_FLAG_UNDERLINE | MD_FLAG_WIKILINKS;
-        m_md_to_widgets.setFlags(flags);
+    RichTextWidget::RichTextWidget(std::shared_ptr<UIState> ui_state): Drawable(ui_state) {
     }
     void RichTextWidget::FrameUpdate() {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
@@ -38,7 +32,7 @@ namespace RichText {
             m_tree[0]->draw(m_draw_list, y_cursor, 0.f, boundaries);
             m_draw_list.Merge();
         }
-        if (isInsideRect(mouse_pos, Rect{vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y})) {
+        if (isInsideRect(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y })) {
             m_y_scroll += ImGui::GetIO().MouseWheel * 40;
             if (m_y_scroll > 0.f)
                 m_y_scroll = 0.f;
