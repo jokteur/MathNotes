@@ -4,7 +4,7 @@
 #include "imgui_internal.h"
 
 namespace RichText {
-    TextString::TextString(UIState_ptr ui_state) : AbstractSpan(ui_state) {
+    TextString::TextString(UIState_ptr ui_state): AbstractSpan(ui_state) {
         m_type = T_TEXT;
     }
 
@@ -28,17 +28,23 @@ namespace RichText {
         success = hk_add_pre_chars(wrap_chars);
 
         float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
-        for (int i = 0;i < m_processed_text.size();i++) {
-            unsigned int c = (unsigned int)m_processed_text[i];
+        int i = 0;
+        char* s = (char*)m_processed_text.c_str();
+        const char* end = s + m_processed_text.size();
+        while (s < end) {
+            unsigned int c = (unsigned int)*s;
             if (c >= 0x80) {
-                ImTextCharFromUtf8(&c, &(m_processed_text[i]), &(m_processed_text[m_processed_text.size() - 1]));
+                s += ImTextCharFromUtf8(&c, s, end);
                 if (c == 0) // Malformed UTF-8?
                     break;
+            }
+            else {
+                s += 1;
             }
             bool force_breakable = false;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;
-            auto char_ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, m_style.font_color, force_breakable);
+            auto char_ptr = std::make_shared<ImChar>(font_out.font_id, static_cast<ImWchar>(c), font_size, m_style.font_color, force_breakable);
             m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
             wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
         }

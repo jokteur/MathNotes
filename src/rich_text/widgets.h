@@ -21,15 +21,6 @@ namespace RichText {
     struct AbstractWidget;
     using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>;
 
-    int const MAX_INT = 2147483647;
-    struct TextBoundaries {
-        int pre = MAX_INT; //INT_MAX
-        int begin = MAX_INT; //INT_MAX
-        int end = -1;
-        int post = -1;
-    };
-    using RawTextPtr = std::shared_ptr<TextBoundaries>;
-
     struct AbstractWidget: public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
@@ -80,12 +71,6 @@ namespace RichText {
 
         // Debug
         bool m_show_boundaries = false;
-
-        // Useful information to be able to make the correspondance btw
-        // widget and raw text
-        // To be constructed by MarkdownToWidgets
-        std::shared_ptr<std::vector<int>> m_textpos_to_lines = nullptr;
-        std::shared_ptr<std::vector<bool>> m_lines_selected = nullptr;
 
         // Internal
         SafeString m_safe_string;

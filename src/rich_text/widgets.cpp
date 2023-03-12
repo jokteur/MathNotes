@@ -10,22 +10,22 @@ namespace RichText {
     }
     bool AbstractWidget::hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
-        // if (m_is_selected && m_type != T_BLOCK_QUOTE) {
-        //     auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.pre, m_raw_text_info.begin, m_special_chars_style);
-        //     if (!res) {
-        //         success = false;
-        //     }
-        // }
+        if (m_is_selected && m_type != T_BLOCK_QUOTE) {
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.front().pre, m_text_boundaries.front().beg, m_special_chars_style);
+            if (!res) {
+                success = false;
+            }
+        }
         return success;
     }
     bool AbstractWidget::hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
-        // if (m_is_selected && m_raw_text_info.end > -1) {
-        //     auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.end, m_raw_text_info.post, m_special_chars_style);
-        //     if (!res) {
-        //         success = false;
-        //     }
-        // }
+        if (m_is_selected) {
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.back().end, m_text_boundaries.back().post, m_special_chars_style);
+            if (!res) {
+                success = false;
+            }
+        }
         return success;
     }
     float AbstractWidget::hk_set_position(float& cursor_y_pos, float& x_offset) {
@@ -132,7 +132,7 @@ namespace RichText {
 
             bool success = true;
 
-            // hk_add_pre_chars(m_wrap_chars);
+            hk_add_pre_chars(m_wrap_chars);
 
             for (auto ptr : m_childrens) {
                 if (ptr->m_category != C_SPAN) {
@@ -143,7 +143,7 @@ namespace RichText {
                     success = false;
                 }
             }
-            // hk_add_post_chars(m_wrap_chars);
+            hk_add_post_chars(m_wrap_chars);
 
             m_wrapper.clear();
             float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;

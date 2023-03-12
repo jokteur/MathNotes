@@ -15,7 +15,7 @@
 namespace RichText {
     void str_from_text_boundaries(const std::string& raw_text, std::string& str, const std::vector<AB::Boundaries>& text_boundaries) {
         int j = 0;
-        for (auto bound : text_boundaries) {
+        for (auto& bound : text_boundaries) {
             if (j > 0)
                 str += '\n';
             for (int i = bound.beg;i < bound.end;i++) {
@@ -63,12 +63,7 @@ namespace RichText {
 
             auto ptr = std::static_pointer_cast<AbstractWidget>(text);
 
-            // Text are separated line by line by md_parse
-            // Only need to push the line number of the start of the text widget
-            // propagate_line_to_parents(ptr, get_line_number(ptr, m_text_start_idx));
             push_to_tree(ptr);
-
-
             tree_up();
             m_last_text_ptr = ptr;
         }
@@ -156,21 +151,12 @@ namespace RichText {
         }
         if (ptr != nullptr) {
             if (enter) {
-                // propagate_lines_to_parents(ptr, m_text_end_idx, mark_begin);
-                // create_intertext_widgets(m_text_end_idx, mark_begin);
-                // ptr->m_raw_text_info.pre = mark_begin;
-                // ptr->m_raw_text_info.begin = mark_end;
-                // m_text_end_idx = mark_end;
                 ptr->m_style.h_margins = ImVec2(0.f, 0.f);
                 ptr->m_style.v_margins = ImVec2(0.f, 0.f);
                 push_to_tree(ptr);
 
             }
             else {
-                // propagate_lines_to_parents(ptr, mark_begin, mark_end);
-                // ptr->m_raw_text_info.end = mark_begin;
-                // ptr->m_raw_text_info.post = mark_end;
-                // m_text_end_idx = mark_end;
                 tree_up();
             }
         }
@@ -187,7 +173,6 @@ namespace RichText {
         if (m_current_ptr != nullptr) {
             m_current_ptr->m_childrens.push_back(node);
             node->m_child_number = m_current_ptr->m_childrens.size() - 1;
-            node->m_textpos_to_lines = m_current_ptr->m_textpos_to_lines;
         }
         m_current_ptr = node;
     }
@@ -249,23 +234,7 @@ namespace RichText {
             auto root = std::make_shared<RootNode>(m_ui_state);
             auto ptr = std::static_pointer_cast<AbstractWidget>(root);
 
-            ptr->m_textpos_to_lines = std::make_shared<std::vector<int>>();
-            ptr->m_lines_selected = std::make_shared<std::vector<bool>>();
-
-            auto textpos_to_lines = ptr->m_textpos_to_lines.get();
-            auto lines_selected = ptr->m_lines_selected.get();
-            lines_selected->push_back(true); // The is always at least one line
-            textpos_to_lines->reserve(m_text_size);
-            int line_counter = 0;
-            for (auto i = 0;i < m_text_size;i++) {
-                if (m_text[i] == '\n') {
-                    line_counter++;
-                    lines_selected->push_back(true);
-                }
-                textpos_to_lines->push_back(line_counter);
-            }
             push_to_tree(ptr);
-            // Build raw text line information
         }
     }
     AbstractWidgetPtr MarkdownToWidgets::BLOCK_UL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockUlDetail& detail) {
@@ -482,28 +451,7 @@ namespace RichText {
         m_config = config;
         m_ui_state = ui_state;
 
-        // md_parse(m_text, m_text_size, &m_md, this);
         AB::parse(m_text, m_text_size, &m_parser);
-
-        // int level = 0;
-        // for (auto ptr : m_tree) {
-        //     // Find out level of widget
-        //     // Not efficient but do not care
-        //     int level = 0;
-        //     auto tmp_ptr = ptr;
-        //     while (tmp_ptr->m_parent != nullptr) {
-        //         tmp_ptr = tmp_ptr->m_parent;
-        //         std::cout << "  ";
-        //         level++;
-        //     }
-        //     std::cout << AB::type_to_name(ptr->m_type);
-        //     std::cout << " Pre: " << ptr->m_raw_text_info.pre;
-        //     std::cout << " Begin: " << ptr->m_raw_text_info.begin;
-        //     std::cout << " End: " << ptr->m_raw_text_info.end;
-        //     std::cout << " Post: " << ptr->m_raw_text_info.post;
-        //     std::cout << std::endl;
-        // }
-        // std::cout << "-----" << std::endl;
 
         return m_tree;
     }

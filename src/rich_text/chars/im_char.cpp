@@ -58,6 +58,9 @@ namespace RichText {
     }
 
     bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style) {
+        if (start == end)
+            return true;
+
         using namespace Fonts;
         FontRequestInfo font_request;
         font_request.font_styling = style.font_styling;
@@ -72,16 +75,24 @@ namespace RichText {
             return false;
         }
 
-        for (int i = start;i < end;i++) {
-            unsigned int c = (unsigned int)(*str)[i];
+        char* s = (char*)(str->c_str() + start);
+        const char* text_end = (char*)(str->c_str() + end);
+        while (s < text_end) {
+            unsigned int c = (unsigned int)*s;
             if (c >= 0x80) {
-                ImTextCharFromUtf8(&c, &((*str)[i]), &((*str)[str->size() - 1]));
+                s += ImTextCharFromUtf8(&c, s, text_end);
                 if (c == 0) // Malformed UTF-8?
                     break;
             }
-            auto ptr = std::make_shared<ImChar>(font_out.font_id, (ImWchar)c, font_size, style.font_color, false);
-            draw_chars.push_back(ptr);
-            wrap_chars.push_back(ptr);
+            else {
+                s += 1;
+            }
+            bool force_breakable = false;
+            if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
+                force_breakable = true;
+            auto char_ptr = std::make_shared<ImChar>(font_out.font_id, static_cast<ImWchar>(c), font_size, style.font_color, force_breakable);
+            draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
+            wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
         }
         return true;
     }
