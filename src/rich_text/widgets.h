@@ -11,6 +11,7 @@
 #include "ui/colors.h"
 
 #include "widgets_enum.h"
+#include "rich_text_context.h"
 #include "markdown_config.h"
 #include "wrapper.h"
 #include "chars/drawable_char.h"
@@ -62,7 +63,6 @@ namespace RichText {
         std::vector<AB::Boundaries> m_text_boundaries;
         AB::Attributes m_attributes;
 
-
         // Widget position and size
         ImVec2 m_position;
         ImVec2 m_dimensions;
@@ -74,6 +74,7 @@ namespace RichText {
 
         // Internal
         SafeString m_safe_string;
+        RichTextInfo* m_rt_info;
 
         // Events
         void virtual onClick() {}

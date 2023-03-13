@@ -6,6 +6,7 @@
 #include "blocks/header.h"
 #include "blocks/lists.h"
 #include "blocks/table.h"
+#include "blocks/quote.h"
 
 #include "spans/latex.h"
 #include "spans/text.h"
@@ -167,6 +168,7 @@ namespace RichText {
     void MarkdownToWidgets::push_to_tree(AbstractWidgetPtr& node) {
         m_tree.push_back(node);
         node->m_safe_string = m_safe_text;
+        node->m_rt_info = m_rt_info;
         if (m_current_ptr != nullptr)
             set_infos(MarkdownConfig::SPECIAL, node, true);
         node->m_parent = m_current_ptr;
@@ -329,7 +331,6 @@ namespace RichText {
             quote->m_attributes = attributes;
             if (m_current_ptr->m_type == T_BLOCK_QUOTE) {
                 auto parent = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
-                quote->quote_level = parent->quote_level + 1;
             }
             set_infos(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractWidget>(quote));
             // quote->m_style.h_margins.x += m_config.x_level_offset;
@@ -440,7 +441,7 @@ namespace RichText {
     AbstractWidgetPtr MarkdownToWidgets::SPAN_DEL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         return nullptr;
     }
-    std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, MarkdownConfig config) {
+    std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config) {
         m_text_start_idx = 0;
         m_text_end_idx = 0;
         m_tree.clear();
@@ -448,6 +449,7 @@ namespace RichText {
         m_text = str->c_str();
         m_text_size = str->size();
         m_current_ptr = nullptr;
+        m_rt_info = rt_info;
         m_config = config;
         m_ui_state = ui_state;
 

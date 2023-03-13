@@ -6,15 +6,17 @@
 #include "wrapper.h"
 #include "ui/drawable.h"
 #include "ui/draw_commands.h"
+#include "rich_text_context.h"
 
 namespace RichText {
-    class RichTextWidget : public Drawable {
+    class RichTextWidget: public Drawable {
     private:
         float m_current_width = 0.f;
         bool m_redo_positions = false;
         MarkdownToWidgets m_md_to_widgets;
 
         SafeString m_safe_string = nullptr;
+        RichTextInfo m_info;
 
         std::vector<AbstractWidgetPtr> m_tree;
         Draw::DrawList m_draw_list;

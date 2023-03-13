@@ -10,6 +10,7 @@
 #include "widgets.h"
 #include "ui/fonts.h"
 #include "markdown_config.h"
+#include "rich_text_context.h"
 
 namespace RichText {
     // Inspired from https://github.com/mekhontsev/imgui_md
@@ -24,6 +25,7 @@ namespace RichText {
 
         const char* m_text;
         SafeString m_safe_text;
+        RichTextInfo* m_rt_info;
         int m_text_start_idx = 0;
         int m_text_end_idx = 0;
         int m_text_size;
@@ -69,6 +71,6 @@ namespace RichText {
     public:
         MarkdownToWidgets();
 
-        std::vector<AbstractWidgetPtr> parse(const SafeString& str, UIState_ptr ui_state, MarkdownConfig config = MarkdownConfig());
+        std::vector<AbstractWidgetPtr> parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config = MarkdownConfig());
     };
 }
