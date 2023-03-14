@@ -67,7 +67,7 @@ int TextInputCallback(ImGuiInputTextCallbackData* data) {
     main_app->m_insert_at = data->CursorPos;
     return 1;
 }
-MainApp::MainApp() : m_rich_text(m_ui_state) {
+MainApp::MainApp(): m_rich_text(m_ui_state) {
 }
 void MainApp::InitializationBeforeLoop() {
     setFonts(m_ui_state);

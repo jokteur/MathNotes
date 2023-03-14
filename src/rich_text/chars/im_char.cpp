@@ -57,7 +57,7 @@ namespace RichText {
         }
     }
 
-    bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style) {
+    bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style, bool replace_spaces_by_points) {
         if (start == end)
             return true;
 
@@ -85,6 +85,9 @@ namespace RichText {
                     break;
             }
             else {
+                if (replace_spaces_by_points && c == ' ') {
+                    c = 183;
+                }
                 s += 1;
             }
             bool force_breakable = false;

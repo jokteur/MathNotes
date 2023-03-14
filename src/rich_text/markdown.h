@@ -56,6 +56,7 @@ namespace RichText {
         AbstractWidgetPtr BLOCK_H(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockHDetail& d);
         AbstractWidgetPtr BLOCK_CODE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockCodeDetail&);
         AbstractWidgetPtr BLOCK_P(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
+        AbstractWidgetPtr BLOCK_HIDDENSPACE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
 
         AbstractWidgetPtr SPAN_EM(bool e, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractWidgetPtr SPAN_STRONG(bool e, const std::vector<AB::Boundaries>&, const AB::Attributes&);
@@ -63,6 +64,7 @@ namespace RichText {
         AbstractWidgetPtr SPAN_IMG(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::SpanImgDetail&);
         AbstractWidgetPtr SPAN_CODE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractWidgetPtr SPAN_DEL(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
+        AbstractWidgetPtr SPAN_HIGHLIGHT(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractWidgetPtr SPAN_LATEXMATH(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         // AbstractWidgetPtr SPAN_WIKILINK(const MD_SPAN_WIKILINK_DETAIL*, bool, int mark_begin, int mark_end);
         // AbstractWidgetPtr SPAN_U(bool, int mark_begin, int mark_end);

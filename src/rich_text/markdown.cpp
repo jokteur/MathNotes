@@ -100,6 +100,9 @@ namespace RichText {
         case AB::BLOCK_P:
             ptr = BLOCK_P(enter, bounds, attributes);
             break;
+        case AB::BLOCK_HIDDEN:
+            ptr = BLOCK_HIDDENSPACE(enter, bounds, attributes);
+            break;
             // case AB::BLOCK_DIV:
             //     ptr = BLOCK_TABLE((MD_BLOCK_TABLE_DETAIL*)detail, enter);
             //     break;
@@ -137,6 +140,9 @@ namespace RichText {
             break;
         case AB::SPAN_DEL:
             ptr = SPAN_DEL(enter, bounds, attributes);
+            break;
+        case AB::SPAN_HIGHLIGHT:
+            ptr = SPAN_HIGHLIGHT(enter, bounds, attributes);
             break;
         case AB::SPAN_LATEXMATH:
             ptr = SPAN_LATEXMATH(enter, bounds, attributes);
@@ -370,6 +376,20 @@ namespace RichText {
         }
     }
 
+    AbstractWidgetPtr MarkdownToWidgets::BLOCK_HIDDENSPACE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+        if (enter) {
+            auto p = std::make_shared<HiddenSpace>(m_ui_state);
+            p->m_text_boundaries = bounds;
+            p->m_attributes = attributes;
+            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(p));
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
+    }
+
     AbstractWidgetPtr MarkdownToWidgets::SPAN_A(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::SpanADetail& detail) {
         set_href(enter, detail.href);
         if (enter) {
@@ -440,6 +460,19 @@ namespace RichText {
     // }
     AbstractWidgetPtr MarkdownToWidgets::SPAN_DEL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         return nullptr;
+    }
+    AbstractWidgetPtr MarkdownToWidgets::SPAN_HIGHLIGHT(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+        if (enter) {
+            auto p = std::make_shared<HighlightSpan>(m_ui_state);
+            p->m_text_boundaries = bounds;
+            p->m_attributes = attributes;
+            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
+            set_infos(MarkdownConfig::HIGHLIGHT, std::static_pointer_cast<AbstractWidget>(p));
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
     }
     std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config) {
         m_text_start_idx = 0;

@@ -11,7 +11,7 @@ namespace RichText {
 #define COMMA ,
 
     struct Style {
-        NEW_STYLE_ELEMENT(font_size, float, 16.f);
+        NEW_STYLE_ELEMENT(font_size, float, 18.f);
         NEW_STYLE_ELEMENT(font_styling, Fonts::FontStyling, Fonts::FontStyling{ Fonts::F_REGULAR COMMA Fonts::W_REGULAR COMMA Fonts::S_NORMAL });
         NEW_STYLE_ELEMENT(font_underline, bool, false);
         NEW_STYLE_ELEMENT(font_strikethrough, bool, false);
@@ -35,11 +35,11 @@ namespace RichText {
         MarkdownConfig();
 
         // Everything is specified in pixel (which are scaled to zoom level and monitor scaling)
-        enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, HREF, EM, STRONG, SPECIAL };
+        enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, HREF, EM, STRONG, HIGHLIGHT, SPECIAL };
         // In order: normal font size, h1, h2, h3, h4, h5, h6
         // Array is compatible with hlevel in md, e.g. font_sizes[4] gives
         // h4 font size
-        Style styles[14];
+        Style styles[15];
 
         float x_level_offset = 15.f;
 

@@ -11,7 +11,7 @@ namespace RichText {
     bool AbstractWidget::hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
         if (m_is_selected && m_type != T_BLOCK_QUOTE) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.front().pre, m_text_boundaries.front().beg, m_special_chars_style);
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.front().pre, m_text_boundaries.front().beg, m_special_chars_style, true);
             if (!res) {
                 success = false;
             }
@@ -21,7 +21,7 @@ namespace RichText {
     bool AbstractWidget::hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
         if (m_is_selected) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.back().end, m_text_boundaries.back().post, m_special_chars_style);
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.back().end, m_text_boundaries.back().post, m_special_chars_style, true);
             if (!res) {
                 success = false;
             }
@@ -165,16 +165,37 @@ namespace RichText {
     }
 
     // Spans
-    bool InterText::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
+    void HiddenSpace::hk_build_widget(float x_offset) {
+        if (m_widget_dirty) {
+            m_wrap_chars.clear();
+            m_draw_chars.clear();
+
+            bool success = true;
+
+            success = add_chars(m_wrap_chars);
+
+            m_wrapper.clear();
+            float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
+            m_wrapper.setWidth(internal_size);
+            m_wrapper.setLineSpace(m_style.line_space);
+            m_wrapper.setString(m_wrap_chars);
+
+            if (success)
+                m_widget_dirty = false;
+        }
+    }
+    bool HiddenSpace::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
         m_draw_chars.clear();
+        m_is_selected = true;
 
-        // if (m_is_selected) {
-        //     auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_raw_text_info.begin, m_raw_text_info.end, m_special_chars_style);
-        //     if (!res) {
-        //         success = false;
-        //     }
-        // }
+        if (m_is_selected) {
+            auto& bounds = m_text_boundaries.front();
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, bounds.pre, bounds.end, m_special_chars_style, true);
+            if (!res) {
+                success = false;
+            }
+        }
         return success;
     }
 
@@ -192,5 +213,14 @@ namespace RichText {
         }
         hk_add_post_chars(wrap_chars);
         return success;
+    }
+    void AbstractSpan::hk_draw_background(Draw::DrawList& draw_list) {
+        if (m_style.bg_color != Colors::transparent) {
+            draw_list.SetCurrentChannel(0);
+            auto cursor_pos = ImGui::GetCursorScreenPos();
+            ImVec2 p_min = cursor_pos + m_position;
+            ImVec2 p_max = cursor_pos + m_position + m_dimensions;
+            draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
+        }
     }
 }

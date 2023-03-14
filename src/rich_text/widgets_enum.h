@@ -5,6 +5,7 @@ namespace RichText {
         T_NONAME,
         T_ROOT,
         // Blocks
+        T_BLOCK_HIDDENSPACE,
         T_BLOCK_P,
         T_BLOCK_QUOTE,
         T_BLOCK_CODE,
@@ -27,6 +28,7 @@ namespace RichText {
         T_SPAN_WIKILINK,
         T_SPAN_DEL,
         T_SPAN_CODE,
+        T_SPAN_HIGHLIGHT,
         T_SPAN_U,
         T_SPAN_LATEX,
         T_SPAN_DISPLAY,

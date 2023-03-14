@@ -98,11 +98,12 @@ namespace RichText {
         void setWidth(float width) override;
     };
 
-    struct InterText: public AbstractWidget {
-        InterText(UIState_ptr ui_state): AbstractWidget(ui_state) {
-            m_category = C_SPAN;
-            m_type = T_INTERTEXT;
+    struct HiddenSpace: public AbstractBlock {
+        HiddenSpace(UIState_ptr ui_state): AbstractBlock(ui_state) {
+            m_category = C_BLOCK;
+            m_type = T_BLOCK_HIDDENSPACE;
         }
+        void hk_build_widget(float x_offset) override;
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 
@@ -112,6 +113,7 @@ namespace RichText {
             m_category = C_SPAN;
         }
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
+        void hk_draw_background(Draw::DrawList& draw_list) override;
     };
 
     struct RootNode: public AbstractWidget {
