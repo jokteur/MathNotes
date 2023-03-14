@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../widgets.h"
+#include "block.h"
 
 namespace RichText {
     struct QuoteWidget: public AbstractBlock {

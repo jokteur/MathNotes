@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../widgets.h"
+#include "block.h"
 
 namespace RichText {
-    struct HeaderWidget : public AbstractBlock {
+    struct HeaderWidget: public AbstractLeafBlock {
     protected:
     public:
         unsigned int hlevel;

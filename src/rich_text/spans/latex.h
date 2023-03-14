@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../widgets.h"
+#include "span.h"
 
 namespace RichText {
-    struct LatexWidget : public AbstractSpan {
+    struct LatexWidget: public AbstractSpan {
         float text_size;
     };
 }

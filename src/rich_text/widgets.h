@@ -25,6 +25,7 @@ namespace RichText {
     struct AbstractWidget: public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
+        std::vector<DrawableCharPtr> m_draw_delimiter_chars;
         std::vector<WrapCharPtr> m_wrap_chars;
     public:
         Type m_type;
@@ -38,8 +39,6 @@ namespace RichText {
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
-        bool virtual hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars);
-        bool virtual hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars);
         void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         // Draw hooks
@@ -81,39 +80,6 @@ namespace RichText {
         void virtual onSelect() {}
         void virtual onDeselect() {}
         void virtual setWidth(float width);
-    };
-
-    struct AbstractBlock: public AbstractWidget {
-    public:
-        AbstractBlock(UIState_ptr ui_state): AbstractWidget(ui_state) {
-            m_category = C_BLOCK;
-        }
-
-        bool m_widget_dirty = true;
-
-        void hk_build_widget(float x_offset) override;
-        void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
-        void hk_draw_background(Draw::DrawList& draw_list) override;
-
-        void setWidth(float width) override;
-    };
-
-    struct HiddenSpace: public AbstractBlock {
-        HiddenSpace(UIState_ptr ui_state): AbstractBlock(ui_state) {
-            m_category = C_BLOCK;
-            m_type = T_BLOCK_HIDDENSPACE;
-        }
-        void hk_build_widget(float x_offset) override;
-        bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
-    };
-
-    struct AbstractSpan: public AbstractWidget {
-        std::string m_processed_text;
-        AbstractSpan(UIState_ptr ui_state): AbstractWidget(ui_state) {
-            m_category = C_SPAN;
-        }
-        bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
-        void hk_draw_background(Draw::DrawList& draw_list) override;
     };
 
     struct RootNode: public AbstractWidget {

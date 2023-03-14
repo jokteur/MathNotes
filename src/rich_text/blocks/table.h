@@ -1,9 +1,9 @@
 #pragma once
 
-#include "rich_text/widgets.h"
+#include "block.h"
 
 namespace RichText {
-    struct TableWidget : public AbstractBlock {
+    struct TableWidget: public AbstractBlock {
 
     };
 }

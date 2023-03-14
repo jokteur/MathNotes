@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rich_text/widgets.h"
+#include "span.h"
 #include "ui/fonts.h"
 #include "ui/colors.h"
 
