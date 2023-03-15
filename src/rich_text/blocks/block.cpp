@@ -51,27 +51,27 @@ namespace RichText {
     }
     bool AbstractBlock::hk_build_widget_post(float x_offset) {
         if (m_widget_dirty && m_is_selected) {
-            bool success = true;
-            m_wrap_chars.clear();
-            for (auto bounds : m_text_boundaries) {
-                m_wrap_chars.clear();
-                auto res = Utf8StrToImCharStr(m_ui_state, m_wrap_chars, m_draw_chars, m_safe_string, bounds.pre, bounds.beg, m_special_chars_style, true);
+            // bool success = true;
+            // m_wrap_chars.clear();
+            // for (auto bounds : m_text_boundaries) {
+            //     m_wrap_chars.clear();
+            //     auto res = Utf8StrToImCharStr(m_ui_state, m_wrap_chars, m_draw_chars, m_safe_string, bounds.pre, bounds.beg, m_special_chars_style, true);
 
-                auto first_char = m_rt_info->getFirstCharFromLine(bounds.line_number);
-                if (first_char != nullptr) {
-                    std::cout << first_char->_calculated_position.y << std::endl;
-                }
-                m_wrapper.clear();
-                float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
-                m_wrapper.setWidth(1000.f); // Large enough number
-                auto last_char = m_wrap_chars.back();
-                m_wrapper.setString(m_wrap_chars);
-                if (!res) {
-                    success = false;
-                }
-            }
-            if (success)
-                m_widget_dirty = false;
+            //     auto first_char = m_rt_info->getFirstCharFromLine(bounds.line_number);
+            //     if (first_char != nullptr) {
+            //         std::cout << first_char->_calculated_position.y << std::endl;
+            //     }
+            //     m_wrapper.clear();
+            //     float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
+            //     m_wrapper.setWidth(1000.f); // Large enough number
+            //     auto last_char = m_wrap_chars.back();
+            //     m_wrapper.setString(m_wrap_chars);
+            //     if (!res) {
+            //         success = false;
+            //     }
+            // }
+            // if (success)
+            //     m_widget_dirty = false;
         }
         return m_widget_dirty;
     }

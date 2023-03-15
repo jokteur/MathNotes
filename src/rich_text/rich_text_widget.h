@@ -14,11 +14,13 @@ namespace RichText {
         float m_current_width = 0.f;
         bool m_redo_positions = false;
         MarkdownToWidgets m_md_to_widgets;
+        ABToWidgets m_ab_to_widgets;
 
         SafeString m_safe_string = nullptr;
         RichTextInfo m_info;
 
         std::vector<AbstractWidgetPtr> m_tree;
+        std::vector<SimpleWidgetPtr> m_s_tree;
         Draw::DrawList m_draw_list;
         float m_y_scroll = 0.f;
 

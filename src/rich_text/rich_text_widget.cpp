@@ -51,9 +51,11 @@ namespace RichText {
     }
     void RichTextWidget::setText(const std::string& text) {
         m_safe_string = std::make_shared<std::string>(text);
-        m_tree = m_md_to_widgets.parse(m_safe_string, m_ui_state, &m_info);
-        if (!m_tree.empty()) {
-            m_tree[0]->setWidth(m_current_width);
-        }
+        ABToWidgets parser;
+        parser.parse(m_safe_string, m_ui_state, &m_info);
+        // m_tree = m_md_to_widgets.parse(m_safe_string, m_ui_state, &m_info);
+        // if (!m_tree.empty()) {
+        //     m_tree[0]->setWidth(m_current_width);
+        // }
     }
 }

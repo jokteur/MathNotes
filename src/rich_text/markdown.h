@@ -75,4 +75,45 @@ namespace RichText {
 
         std::vector<AbstractWidgetPtr> parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config = MarkdownConfig());
     };
+
+    struct RootBlock {
+        int line_start;
+        int line_end;
+        Type type;
+    };
+
+
+    class ABToWidgets {
+    private:
+        AB::Parser m_parser;
+        std::vector<RootBlock> m_tree;
+        MarkdownConfig m_config;
+
+        const char* m_text;
+        SafeString m_safe_text;
+        RichTextInfo* m_rt_info;
+        int m_text_start_idx = 0;
+        int m_text_end_idx = 0;
+        int m_text_size;
+
+        int level = 0;
+
+        SimpleWidgetPtr m_current_ptr = nullptr;
+        SimpleWidgetPtr m_last_text_ptr = nullptr;
+        SimpleWidgetPtr m_last_block_ptr = nullptr;
+
+        UIState_ptr m_ui_state = nullptr;
+
+        std::string m_href;
+
+        int text(AB::TEXT_TYPE t_type, const std::vector<AB::Boundaries>& bounds);
+        int block(AB::BLOCK_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds = {}, const AB::Attributes& attributes = {}, AB::BlockDetailPtr detail = nullptr);
+        int span(AB::SPAN_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds = {}, const AB::Attributes& attributes = {}, AB::SpanDetailPtr detail = nullptr);
+
+        void configure_parser();
+    public:
+        ABToWidgets();
+
+        std::vector<RootBlock> parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config = MarkdownConfig());
+    };
 }

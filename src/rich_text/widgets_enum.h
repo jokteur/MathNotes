@@ -34,13 +34,16 @@ namespace RichText {
         T_SPAN_DISPLAY,
         // Text
         T_TEXT,
+        T_LATEX,
+        T_CODE,
         T_INTERTEXT
     };
     enum Category {
         C_NONAME,
         C_ROOT,
         C_BLOCK,
-        C_SPAN
+        C_SPAN,
+        C_TEXT
     };
 
     const char* type_to_name(Type type);

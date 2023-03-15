@@ -11,7 +11,7 @@
 int TextInputCallback(ImGuiInputTextCallbackData* data);
 
 using namespace RichText;
-class MainApp : public Tempo::App {
+class MainApp: public Tempo::App {
 private:
     std::shared_ptr<UIState> m_ui_state = std::make_shared<UIState>();
 
@@ -19,6 +19,8 @@ private:
 
     std::string m_in_text;
     std::string m_prev_text;
+    std::string m_big_text;
+    bool text_set = true;
 
     //bool m_open = true;
     friend int TextInputCallback(ImGuiInputTextCallback* data);

@@ -18,6 +18,7 @@ namespace RichText {
 
         x_offset += m_style.h_paddings.x;
         cursor_y_pos += m_style.v_paddings.x;
+        useless_val++;
         return current_y_pos;
     }
     void AbstractWidget::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {

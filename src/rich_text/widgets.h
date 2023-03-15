@@ -22,6 +22,16 @@ namespace RichText {
     struct AbstractWidget;
     using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>;
 
+    struct SimpleWidget;
+    using SimpleWidgetPtr = std::shared_ptr<SimpleWidget>;
+    struct SimpleWidget {
+        // std::vector<SimpleWidgetPtr> m_childrens;
+        SimpleWidgetPtr m_parent = nullptr;
+        std::vector<AB::Boundaries> m_text_boundaries;
+        AB::Attributes m_attributes;
+        Type m_type;
+    };
+
     struct AbstractWidget: public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
@@ -36,6 +46,8 @@ namespace RichText {
         // Informations about the tree structure
         std::vector<AbstractWidgetPtr> m_childrens;
         AbstractWidgetPtr m_parent = nullptr;
+
+        int useless_val = 0;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);

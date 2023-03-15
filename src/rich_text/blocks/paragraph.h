@@ -7,7 +7,7 @@ namespace RichText {
     protected:
     public:
         ParagraphWidget(UIState_ptr ui_state);
-        bool hk_build_widget(float x_offset) override;
+        // bool hk_build_widget(float x_offset) override;
     };
     struct CodeWidget: public AbstractLeafBlock {
         CodeWidget(UIState_ptr ui_state);

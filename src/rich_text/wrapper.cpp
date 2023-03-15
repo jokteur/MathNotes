@@ -149,7 +149,7 @@ namespace RichText {
         }
         m_height = cursor_pos_y;// + max_ascent + max_descent;
     }
-    void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string, RichTextInfo* rt_info = nullptr, int line_start = -1) {
+    void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string) {
         m_string = string;
         recalculate();
     }

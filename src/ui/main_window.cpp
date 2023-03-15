@@ -10,6 +10,20 @@
 #include "translations/translate.h"
 #include "imgui_stdlib.h"
 
+std::string get_file_contents(const char* filename) {
+    std::ifstream in(filename, std::ios::in | std::ios::binary);
+    if (in) {
+        std::string contents;
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+        return(contents);
+    }
+    throw(errno);
+}
+
 void setFonts(UIState_ptr state) {
     using namespace Fonts;
     using Fs = FontStyling;
@@ -72,6 +86,8 @@ MainApp::MainApp(): m_rich_text(m_ui_state) {
 void MainApp::InitializationBeforeLoop() {
     setFonts(m_ui_state);
     defineStyle();
+    m_big_text = get_file_contents("data/bigfile.md");
+    m_big_text += m_big_text;
 }
 void MainApp::AfterLoop() {
 }
@@ -81,13 +97,22 @@ void MainApp::FrameUpdate() {
     ImGui::InputTextMultiline("input", &m_in_text, ImVec2(0, 0),
         ImGuiInputTextFlags_CallbackAlways, TextInputCallback, (void*)this);
 
+    if (!text_set) {
+        auto t1 = std::chrono::high_resolution_clock::now();
+        m_rich_text.setText(m_big_text);
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        std::cout << ms_int.count() << "ms\n";
+        text_set = true;
+    }
+
     if (m_in_text != m_prev_text) {
         m_prev_text = m_in_text;
         m_rich_text.setText(m_in_text);
     }
 
-    if (ImGui::Button("Markdown")) {
-        m_rich_text.setText(m_in_text);
+    if (ImGui::Button("SetBigText")) {
+        text_set = false;
     }
     ImGui::End();
 

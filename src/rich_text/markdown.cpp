@@ -487,4 +487,63 @@ namespace RichText {
 
         return m_tree;
     }
+
+
+
+
+    void ABToWidgets::configure_parser() {
+        m_parser.enter_block = [&](AB::BLOCK_TYPE b_type, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::BlockDetailPtr detail) -> bool {
+            return this->block(b_type, true, bounds, attributes, detail);
+        };
+        m_parser.leave_block = [&](AB::BLOCK_TYPE b_type) -> bool {
+            return this->block(b_type, false);
+        };
+        m_parser.enter_span = [&](AB::SPAN_TYPE s_type, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::SpanDetailPtr detail) {
+            return this->span(s_type, true, bounds, attributes, detail);
+        };
+        m_parser.leave_span = [&](AB::SPAN_TYPE s_type) {
+            return this->span(s_type, false);
+        };
+        m_parser.text = [&](AB::TEXT_TYPE t_type, const std::vector<AB::Boundaries>& bounds) {
+            return this->text(t_type, bounds);
+        };
+    }
+    ABToWidgets::ABToWidgets() {
+        configure_parser();
+    }
+    int ABToWidgets::text(AB::TEXT_TYPE t_type, const std::vector<AB::Boundaries>& bounds) {
+        return true;
+    }
+    int ABToWidgets::block(AB::BLOCK_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::BlockDetailPtr detail) {
+        if (level == 1 && enter) {
+            m_tree.push_back(RootBlock{ bounds.front().line_number, bounds.back().line_number + 1, T_ROOT });
+        }
+        if (enter) {
+            level++;
+        }
+        else {
+            level--;
+        }
+        return true;
+    }
+    int ABToWidgets::span(AB::SPAN_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::SpanDetailPtr detail) {
+        return true;
+    }
+
+    std::vector<RootBlock> ABToWidgets::parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config) {
+        m_text_start_idx = 0;
+        m_text_end_idx = 0;
+        m_tree.clear();
+        m_safe_text = str;
+        m_text = str->c_str();
+        m_text_size = str->size();
+        m_current_ptr = nullptr;
+        m_rt_info = rt_info;
+        m_config = config;
+        m_ui_state = ui_state;
+
+        AB::parse(m_text, m_text_size, &m_parser);
+
+        return m_tree;
+    }
 }

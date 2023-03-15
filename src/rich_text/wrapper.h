@@ -4,7 +4,6 @@
 #include <list>
 #include <tempo.h>
 
-#include "rich_text_context.h"
 
 namespace RichText {
     enum Alignement { LEFT, CENTER, RIGHT };
@@ -107,7 +106,7 @@ namespace RichText {
         WrapAlgorithm();
         ~WrapAlgorithm();
 
-        void setString(const std::vector<WrapCharPtr>& string, RichTextInfo* rt_info = nullptr, int line_start = -1);
+        void setString(const std::vector<WrapCharPtr>& string);
         void clear();
 
         const std::list<Line>& getLines() { return m_lines; }
