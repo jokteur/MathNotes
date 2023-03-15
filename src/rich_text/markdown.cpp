@@ -57,8 +57,6 @@ namespace RichText {
             auto text = std::make_shared<TextString>(m_ui_state);
             text->m_text_boundaries = bounds;
             str_from_text_boundaries(*m_safe_text, text->m_processed_text, bounds);
-            // text->m_processed_text.append(str, size);
-
 
             set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(text));
 
@@ -339,7 +337,6 @@ namespace RichText {
                 auto parent = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
             }
             set_infos(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractWidget>(quote));
-            // quote->m_style.h_margins.x += m_config.x_level_offset;
             auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
             return ptr;
         }

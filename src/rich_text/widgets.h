@@ -39,13 +39,12 @@ namespace RichText {
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
-        void virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         // Draw hooks
         float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
         void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
-        void virtual hk_build_widget(float x_offset);
-        void virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        bool virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
         void virtual hk_draw_background(Draw::DrawList& draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list);
 

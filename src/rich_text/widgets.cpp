@@ -27,20 +27,21 @@ namespace RichText {
 
         cursor_y_pos += m_style.v_margins.y;
     }
-    void AbstractWidget::hk_build_widget(float x_offset) {
-
-    }
-    void AbstractWidget::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractWidget::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
         if (isInsideRectY(m_position, boundaries)) {
             for (auto ptr : m_draw_chars) {
-                ptr->draw(draw_list, m_position + padding_before);
+                if (!ptr->draw(draw_list, m_position + padding_before))
+                    ret = false;
             }
         }
         for (auto& ptr : m_childrens) {
-            ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries);
+            if (!ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries))
+                ret = false;
         }
+        return ret;
     }
     void AbstractWidget::hk_draw_background(Draw::DrawList& draw_list) {
 
@@ -54,13 +55,15 @@ namespace RichText {
         }
     }
 
-    void AbstractWidget::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractWidget::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        bool ret = true;
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
-        hk_build_widget(x_offset);
-        hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries);
+        if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries))
+            ret = false;
         hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
         hk_draw_background(draw_list);
         hk_draw_show_boundaries(draw_list);
+        return ret;
     }
     void AbstractWidget::setWidth(float width) {
         m_window_width = width;

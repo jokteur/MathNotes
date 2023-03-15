@@ -22,8 +22,9 @@ namespace RichText {
         bool m_widget_dirty = true;
 
         bool hk_build_delimiter_chars();
-        void hk_build_widget(float x_offset) override;
-        void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
+        bool hk_build_widget(float x_offset);
+        bool hk_build_widget_post(float x_offset);
+        bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
         void hk_draw_background(Draw::DrawList& draw_list) override;
 
         void setWidth(float width) override;
@@ -37,8 +38,8 @@ namespace RichText {
 
         bool m_widget_dirty = true;
 
-        void hk_build_widget(float x_offset) override;
-        void hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
+        bool hk_build_widget(float x_offset);
+        bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
     };
 
     struct HiddenSpace: public AbstractLeafBlock {
@@ -46,7 +47,7 @@ namespace RichText {
             m_category = C_BLOCK;
             m_type = T_BLOCK_HIDDENSPACE;
         }
-        void hk_build_widget(float x_offset) override;
+        bool hk_build_widget(float x_offset);
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 }

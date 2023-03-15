@@ -8,7 +8,7 @@ namespace RichText {
 
         float m_delimiter_offset = 0.f;
 
-        void hk_build_widget(float x_offset) override;
+        // void hk_build_widget(float x_offset) override;
     };
     using QuoteWidgetPtr = std::shared_ptr<QuoteWidget>;
 }

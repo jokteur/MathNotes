@@ -73,7 +73,8 @@ namespace RichText {
     void TextString::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
 
     }
-    void TextString::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool TextString::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        bool ret = true;
         // We do not update cursor_y_pos in text span (taken care of parent block)
         if (isInsideRectY(m_position, boundaries)) {
             // Draw all backgrounds
@@ -91,8 +92,10 @@ namespace RichText {
             }
             // Draw all chars
             for (auto ptr : m_draw_chars) {
-                ptr->draw(draw_list, ImVec2(x_offset, cursor_y_pos));
+                if (!ptr->draw(draw_list, ImVec2(x_offset, cursor_y_pos)))
+                    ret = false;
             }
         }
+        return ret;
     }
 }

@@ -15,7 +15,7 @@ namespace RichText {
     }
 
 
-    void LatexChar::draw(Draw::DrawList& draw_list, ImVec2 draw_offset) {
+    bool LatexChar::draw(Draw::DrawList& draw_list, ImVec2 draw_offset) {
         auto cursor_pos = ImGui::GetCursorScreenPos();
         auto final_pos = cursor_pos + _calculated_position + draw_offset;
         final_pos.x = IM_ROUND(final_pos.x);
@@ -25,6 +25,7 @@ namespace RichText {
             final_pos,
             final_pos + dimensions
         );
+        return true;
     }
 
     DrawableCharPtr ToLatexChar(const std::string& latex_src, float font_size, float line_space, microtex::color text_color, ImVec2 scale, ImVec2 inner_padding) {

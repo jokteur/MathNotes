@@ -5,7 +5,7 @@ namespace RichText {
     MarkdownConfig::MarkdownConfig() {
         // Paragraph
         styles[P].set_line_space(1.4f);
-        styles[P].set_v_margins(ImVec2(0.f, 5.f));
+        styles[P].set_v_margins(ImVec2(0.f, 0.f));
         styles[P].set_h_margins(ImVec2(0.f, 0.f));
         styles[P].set_v_paddings(ImVec2(0.f, 0.f));
         styles[P].set_h_paddings(ImVec2(0.f, 0.f));
@@ -58,7 +58,8 @@ namespace RichText {
         // Quote
         styles[QUOTE].set_line_space(1.4f);
         styles[QUOTE].set_h_margins(ImVec2(15.f, 0.f));
-        styles[QUOTE].set_v_margins(ImVec2(0.f, 3.f));
+        styles[QUOTE].set_v_margins(ImVec2(0.f, 0.f));
+        styles[QUOTE].set_v_paddings(ImVec2(0.f, 0.f));
 
         // href
         styles[HREF].set_font_underline(true);

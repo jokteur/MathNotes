@@ -40,11 +40,11 @@ namespace RichText {
         advance = scale * glyph->AdvanceX;
     }
 
-    void ImChar::draw(Draw::DrawList& draw_list, ImVec2 draw_offset) {
+    bool ImChar::draw(Draw::DrawList& draw_list, ImVec2 draw_offset) {
         auto font = Tempo::GetImFont(m_font_id);
 
         if (font->im_font == nullptr)
-            return;
+            return false;
         auto cursor_pos = ImGui::GetCursorScreenPos();
 
         if (!is_linebreak) {
@@ -55,6 +55,7 @@ namespace RichText {
                 position,
                 m_color, m_char);
         }
+        return true;
     }
 
     bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style, bool replace_spaces_by_points) {
