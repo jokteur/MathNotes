@@ -6,6 +6,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "imgui_internal.h"
 #include "rich_text/rich_text_widget.h"
+#include "ab/ab_file.h"
 
 // Drawable and widgets
 int TextInputCallback(ImGuiInputTextCallbackData* data);
@@ -16,6 +17,7 @@ private:
     std::shared_ptr<UIState> m_ui_state = std::make_shared<UIState>();
 
     RichTextWidget m_rich_text;
+    AB::File* m_ab_file = nullptr;
 
     std::string m_in_text;
     std::string m_prev_text;

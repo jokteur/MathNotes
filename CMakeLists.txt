@@ -60,12 +60,14 @@ include_directories(external/ab-parser)
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/core/*.cpp
+    src/ab/*.cpp
     src/rich_text/*.cpp
     src/rich_text/chars/*.cpp
     src/rich_text/spans/*.cpp
     src/rich_text/blocks/*.cpp
     src/latex/*.cpp
     src/translations/*.cpp
+    src/utils.cpp
     src/ui/*.cpp src/ui/*.h
 )
 
