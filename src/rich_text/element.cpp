@@ -1,14 +1,14 @@
-#include "widgets.h"
+#include "element.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 #include "rich_text/chars/im_char.h"
 
 namespace RichText {
-    // AbstractWidget
-    bool AbstractWidget::add_chars(std::vector<WrapCharPtr>&) {
+    // AbstractElement
+    bool AbstractElement::add_chars(std::vector<WrapCharPtr>&) {
         return true;
     }
-    float AbstractWidget::hk_set_position(float& cursor_y_pos, float& x_offset) {
+    float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
         x_offset += m_style.h_margins.x;
         cursor_y_pos += m_style.v_margins.y;
 
@@ -21,14 +21,14 @@ namespace RichText {
         useless_val++;
         return current_y_pos;
     }
-    void AbstractWidget::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
+    void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
         cursor_y_pos += m_style.v_paddings.y;
         m_dimensions.x = m_window_width - x_offset;
         m_dimensions.y = cursor_y_pos - last_y_pos;
 
         cursor_y_pos += m_style.v_margins.y;
     }
-    bool AbstractWidget::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
@@ -44,10 +44,10 @@ namespace RichText {
         }
         return ret;
     }
-    void AbstractWidget::hk_draw_background(Draw::DrawList& draw_list) {
+    void AbstractElement::hk_draw_background(Draw::DrawList& draw_list) {
 
     }
-    void AbstractWidget::hk_draw_show_boundaries(Draw::DrawList& draw_list) {
+    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList& draw_list) {
         if (m_show_boundaries) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             ImVec2 p_min = cursor_pos + m_position;
@@ -56,7 +56,7 @@ namespace RichText {
         }
     }
 
-    bool AbstractWidget::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractElement::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         bool ret = true;
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
         if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries))
@@ -66,7 +66,7 @@ namespace RichText {
         hk_draw_show_boundaries(draw_list);
         return ret;
     }
-    void AbstractWidget::setWidth(float width) {
+    void AbstractElement::setWidth(float width) {
         m_window_width = width;
         for (auto ptr : m_childrens) {
             ptr->setWidth(width);

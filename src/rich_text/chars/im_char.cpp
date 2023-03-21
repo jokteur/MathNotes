@@ -1,6 +1,7 @@
 #include "im_char.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
+#include "ui/state.h"
 #include <iostream>
 
 namespace RichText {

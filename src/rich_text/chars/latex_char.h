@@ -1,7 +1,7 @@
 #pragma once
 
 #include "drawable_char.h"
-#include "../../latex/latex.h"
+#include "latex/latex.h"
 
 namespace RichText {
     /**

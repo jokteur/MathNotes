@@ -10,12 +10,12 @@
 #include "ui/draw_commands.h"
 #include "ui/colors.h"
 
-#include "../widgets.h"
+#include "rich_text/element.h"
 
 namespace RichText {
-    struct AbstractSpan: public AbstractWidget {
+    struct AbstractSpan: public AbstractElement {
         std::string m_processed_text;
-        AbstractSpan(UIState_ptr ui_state): AbstractWidget(ui_state) {
+        AbstractSpan(UIState_ptr ui_state): AbstractElement(ui_state) {
             m_category = C_SPAN;
         }
         bool hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars);

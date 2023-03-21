@@ -19,7 +19,7 @@ namespace RichText {
         SafeString m_safe_string = nullptr;
         RichTextInfo m_info;
 
-        std::vector<AbstractWidgetPtr> m_tree;
+        std::vector<AbstractElementPtr> m_tree;
         std::vector<SimpleWidgetPtr> m_s_tree;
         Draw::DrawList m_draw_list;
         float m_y_scroll = 0.f;

@@ -58,9 +58,9 @@ namespace RichText {
             text->m_text_boundaries = bounds;
             str_from_text_boundaries(*m_safe_text, text->m_processed_text, bounds);
 
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(text));
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(text));
 
-            auto ptr = std::static_pointer_cast<AbstractWidget>(text);
+            auto ptr = std::static_pointer_cast<AbstractElement>(text);
 
             push_to_tree(ptr);
             tree_up();
@@ -69,7 +69,7 @@ namespace RichText {
         return true;
     }
     int MarkdownToWidgets::block(AB::BLOCK_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::BlockDetailPtr detail) {
-        AbstractWidgetPtr ptr = nullptr;
+        AbstractElementPtr ptr = nullptr;
         switch (type) {
         case AB::BLOCK_DOC:
             BLOCK_DOC(enter);
@@ -119,7 +119,7 @@ namespace RichText {
         return true;
     }
     int MarkdownToWidgets::span(AB::SPAN_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::SpanDetailPtr detail) {
-        AbstractWidgetPtr ptr = nullptr;
+        AbstractElementPtr ptr = nullptr;
         switch (type) {
         case AB::SPAN_EM:
             ptr = SPAN_EM(enter, bounds, attributes);
@@ -169,7 +169,7 @@ namespace RichText {
         return true;
     }
 
-    void MarkdownToWidgets::push_to_tree(AbstractWidgetPtr& node) {
+    void MarkdownToWidgets::push_to_tree(AbstractElementPtr& node) {
         m_tree.push_back(node);
         node->m_safe_string = m_safe_text;
         node->m_rt_info = m_rt_info;
@@ -195,7 +195,7 @@ namespace RichText {
             m_href.clear();
         }
     }
-    void MarkdownToWidgets::set_infos(MarkdownConfig::type type, AbstractWidgetPtr ptr, bool special_style) {
+    void MarkdownToWidgets::set_infos(MarkdownConfig::type type, AbstractElementPtr ptr, bool special_style) {
         auto style = m_config.styles[type];
         Style* current_style = nullptr;
 
@@ -238,12 +238,12 @@ namespace RichText {
     void MarkdownToWidgets::BLOCK_DOC(bool enter) {
         if (enter) {
             auto root = std::make_shared<RootNode>(m_ui_state);
-            auto ptr = std::static_pointer_cast<AbstractWidget>(root);
+            auto ptr = std::static_pointer_cast<AbstractElement>(root);
 
             push_to_tree(ptr);
         }
     }
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_UL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockUlDetail& detail) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_UL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockUlDetail& detail) {
         if (enter) {
             auto ul_list = std::make_shared<ULWidget>(m_ui_state);
             ul_list->m_text_boundaries = bounds;
@@ -256,8 +256,8 @@ namespace RichText {
             }
             ul_list->mark = detail.marker;
             ul_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ul_list));
-            auto ptr = std::static_pointer_cast<AbstractWidget>(ul_list);
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(ul_list));
+            auto ptr = std::static_pointer_cast<AbstractElement>(ul_list);
             return ptr;
         }
         else {
@@ -265,7 +265,7 @@ namespace RichText {
         }
     }
 
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_OL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockOlDetail& detail) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_OL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockOlDetail& detail) {
         if (enter) {
             auto ol_list = std::make_shared<OLWidget>(m_ui_state);
             ol_list->m_text_boundaries = bounds;
@@ -278,8 +278,8 @@ namespace RichText {
             }
             // ol_list->start = detail->start;
             ol_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(ol_list));
-            auto ptr = std::static_pointer_cast<AbstractWidget>(ol_list);
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(ol_list));
+            auto ptr = std::static_pointer_cast<AbstractElement>(ol_list);
             return ptr;
         }
         else {
@@ -287,7 +287,7 @@ namespace RichText {
         }
     }
 
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_LI(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockLiDetail& detail) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_LI(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockLiDetail& detail) {
         if (enter) {
             auto list_el = std::make_shared<LIWidget>(m_ui_state);
             list_el->m_text_boundaries = bounds;
@@ -301,8 +301,8 @@ namespace RichText {
                 list_el->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level;
             }
             list_el->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(list_el));
-            auto ptr = std::static_pointer_cast<AbstractWidget>(list_el);
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(list_el));
+            auto ptr = std::static_pointer_cast<AbstractElement>(list_el);
             return ptr;
         }
         else {
@@ -310,25 +310,25 @@ namespace RichText {
         }
     }
 
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_HR(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_HR(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         return nullptr;
     }
 
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_H(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockHDetail& detail) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_H(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockHDetail& detail) {
         if (enter) {
             auto header = std::make_shared<HeaderWidget>(m_ui_state);
             header->m_text_boundaries = bounds;
             header->m_attributes = attributes;
             header->hlevel = detail.level;
-            set_infos((MarkdownConfig::type)detail.level, std::static_pointer_cast<AbstractWidget>(header));
-            auto ptr = std::static_pointer_cast<AbstractWidget>(header);
+            set_infos((MarkdownConfig::type)detail.level, std::static_pointer_cast<AbstractElement>(header));
+            auto ptr = std::static_pointer_cast<AbstractElement>(header);
             return ptr;
         }
         else {
             return m_current_ptr;
         }
     }
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_QUOTE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_QUOTE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto quote = std::make_shared<QuoteWidget>(m_ui_state);
             quote->m_text_boundaries = bounds;
@@ -336,8 +336,8 @@ namespace RichText {
             if (m_current_ptr->m_type == T_BLOCK_QUOTE) {
                 auto parent = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
             }
-            set_infos(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractWidget>(quote));
-            auto ptr = std::static_pointer_cast<AbstractWidget>(quote);
+            set_infos(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractElement>(quote));
+            auto ptr = std::static_pointer_cast<AbstractElement>(quote);
             return ptr;
         }
         else {
@@ -345,12 +345,12 @@ namespace RichText {
         }
 
     }
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_CODE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockCodeDetail& detail) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_CODE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockCodeDetail& detail) {
         if (enter) {
             auto code = std::make_shared<CodeWidget>(m_ui_state);
             code->m_text_boundaries = bounds;
             code->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(code);
+            auto ptr = std::static_pointer_cast<AbstractElement>(code);
             set_infos(MarkdownConfig::CODE, ptr);
             return ptr;
         }
@@ -359,13 +359,13 @@ namespace RichText {
         }
     }
 
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_P(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_P(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<ParagraphWidget>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(p));
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -373,13 +373,13 @@ namespace RichText {
         }
     }
 
-    AbstractWidgetPtr MarkdownToWidgets::BLOCK_HIDDENSPACE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::BLOCK_HIDDENSPACE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<HiddenSpace>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractWidget>(p));
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -387,91 +387,91 @@ namespace RichText {
         }
     }
 
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_A(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::SpanADetail& detail) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_A(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::SpanADetail& detail) {
         set_href(enter, detail.href);
         if (enter) {
             auto p = std::make_shared<LinkSpan>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
-            set_infos(MarkdownConfig::HREF, std::static_pointer_cast<AbstractWidget>(p));
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(MarkdownConfig::HREF, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
             return m_current_ptr;
         }
     }
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_EM(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_EM(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<EmSpan>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
-            set_infos(MarkdownConfig::EM, std::static_pointer_cast<AbstractWidget>(p));
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(MarkdownConfig::EM, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
             return m_current_ptr;
         }
     }
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_STRONG(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_STRONG(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<StrongSpan>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
-            set_infos(MarkdownConfig::STRONG, std::static_pointer_cast<AbstractWidget>(p));
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(MarkdownConfig::STRONG, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
             return m_current_ptr;
         }
     }
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_IMG(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::SpanImgDetail& detail) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_IMG(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::SpanImgDetail& detail) {
         return nullptr;
     }
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_CODE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_CODE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<StrongSpan>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
             if (m_current_ptr->m_type == T_BLOCK_CODE)
-                set_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractWidget>(p));
+                set_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractElement>(p));
             else
-                set_infos(MarkdownConfig::INLINE_CODE, std::static_pointer_cast<AbstractWidget>(p));
+                set_infos(MarkdownConfig::INLINE_CODE, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
             return m_current_ptr;
         }
     }
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_LATEXMATH(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_LATEXMATH(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         return nullptr;
     }
-    // AbstractWidgetPtr MarkdownToWidgets::SPAN_WIKILINK(const MD_SPAN_WIKILINK_DETAIL*, bool) {
+    // AbstractElementPtr MarkdownToWidgets::SPAN_WIKILINK(const MD_SPAN_WIKILINK_DETAIL*, bool) {
     //     return nullptr;
     // }
-    // AbstractWidgetPtr MarkdownToWidgets::SPAN_U(bool enter) {
+    // AbstractElementPtr MarkdownToWidgets::SPAN_U(bool enter) {
     //     return nullptr;
     // }
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_DEL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_DEL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         return nullptr;
     }
-    AbstractWidgetPtr MarkdownToWidgets::SPAN_HIGHLIGHT(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+    AbstractElementPtr MarkdownToWidgets::SPAN_HIGHLIGHT(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<HighlightSpan>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
-            auto ptr = std::static_pointer_cast<AbstractWidget>(p);
-            set_infos(MarkdownConfig::HIGHLIGHT, std::static_pointer_cast<AbstractWidget>(p));
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(MarkdownConfig::HIGHLIGHT, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
             return m_current_ptr;
         }
     }
-    std::vector<AbstractWidgetPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config) {
+    std::vector<AbstractElementPtr> MarkdownToWidgets::parse(const SafeString& str, UIState_ptr ui_state, RichTextInfo* rt_info, MarkdownConfig config) {
         m_text_start_idx = 0;
         m_text_end_idx = 0;
         m_tree.clear();

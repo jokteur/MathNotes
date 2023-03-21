@@ -10,6 +10,7 @@ namespace RichText {
     struct WidgetConfig {
         float line_start;
         int line_lookahead_window = 1000;
+        bool interactive = false;
     };
 
     class WidgetManager;

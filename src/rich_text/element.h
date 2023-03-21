@@ -19,8 +19,8 @@
 namespace RichText {
     using SafeString = std::shared_ptr<std::string>;
 
-    struct AbstractWidget;
-    using AbstractWidgetPtr = std::shared_ptr<AbstractWidget>;
+    struct AbstractElement;
+    using AbstractElementPtr = std::shared_ptr<AbstractElement>;
 
     struct SimpleWidget;
     using SimpleWidgetPtr = std::shared_ptr<SimpleWidget>;
@@ -32,7 +32,7 @@ namespace RichText {
         Type m_type;
     };
 
-    struct AbstractWidget: public Drawable {
+    struct AbstractElement: public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<DrawableCharPtr> m_draw_delimiter_chars;
@@ -40,12 +40,12 @@ namespace RichText {
     public:
         Type m_type;
         Category m_category;
-        AbstractWidget(UIState_ptr ui_state): Drawable(ui_state) {}
-        ~AbstractWidget() {};
+        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) {}
+        ~AbstractElement() {};
 
         // Informations about the tree structure
-        std::vector<AbstractWidgetPtr> m_childrens;
-        AbstractWidgetPtr m_parent = nullptr;
+        std::vector<AbstractElementPtr> m_childrens;
+        AbstractElementPtr m_parent = nullptr;
 
         int useless_val = 0;
 
@@ -93,8 +93,8 @@ namespace RichText {
         void virtual setWidth(float width);
     };
 
-    struct RootNode: public AbstractWidget {
-        RootNode(UIState_ptr ui_state): AbstractWidget(ui_state) {
+    struct RootNode: public AbstractElement {
+        RootNode(UIState_ptr ui_state): AbstractElement(ui_state) {
             m_type = T_ROOT;
             m_category = C_ROOT;
         }

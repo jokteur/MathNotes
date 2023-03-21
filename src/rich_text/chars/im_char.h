@@ -1,7 +1,7 @@
 #pragma once
 
 #include "drawable_char.h"
-#include "rich_text/widgets.h"
+#include "rich_text/element.h"
 
 namespace RichText {
     /**
