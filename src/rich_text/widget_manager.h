@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "ab/ab_file.h"
 #include "ui/drawable.h"
+#include "element.h"
 
 namespace RichText {
     typedef int WidgetId;
@@ -17,9 +18,11 @@ namespace RichText {
 
     class Widget: public Drawable {
     private:
-        WidgetConfig config;
-        float current_line = 0.f;
+        WidgetConfig m_config;
+        float m_current_line = 0.f;
         friend class WidgetManager;
+
+        std::vector<AbstractElement*> m_elements;
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}
         void draw();
@@ -37,6 +40,7 @@ namespace RichText {
         static WidgetId widget_id;
     public:
         WidgetManager(const AB::File& file);
+        ~WidgetManager();
 
         WidgetId createWidget(const WidgetConfig& config, UIState_ptr ui_state);
         void removeWidget(WidgetId id);

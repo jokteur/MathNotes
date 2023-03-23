@@ -13,6 +13,7 @@ namespace AB {
         int line_start;
         int line_end;
         BLOCK_TYPE type;
+        void* widget_ptr = nullptr;
     };
     struct Header {
         std::vector<AB::Boundaries> bounds;
