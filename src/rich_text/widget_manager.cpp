@@ -14,24 +14,30 @@ namespace RichText {
     }
 
     WidgetId WidgetManager::createWidget(const WidgetConfig& config, UIState_ptr ui_state) {
-        m_widgets[widget_id] = Widget(ui_state);
-        m_widgets[widget_id].m_config = config;
-        m_widgets[widget_id].m_current_line = config.line_start;
+        widget_id++;
+        Widget widget(ui_state);
+        widget.m_config = config;
+        widget.m_file = &m_file;
+        widget.m_current_line = config.line_start;
+        auto pair = m_widgets.emplace(std::pair<WidgetId, Widget>(widget_id, widget));
+        return widget_id;
     }
     void WidgetManager::removeWidget(WidgetId id) {
-        if (m_widgets.find(id) != m_widgets.end()) {
-            m_widgets.erase(id);
+        auto it = m_widgets.find(id);
+        if (it != m_widgets.end()) {
+            m_widgets.erase(it);
         }
     }
     void WidgetManager::displayWidget(WidgetId id) {
-        if (m_widgets.find(id) != m_widgets.end()) {
-            m_widgets[id].draw();
+        auto it = m_widgets.find(id);
+        if (it != m_widgets.end()) {
+            it->second.draw();
         }
     }
     WidgetManager::~WidgetManager() {
         for (auto block : m_file.m_blocks) {
             if (block.widget_ptr != nullptr) {
-                delete block.widget_ptr;
+                delete (AbstractElement*)block.widget_ptr;
             }
         }
     }

@@ -16,6 +16,7 @@ namespace AB {
         int idx_end;
         BLOCK_TYPE type;
         void* widget_ptr = nullptr;
+        bool build_widget = false;
     };
     struct Header {
         std::vector<AB::Boundaries> bounds;
