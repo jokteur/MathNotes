@@ -11,7 +11,9 @@ namespace RichText {
 namespace AB {
     struct RootBlock {
         int line_start;
+        int idx_start;
         int line_end;
+        int idx_end;
         BLOCK_TYPE type;
         void* widget_ptr = nullptr;
     };
@@ -33,9 +35,15 @@ namespace AB {
         bool track_labels = true;
     };
 
-    struct SimpleBound {
-        int start;
-        int end;
+    struct Bound {
+        int txt_idx = -1;
+        int line_idx = -1;
+        int block_idx = -1;
+    };
+
+    struct BlockBounds {
+        Bound start;
+        Bound end;
     };
 
 
@@ -60,6 +68,7 @@ namespace AB {
 
         /**
          * @brief Returns the start position of the line
+         * Search in log(n)
          */
         int lineNumberToPosition(int num);
 
@@ -74,7 +83,7 @@ namespace AB {
          * @param line_end
          * @return Boundaries
          */
-        SimpleBound getBlocksBoundsContaining(int line_start, int line_end);
+        BlockBounds getBlocksBoundsContaining(int line_start, int line_end);
 
         friend class RichText::WidgetManager;
     };
