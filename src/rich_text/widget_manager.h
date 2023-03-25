@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include "ab/ab_file.h"
+#include "markdown.h"
 #include "ui/drawable.h"
 #include "element.h"
 
@@ -18,12 +19,18 @@ namespace RichText {
 
     class Widget: public Drawable {
     private:
+        bool m_redo_positions = false;
+
         WidgetConfig m_config;
-        float m_current_line = 0.f;
         AB::File* m_file;
         int m_block_idx_start;
         int m_block_idx_end;
         friend class WidgetManager;
+
+        Draw::DrawList m_draw_list;
+        float m_current_line = 0.f;
+        float m_current_width = 0.f;
+        float m_y_scroll = 0.f;
 
         std::unordered_map<int, AbstractElement*> m_root_elements;
     public:
@@ -40,6 +47,8 @@ namespace RichText {
     private:
         AB::File m_file;
         std::unordered_map<WidgetId, Widget> m_widgets;
+        Widget m_empty_widget;
+        ABToWidgets m_ab_to_widgets;
         static WidgetId widget_id;
         UIState_ptr m_ui_state;
     public:
@@ -57,5 +66,11 @@ namespace RichText {
          * @return Widget&
          */
         Widget& getWidget(WidgetId id);
+
+        /**
+         * Call this function periodically to manage the memory of
+         * all the widgets ; create / destroy blocks, spans, ...
+        */
+        void manage();
     };
 }

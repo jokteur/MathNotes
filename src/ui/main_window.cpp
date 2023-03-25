@@ -7,7 +7,6 @@
 #include "utils.h"
 
 #include "ab/ab_file.h"
-#include "rich_text/rich_text_widget.h"
 #include "imgui_internal.h"
 #include "translations/translate.h"
 #include "imgui_stdlib.h"
@@ -69,7 +68,7 @@ int TextInputCallback(ImGuiInputTextCallbackData* data) {
     main_app->m_insert_at = data->CursorPos;
     return 1;
 }
-MainApp::MainApp(): m_rich_text(m_ui_state) {
+MainApp::MainApp() {
 
 }
 void MainApp::InitializationBeforeLoop() {
@@ -82,6 +81,7 @@ void MainApp::AfterLoop() {
 }
 
 void MainApp::FrameUpdate() {
+    using namespace RichText;
     ImGui::Begin("My window");
     ImGui::InputTextMultiline("input", &m_in_text, ImVec2(0, 0),
         ImGuiInputTextFlags_CallbackAlways, TextInputCallback, (void*)this);
@@ -95,22 +95,42 @@ void MainApp::FrameUpdate() {
 
         auto t2 = std::chrono::high_resolution_clock::now();
         auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-        std::cout << ms_int.count() << "ms\n";
+        std::cout << ms_int.count() << "ms (parse file) ";
+
+        t1 = std::chrono::high_resolution_clock::now();
         m_ab_file->getBlocksBoundsContaining(30, 35488);
+        t2 = std::chrono::high_resolution_clock::now();
+        auto mu_int = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+        std::cout << mu_int.count() << "mus (test)";
+        std::cout << std::endl;
+
+        if (m_widget_manager != nullptr) {
+            delete m_widget_manager;
+        }
+        // t1 = std::chrono::high_resolution_clock::now();
+        m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
+        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
+
         text_set = true;
     }
 
-    if (m_in_text != m_prev_text) {
-        m_prev_text = m_in_text;
-        m_rich_text.setText(m_in_text);
+    if (m_widget_manager != nullptr) {
+        auto widget = m_widget_manager->getWidget(m_widget_id);
+        m_widget_manager->manage();
+        widget.draw();
     }
+
+    // if (m_in_text != m_prev_text) {
+    //     m_prev_text = m_in_text;
+    //     m_rich_text.setText(m_in_text);
+    // }
 
     if (ImGui::Button("SetBigText")) {
         text_set = false;
     }
     ImGui::End();
 
-    m_rich_text.FrameUpdate();
+    // m_rich_text.FrameUpdate();
 }
 
 void MainApp::BeforeFrameUpdate() {
