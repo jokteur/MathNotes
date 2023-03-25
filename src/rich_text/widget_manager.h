@@ -24,6 +24,8 @@ namespace RichText {
         int m_block_idx_start;
         int m_block_idx_end;
         friend class WidgetManager;
+
+        std::unordered_map<int, AbstractElement*> m_root_elements;
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}
         void draw();
@@ -39,19 +41,21 @@ namespace RichText {
         AB::File m_file;
         std::unordered_map<WidgetId, Widget> m_widgets;
         static WidgetId widget_id;
-
+        UIState_ptr m_ui_state;
     public:
-        WidgetManager(const AB::File& file);
+        WidgetManager(const AB::File& file, UIState_ptr ui_state);
         ~WidgetManager();
 
-        WidgetId createWidget(const WidgetConfig& config, UIState_ptr ui_state);
+        WidgetId createWidget(const WidgetConfig& config);
+        /**/
         void removeWidget(WidgetId id);
-        void displayWidget(WidgetId id);
-
-        /* This function creates or destroy widgets depending
-         * on the state of all widgets belonging to the manager
+        /**
+         * @brief Returns a reference to the widget associated
+         * with the id
          *
-         * This function should be called every loop */
-        void manage();
+         * @param id of the widget given by createWidget()
+         * @return Widget&
+         */
+        Widget& getWidget(WidgetId id);
     };
 }

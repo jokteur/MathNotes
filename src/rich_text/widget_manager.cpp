@@ -9,18 +9,14 @@ namespace RichText {
 
 
     WidgetId WidgetManager::widget_id = 0;
-    WidgetManager::WidgetManager(const File& file): m_file(file) {
-
+    WidgetManager::WidgetManager(const File& file, UIState_ptr ui_state): m_file(file) {
+        m_ui_state = ui_state;
     }
 
-    WidgetId WidgetManager::createWidget(const WidgetConfig& config, UIState_ptr ui_state) {
-        widget_id++;
-        Widget widget(ui_state);
-        widget.m_config = config;
-        widget.m_file = &m_file;
-        widget.m_current_line = config.line_start;
-        auto pair = m_widgets.emplace(std::pair<WidgetId, Widget>(widget_id, widget));
-        return widget_id;
+    WidgetId WidgetManager::createWidget(const WidgetConfig& config) {
+        m_widgets[widget_id] = Widget(m_ui_state);
+        m_widgets[widget_id].m_config = config;
+        m_widgets[widget_id].m_current_line = config.line_start;
     }
     void WidgetManager::removeWidget(WidgetId id) {
         auto it = m_widgets.find(id);
@@ -28,17 +24,12 @@ namespace RichText {
             m_widgets.erase(it);
         }
     }
-    void WidgetManager::displayWidget(WidgetId id) {
-        auto it = m_widgets.find(id);
-        if (it != m_widgets.end()) {
-            it->second.draw();
+    Widget& WidgetManager::getWidget(WidgetId id) {
+        if (m_widgets.find(id) != m_widgets.end()) {
+            return m_widgets[id];
         }
+        return Widget(m_ui_state);
     }
     WidgetManager::~WidgetManager() {
-        for (auto block : m_file.m_blocks) {
-            if (block.widget_ptr != nullptr) {
-                delete (AbstractElement*)block.widget_ptr;
-            }
-        }
     }
 }

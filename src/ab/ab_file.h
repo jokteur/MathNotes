@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 #include <ab_parser.h>
 
@@ -15,8 +16,6 @@ namespace AB {
         int line_end;
         int idx_end;
         BLOCK_TYPE type;
-        void* widget_ptr = nullptr;
-        bool build_widget = false;
     };
     struct Header {
         std::vector<AB::Boundaries> bounds;
