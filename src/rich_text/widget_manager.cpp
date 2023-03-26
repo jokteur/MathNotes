@@ -49,13 +49,31 @@ namespace RichText {
         }
     }
 
-    WidgetId WidgetManager::widget_id = 0;
+    void Widget::build_elements() {
+
+    }
+
     WidgetManager::WidgetManager(const File& file, UIState_ptr ui_state): m_file(file), m_empty_widget(nullptr) {
         m_ui_state = ui_state;
     }
 
     WidgetId WidgetManager::createWidget(const WidgetConfig& config) {
-        widget_id++;
+        WidgetId widget_id = 1;
+
+        bool available_slot = false;
+        for (int i = 1;i <= 32;i++) {
+            if (m_current_widgets & widget_id) {
+                available_slot = true;
+                break;
+            }
+            widget_id << 1;
+        }
+
+        if (!available_slot)
+            return 0;
+
+        m_current_widgets |= widget_id;
+
         Widget widget(m_ui_state);
         widget.m_config = config;
         widget.m_file = &m_file;

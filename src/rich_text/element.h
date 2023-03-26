@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include "ab_parser.h"
 
+#include "ab/ab_file.h"
 #include "types.h"
 #include "ui/drawable.h"
 #include "ui/fonts.h"
@@ -22,21 +23,12 @@ namespace RichText {
     struct AbstractElement;
     using AbstractElementPtr = std::shared_ptr<AbstractElement>;
 
-    struct SimpleWidget;
-    using SimpleWidgetPtr = std::shared_ptr<SimpleWidget>;
-    struct SimpleWidget {
-        // std::vector<SimpleWidgetPtr> m_childrens;
-        SimpleWidgetPtr m_parent = nullptr;
-        std::vector<AB::Boundaries> m_text_boundaries;
-        AB::Attributes m_attributes;
-        Type m_type;
-    };
-
     struct AbstractElement: public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<DrawableCharPtr> m_draw_delimiter_chars;
         std::vector<WrapCharPtr> m_wrap_chars;
+
     public:
         Type m_type;
         Category m_category;
@@ -46,8 +38,7 @@ namespace RichText {
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
         AbstractElementPtr m_parent = nullptr;
-
-        int useless_val = 0;
+        AB::RootIterator m_ref_to_root;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);

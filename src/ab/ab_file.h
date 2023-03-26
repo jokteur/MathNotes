@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <list>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
@@ -16,7 +17,10 @@ namespace AB {
         int line_end;
         int idx_end;
         BLOCK_TYPE type;
+        int is_dirty = 0;
     };
+    typedef std::list<RootBlock>::iterator RootIterator;
+
     struct Header {
         std::vector<AB::Boundaries> bounds;
         std::string content;
@@ -42,14 +46,17 @@ namespace AB {
     };
 
     struct BlockBounds {
-        Bound start;
-        Bound end;
+        RootIterator start;
+        RootIterator end;
     };
 
 
-    class File {
+    struct File {
     private:
-        std::vector<RootBlock> m_blocks;
+        void add_to_text(std::string& str, const std::vector<AB::Boundaries>& bounds);
+        void parse(int start = 0, int end = -1);
+    public:
+        std::list<RootBlock> m_blocks;
         std::string m_txt;
         std::vector<int> m_line_begins;
         std::vector<Equation> m_equations;
@@ -61,22 +68,13 @@ namespace AB {
         bool m_h_accumulating = false;
         std::string m_h_accumulator;
 
-        void add_to_text(std::string& str, const std::vector<AB::Boundaries>& bounds);
-        void parse(int start = 0, int end = -1);
-    public:
         File(const std::string& path_or_txt, bool is_path = true, FileConfig config = FileConfig{});
-
-        /**
-         * @brief Returns the start position of the line
-         * Search in log(n)
-         */
-        int lineNumberToPosition(int num);
 
         void insertText(int position, const std::string& text);
         void deleteText(int start, int end);
 
         /**
-         * @brief Get the boundaries of the (root) blocks that contain
+         * @brief Get the iterators of the (root) blocks that contain
          * line_start to line_end
          *
          * @param line_start
@@ -84,7 +82,5 @@ namespace AB {
          * @return Boundaries
          */
         BlockBounds getBlocksBoundsContaining(int line_start, int line_end);
-
-        friend class RichText::WidgetManager;
     };
 };

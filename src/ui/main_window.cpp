@@ -75,7 +75,8 @@ void MainApp::InitializationBeforeLoop() {
     setFonts(m_ui_state);
     defineStyle();
     getFileContents("data/bigfile.md", m_big_text);
-    // m_big_text += m_big_text;
+    // for (int i = 0;i < 3;i++)
+    //     m_big_text += m_big_text;
 }
 void MainApp::AfterLoop() {
 }
@@ -98,18 +99,21 @@ void MainApp::FrameUpdate() {
         std::cout << ms_int.count() << "ms (parse file) ";
 
         t1 = std::chrono::high_resolution_clock::now();
-        m_ab_file->getBlocksBoundsContaining(30, 35488);
+        m_ab_file->getBlocksBoundsContaining(30, 135488);
         t2 = std::chrono::high_resolution_clock::now();
         auto mu_int = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
         std::cout << mu_int.count() << "mus (test)";
+        std::cout << " " << sizeof(*m_ab_file) << std::endl;
         std::cout << std::endl;
+
+        std::cout << m_ab_file->m_blocks.size() * (sizeof(AB::RootBlock) + 24) << std::endl;
 
         if (m_widget_manager != nullptr) {
             delete m_widget_manager;
         }
         // t1 = std::chrono::high_resolution_clock::now();
-        m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
-        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
+        // m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
+        // m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
 
         text_set = true;
     }

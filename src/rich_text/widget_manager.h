@@ -32,7 +32,15 @@ namespace RichText {
         float m_current_width = 0.f;
         float m_y_scroll = 0.f;
 
-        std::unordered_map<int, AbstractElement*> m_root_elements;
+
+        struct RootCompare {
+            bool operator() (const AB::RootIterator& lhs, const AB::RootIterator& rhs) const {
+                return &lhs < &rhs;
+            }
+        };
+        std::unordered_map<AB::RootIterator, AbstractElement*, RootCompare> m_root_elements;
+
+        void build_elements();
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}
         void draw();
@@ -49,12 +57,13 @@ namespace RichText {
         std::unordered_map<WidgetId, Widget> m_widgets;
         Widget m_empty_widget;
         ABToWidgets m_ab_to_widgets;
-        static WidgetId widget_id;
+        int m_current_widgets = 0;
         UIState_ptr m_ui_state;
     public:
         WidgetManager(const AB::File& file, UIState_ptr ui_state);
         ~WidgetManager();
 
+        /* Returns a widget id linked to a widget (limited to 32 widgets)*/
         WidgetId createWidget(const WidgetConfig& config);
         /**/
         void removeWidget(WidgetId id);
