@@ -17,6 +17,12 @@ namespace RichText {
 
     class WidgetManager;
 
+    struct RootCompare {
+        bool operator() (const AB::RootIterator& lhs, const AB::RootIterator& rhs) const {
+            return &lhs < &rhs;
+        }
+    };
+
     class Widget: public Drawable {
     private:
         bool m_redo_positions = false;
@@ -32,12 +38,6 @@ namespace RichText {
         float m_current_width = 0.f;
         float m_y_scroll = 0.f;
 
-
-        struct RootCompare {
-            bool operator() (const AB::RootIterator& lhs, const AB::RootIterator& rhs) const {
-                return &lhs < &rhs;
-            }
-        };
         std::unordered_map<AB::RootIterator, AbstractElement*, RootCompare> m_root_elements;
 
         void build_elements();

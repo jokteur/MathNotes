@@ -111,9 +111,11 @@ void MainApp::FrameUpdate() {
         if (m_widget_manager != nullptr) {
             delete m_widget_manager;
         }
-        // t1 = std::chrono::high_resolution_clock::now();
-        // m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
-        // m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
+        t1 = std::chrono::high_resolution_clock::now();
+        m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
+        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
+        m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
+        m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
 
         text_set = true;
     }

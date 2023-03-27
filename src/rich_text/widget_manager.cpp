@@ -50,7 +50,6 @@ namespace RichText {
     }
 
     void Widget::build_elements() {
-
     }
 
     WidgetManager::WidgetManager(const File& file, UIState_ptr ui_state): m_file(file), m_empty_widget(nullptr) {
@@ -85,6 +84,7 @@ namespace RichText {
         auto it = m_widgets.find(id);
         if (it != m_widgets.end()) {
             m_widgets.erase(it);
+            m_current_widgets ^= id;
         }
     }
     Widget& WidgetManager::getWidget(WidgetId id) {
@@ -98,6 +98,9 @@ namespace RichText {
     }
 
     void WidgetManager::manage() {
-
+        int widget_id = 1;
+        for (int i = 1;i <= 32;i++) {
+            widget_id << 1;
+        }
     }
 }
