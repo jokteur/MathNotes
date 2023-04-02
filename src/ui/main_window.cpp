@@ -109,12 +109,13 @@ void MainApp::FrameUpdate() {
         std::cout << m_ab_file->m_blocks.size() * (sizeof(AB::RootBlock) + 24) << std::endl;
 
         if (m_widget_manager != nullptr) {
+            std::cout << "Before: " << RichText::AbstractElement::count << std::endl;
             delete m_widget_manager;
+            std::cout << "After: " << RichText::AbstractElement::count << std::endl;
         }
         t1 = std::chrono::high_resolution_clock::now();
         m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
-        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
-        m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
+        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 40, true });
 
         text_set = true;
     }

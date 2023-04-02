@@ -8,6 +8,10 @@ namespace RichText {
     bool AbstractElement::add_chars(std::vector<WrapCharPtr>&) {
         return true;
     }
+    AbstractElement::~AbstractElement() {
+        count--;
+    }
+    int AbstractElement::count = 0;
     float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
         x_offset += m_style.h_margins.x;
         cursor_y_pos += m_style.v_margins.y;

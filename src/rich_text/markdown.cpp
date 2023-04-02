@@ -196,8 +196,8 @@ namespace RichText {
         m_current_ptr = node;
     }
     void ABToWidgets::tree_up() {
-        if (m_current_ptr->m_parent != nullptr) {
-            m_current_ptr = m_current_ptr->m_parent;
+        if (m_current_ptr->m_parent.lock() != nullptr) {
+            m_current_ptr = m_current_ptr->m_parent.lock();
         }
     }
     void ABToWidgets::set_href(bool enter, const std::string& src) {

@@ -22,6 +22,7 @@ namespace AB {
         int is_dirty = 0;
     };
     typedef std::shared_ptr<RootBlock> RootBlockPtr;
+    typedef std::shared_ptr<RootBlock> RootBlockWeakPtr;
 
     struct Header {
         std::vector<AB::Boundaries> bounds;

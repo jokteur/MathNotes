@@ -21,6 +21,7 @@
 namespace RichText {
     struct AbstractElement;
     using AbstractElementPtr = std::shared_ptr<AbstractElement>;
+    using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
 
     struct AbstractElement: public Drawable {
     protected:
@@ -31,13 +32,14 @@ namespace RichText {
     public:
         Type m_type;
         Category m_category;
-        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) {}
-        ~AbstractElement() {};
+        static int count;
+        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) { count++; }
+        ~AbstractElement();
 
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
-        AbstractElementPtr m_parent = nullptr;
-        AB::RootBlockPtr m_ref_to_root;
+        AbstractElementWeakPtr m_parent;
+        AB::RootBlockWeakPtr m_ref_to_root;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);

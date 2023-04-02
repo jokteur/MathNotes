@@ -12,7 +12,7 @@ namespace RichText {
     typedef int WidgetId;
     struct WidgetConfig {
         float line_start;
-        int line_lookahead_window = 4000;
+        int line_lookahead_window = 40;
         bool interactive = false;
     };
 
@@ -39,6 +39,8 @@ namespace RichText {
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}
         Widget(const Widget&) = delete;
+
+        ~Widget() { std::cout << "Destroy widget" << std::endl; }
         Widget& operator= (const Widget&) = delete;
         void draw();
     };
