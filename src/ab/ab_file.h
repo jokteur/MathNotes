@@ -7,6 +7,8 @@
 #include <vector>
 #include <ab_parser.h>
 
+#include "types.h"
+
 namespace RichText {
     class WidgetManager;
 }
@@ -19,7 +21,7 @@ namespace AB {
         BLOCK_TYPE type;
         int is_dirty = 0;
     };
-    typedef std::list<RootBlock>::iterator RootBlockIterator;
+    typedef std::shared_ptr<RootBlock> RootBlockPtr;
 
     struct Header {
         std::vector<AB::Boundaries> bounds;
@@ -46,10 +48,9 @@ namespace AB {
     };
 
     struct BlockBounds {
-        RootBlockIterator start;
-        RootBlockIterator end;
+        Bound start;
+        Bound end;
     };
-
 
     struct File {
     private:
@@ -57,8 +58,8 @@ namespace AB {
         void parse(int start = 0, int end = -1);
 
     public:
-        std::string m_txt;
-        std::list<RootBlock> m_blocks;
+        SafeString m_safe_txt;
+        std::vector<RootBlockPtr> m_blocks;
         std::vector<int> m_line_begins;
         std::vector<Equation> m_equations;
         std::vector<Header> m_headers;

@@ -4,6 +4,8 @@ using namespace AB;
 
 namespace RichText {
     void Widget::draw() {
+        manage_elements();
+
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
         float width = ImGui::GetWindowContentRegionWidth();
@@ -49,7 +51,62 @@ namespace RichText {
         }
     }
 
-    void Widget::build_elements() {
+    void Widget::manage_elements() {
+        int half_window = m_config.line_lookahead_window / 2;
+        int start_line = m_current_line - half_window;
+        int end_line = m_current_line + half_window;
+        auto bounds = m_file->getBlocksBoundsContaining(start_line, end_line);
+
+        int start = bounds.start.block_idx;
+        int end = bounds.end.block_idx;
+
+        std::unordered_set<AB::RootBlockPtr> to_destroy;
+
+        /* Widget was just created or jumped to another location */
+        if (m_block_idx_end == -1 || start >= m_block_idx_end) {
+            if (start >= m_block_idx_end) {
+                m_root_elements.clear();
+            }
+            m_block_idx_start = start;
+            m_block_idx_end = end;
+            ABToWidgets parser;
+            auto t1 = std::chrono::high_resolution_clock::now();
+            parser.parse(m_file, m_block_idx_start, m_block_idx_end, &m_root_elements, m_ui_state);
+            auto t2 = std::chrono::high_resolution_clock::now();
+            auto ms_int = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+            std::cout << ms_int.count() << "mus (parse widgets) " << std::endl;
+        }
+        else {
+            /* Blocks to build before */
+            if (start < m_block_idx_start) {
+                ABToWidgets parser;
+                parser.parse(m_file, start, m_block_idx_start, &m_root_elements, m_ui_state);
+            }
+            /* Blocks to destroy before */
+            else if (start > m_block_idx_start) {
+                for (int i = m_block_idx_start; i < start;i++) {
+                    to_destroy.insert(m_file->m_blocks[i]);
+                }
+            }
+            /* Blocks to build after */
+            if (end > m_block_idx_end) {
+                ABToWidgets parser;
+                parser.parse(m_file, m_block_idx_end, end, &m_root_elements, m_ui_state);
+            }
+            /* Blocks to destroy after */
+            else if (end < m_block_idx_end) {
+                for (int i = end; i < m_block_idx_end;i++) {
+                    to_destroy.insert(m_file->m_blocks[i]);
+                }
+            }
+
+            for (auto ptr : to_destroy) {
+                m_root_elements.erase(ptr);
+            }
+
+            m_block_idx_start = start;
+            m_block_idx_end = end;
+        }
     }
 
     WidgetManager::WidgetManager(const File& file, UIState_ptr ui_state): m_file(file), m_empty_widget(nullptr) {
@@ -61,11 +118,11 @@ namespace RichText {
 
         bool available_slot = false;
         for (int i = 1;i <= 32;i++) {
-            if (m_current_widgets & widget_id) {
+            if (m_current_widgets ^ widget_id) {
                 available_slot = true;
                 break;
             }
-            widget_id << 1;
+            widget_id = widget_id << 1;
         }
 
         if (!available_slot)
@@ -73,11 +130,11 @@ namespace RichText {
 
         m_current_widgets |= widget_id;
 
-        Widget widget(m_ui_state);
-        widget.m_config = config;
-        widget.m_file = &m_file;
-        widget.m_current_line = config.line_start;
-        auto pair = m_widgets.emplace(std::pair<WidgetId, Widget>(widget_id, widget));
+        auto widget = std::make_shared<Widget>(m_ui_state);
+        widget->m_config = config;
+        widget->m_file = &m_file;
+        widget->m_current_line = config.line_start;
+        m_widgets[widget_id] = widget;
         return widget_id;
     }
     void WidgetManager::removeWidget(WidgetId id) {
@@ -87,12 +144,12 @@ namespace RichText {
             m_current_widgets ^= id;
         }
     }
-    Widget& WidgetManager::getWidget(WidgetId id) {
+    WidgetPtr WidgetManager::getWidget(WidgetId id) {
         auto it = m_widgets.find(id);
         if (it != m_widgets.end()) {
             return it->second;
         }
-        return m_empty_widget;
+        return nullptr;
     }
     WidgetManager::~WidgetManager() {
     }
@@ -100,7 +157,12 @@ namespace RichText {
     void WidgetManager::manage() {
         int widget_id = 1;
         for (int i = 1;i <= 32;i++) {
-            widget_id << 1;
+            if (m_current_widgets & widget_id) {
+                // std::cout << "Managing " << widget_id << " ";
+                // auto& widget = getWidget(widget_id);
+                // int current_line = widget.m_current_line;
+            }
+            widget_id = widget_id << 1;
         }
     }
 }

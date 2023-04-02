@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tempo.h>
+#include <string>
 
 struct Rect {
     float x = 0.f;
@@ -8,6 +9,8 @@ struct Rect {
     float w = 0.f;
     float h = 0.f;
 };
+
+typedef std::shared_ptr<std::string> SafeString;
 
 inline bool isInsideRect(const ImVec2& pos, const Rect& rect) {
     return pos.x >= rect.x && pos.x <= rect.x + rect.w

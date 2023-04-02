@@ -12,21 +12,11 @@ namespace RichText {
     typedef int WidgetId;
     struct WidgetConfig {
         float line_start;
-        int line_lookahead_window = 1000;
+        int line_lookahead_window = 4000;
         bool interactive = false;
     };
 
     class WidgetManager;
-
-    struct RootCompare {
-        bool operator() (const AB::RootBlockIterator& lhs, const AB::RootBlockIterator& rhs) const {
-            return &lhs < &rhs;
-        }
-
-        // size_t operator()(const AB::RootBlockIterator& it) const {
-        //     return (size_t)it._Ptr;
-        // }
-    };
 
     class Widget: public Drawable {
     private:
@@ -34,8 +24,8 @@ namespace RichText {
 
         WidgetConfig m_config;
         AB::File* m_file;
-        int m_block_idx_start;
-        int m_block_idx_end;
+        int m_block_idx_start = 1e9;
+        int m_block_idx_end = -1;
         friend class WidgetManager;
 
         Draw::DrawList m_draw_list;
@@ -43,13 +33,16 @@ namespace RichText {
         float m_current_width = 0.f;
         float m_y_scroll = 0.f;
 
-        std::unordered_map<AB::RootBlockIterator, AbstractElement*, RootCompare> m_root_elements;
+        std::unordered_map<AB::RootBlockPtr, AbstractElementPtr> m_root_elements;
 
-        void build_elements();
+        void manage_elements();
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}
+        Widget(const Widget&) = delete;
+        Widget& operator= (const Widget&) = delete;
         void draw();
     };
+    typedef std::shared_ptr<Widget> WidgetPtr;
 
     /**
      * @brief WidgetManager manages all the widgets that could be displayed from
@@ -59,7 +52,7 @@ namespace RichText {
     class WidgetManager {
     private:
         AB::File m_file;
-        std::unordered_map<WidgetId, Widget> m_widgets;
+        std::unordered_map<WidgetId, WidgetPtr> m_widgets;
         Widget m_empty_widget;
         ABToWidgets m_ab_to_widgets;
         int m_current_widgets = 0;
@@ -73,13 +66,13 @@ namespace RichText {
         /**/
         void removeWidget(WidgetId id);
         /**
-         * @brief Returns a reference to the widget associated
-         * with the id
+         * @brief Returns a pointer to the widget associated with the id
+         *
          *
          * @param id of the widget given by createWidget()
-         * @return Widget&
+         * @return WidgetPtr
          */
-        Widget& getWidget(WidgetId id);
+        WidgetPtr getWidget(WidgetId id);
 
         /**
          * Call this function periodically to manage the memory of

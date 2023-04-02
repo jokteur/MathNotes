@@ -72,7 +72,6 @@ namespace RichText {
         AbstractElementPtr ptr = nullptr;
         switch (type) {
         case AB::BLOCK_DOC:
-            BLOCK_DOC(enter);
             break;
         case AB::BLOCK_QUOTE:
             ptr = BLOCK_QUOTE(enter, bounds, attributes);
@@ -106,6 +105,12 @@ namespace RichText {
             //     break;
         default:
             break;
+        }
+        if (enter) {
+            m_level++;
+        }
+        else {
+            m_level--;
         }
         if (ptr != nullptr) {
             if (enter) {
@@ -170,7 +175,13 @@ namespace RichText {
     }
 
     void ABToWidgets::push_to_tree(AbstractElementPtr& node) {
-        m_tree.push_back(node);
+        // m_tree.push_back(node);
+        if (m_level == 1) {
+            m_current_ptr = nullptr;
+            auto block_ptr = m_ab_file->m_blocks[m_root_idx_current];
+            (*m_root_elements)[block_ptr] = node;
+            m_root_idx_current++;
+        }
         // node->m_txt_offset = m_text_start_idx;
         // node->m_line_offset = m_line_offset;
         node->m_safe_string = m_safe_text;
@@ -212,19 +223,22 @@ namespace RichText {
         // Inherit potential properties from parents
 #define INHERIT_PROPERTY(name_) \
     if (!style.isset_##name_) { current_style->name_ = m_current_ptr->m_style.name_;}
-        INHERIT_PROPERTY(font_size);
-        INHERIT_PROPERTY(font_styling);
-        INHERIT_PROPERTY(font_color);
-        INHERIT_PROPERTY(font_underline);
-        INHERIT_PROPERTY(font_strikethrough);
-        INHERIT_PROPERTY(font_em);
-        INHERIT_PROPERTY(font_strong);
-        INHERIT_PROPERTY(line_space);
-        INHERIT_PROPERTY(h_margins);
-        INHERIT_PROPERTY(v_margins);
-        INHERIT_PROPERTY(h_paddings);
-        INHERIT_PROPERTY(v_paddings);
-        INHERIT_PROPERTY(bg_color);
+
+        if (m_current_ptr != nullptr) {
+            INHERIT_PROPERTY(font_size);
+            INHERIT_PROPERTY(font_styling);
+            INHERIT_PROPERTY(font_color);
+            INHERIT_PROPERTY(font_underline);
+            INHERIT_PROPERTY(font_strikethrough);
+            INHERIT_PROPERTY(font_em);
+            INHERIT_PROPERTY(font_strong);
+            INHERIT_PROPERTY(line_space);
+            INHERIT_PROPERTY(h_margins);
+            INHERIT_PROPERTY(v_margins);
+            INHERIT_PROPERTY(h_paddings);
+            INHERIT_PROPERTY(v_paddings);
+            INHERIT_PROPERTY(bg_color);
+        }
 
         if (style.isset_font_strong && style.font_strong) {
             m_config.make_bold(current_style->font_styling);
@@ -237,14 +251,6 @@ namespace RichText {
         }
     }
 
-    void ABToWidgets::BLOCK_DOC(bool enter) {
-        if (enter) {
-            auto root = std::make_shared<RootNode>(m_ui_state);
-            auto ptr = std::static_pointer_cast<AbstractElement>(root);
-
-            push_to_tree(ptr);
-        }
-    }
     AbstractElementPtr ABToWidgets::BLOCK_UL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockUlDetail& detail) {
         if (enter) {
             auto ul_list = std::make_shared<ULWidget>(m_ui_state);
@@ -473,18 +479,25 @@ namespace RichText {
             return m_current_ptr;
         }
     }
-    std::vector<AbstractElementPtr> ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, UIState_ptr ui_state, MarkdownConfig config) {
+    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::unordered_map<AB::RootBlockPtr, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config) {
         m_ab_file = file;
         m_root_idx_start = root_idx_start;
+        m_root_idx_current = root_idx_start;
         m_root_idx_end = root_idx_end;
 
-        m_tree.clear();
+        m_root_elements = root_elements;
         m_current_ptr = nullptr;
         m_config = config;
         m_ui_state = ui_state;
+        m_safe_text = file->m_safe_txt;
 
-        // AB::parse(m_safe_text->c_str() + *start, end - *start, &m_parser);
 
-        return m_tree;
+        int idx_start = m_ab_file->m_blocks[root_idx_start]->idx_start;
+        int idx_end = m_ab_file->m_blocks[root_idx_end]->idx_end;
+
+        std::cout << "Parse " << root_idx_start << " to " << root_idx_end <<
+            " or idx: " << idx_start << " " << idx_end << std::endl;
+
+        AB::parse(m_safe_text.get(), idx_start, idx_end, &m_parser);
     }
 }

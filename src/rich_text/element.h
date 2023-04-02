@@ -10,6 +10,7 @@
 #include "ui/fonts.h"
 #include "ui/draw_commands.h"
 #include "ui/colors.h"
+#include "types.h"
 
 #include "widgets_enum.h"
 #include "rich_text_context.h"
@@ -18,8 +19,6 @@
 #include "chars/drawable_char.h"
 
 namespace RichText {
-    using SafeString = std::shared_ptr<std::string>;
-
     struct AbstractElement;
     using AbstractElementPtr = std::shared_ptr<AbstractElement>;
 
@@ -38,7 +37,7 @@ namespace RichText {
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
         AbstractElementPtr m_parent = nullptr;
-        AB::RootBlockIterator m_ref_to_root;
+        AB::RootBlockPtr m_ref_to_root;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);

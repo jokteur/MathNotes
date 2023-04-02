@@ -115,15 +115,13 @@ void MainApp::FrameUpdate() {
         m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
         m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
         m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
-        m_widget_manager->createWidget(WidgetConfig{ 0.f, 1000, true });
 
         text_set = true;
     }
 
     if (m_widget_manager != nullptr) {
         auto widget = m_widget_manager->getWidget(m_widget_id);
-        m_widget_manager->manage();
-        widget.draw();
+        widget->draw();
     }
 
     // if (m_in_text != m_prev_text) {

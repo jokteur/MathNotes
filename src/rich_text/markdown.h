@@ -26,19 +26,21 @@ namespace RichText {
     class ABToWidgets {
     private:
         AB::Parser m_parser;
-        std::vector<AbstractElementPtr> m_tree;
         MarkdownConfig m_config;
 
         SafeString m_safe_text;
         RichTextInfo* m_rt_info;
         int* m_line_offset = 0;
         int m_root_idx_start;
+        int m_root_idx_current;
         int m_root_idx_end;
         int m_text_size;
+        int m_level = -1;
 
         AbstractElementPtr m_current_ptr = nullptr;
         AbstractElementPtr m_last_text_ptr = nullptr;
         AbstractElementPtr m_last_block_ptr = nullptr;
+        std::unordered_map<AB::RootBlockPtr, AbstractElementPtr>* m_root_elements;
 
         UIState_ptr m_ui_state = nullptr;
         AB::File* m_ab_file;
@@ -54,7 +56,6 @@ namespace RichText {
         void tree_up();
         void set_infos(MarkdownConfig::type type, AbstractElementPtr ptr, bool special_style = false);
 
-        void BLOCK_DOC(bool);
         AbstractElementPtr BLOCK_QUOTE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractElementPtr BLOCK_UL(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockUlDetail&);
         AbstractElementPtr BLOCK_OL(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockOlDetail&);
@@ -80,6 +81,6 @@ namespace RichText {
     public:
         ABToWidgets();
 
-        std::vector<AbstractElementPtr> parse(AB::File* file, int root_idx_start, int root_idx_end, UIState_ptr ui_state, MarkdownConfig config = MarkdownConfig());
+        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::unordered_map<AB::RootBlockPtr, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config = MarkdownConfig());
     };
 }
