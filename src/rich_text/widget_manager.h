@@ -7,6 +7,7 @@
 #include "ui/drawable.h"
 #include "element.h"
 
+
 namespace RichText {
     typedef int WidgetId;
     struct WidgetConfig {
@@ -18,9 +19,13 @@ namespace RichText {
     class WidgetManager;
 
     struct RootCompare {
-        bool operator() (const AB::RootIterator& lhs, const AB::RootIterator& rhs) const {
+        bool operator() (const AB::RootBlockIterator& lhs, const AB::RootBlockIterator& rhs) const {
             return &lhs < &rhs;
         }
+
+        // size_t operator()(const AB::RootBlockIterator& it) const {
+        //     return (size_t)it._Ptr;
+        // }
     };
 
     class Widget: public Drawable {
@@ -38,7 +43,7 @@ namespace RichText {
         float m_current_width = 0.f;
         float m_y_scroll = 0.f;
 
-        std::unordered_map<AB::RootIterator, AbstractElement*, RootCompare> m_root_elements;
+        std::unordered_map<AB::RootBlockIterator, AbstractElement*, RootCompare> m_root_elements;
 
         void build_elements();
     public:

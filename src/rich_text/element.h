@@ -38,7 +38,7 @@ namespace RichText {
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
         AbstractElementPtr m_parent = nullptr;
-        AB::RootIterator m_ref_to_root;
+        AB::RootBlockIterator m_ref_to_root;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);

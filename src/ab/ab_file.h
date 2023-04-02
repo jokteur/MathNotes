@@ -19,7 +19,7 @@ namespace AB {
         BLOCK_TYPE type;
         int is_dirty = 0;
     };
-    typedef std::list<RootBlock>::iterator RootIterator;
+    typedef std::list<RootBlock>::iterator RootBlockIterator;
 
     struct Header {
         std::vector<AB::Boundaries> bounds;
@@ -46,8 +46,8 @@ namespace AB {
     };
 
     struct BlockBounds {
-        RootIterator start;
-        RootIterator end;
+        RootBlockIterator start;
+        RootBlockIterator end;
     };
 
 
@@ -55,9 +55,10 @@ namespace AB {
     private:
         void add_to_text(std::string& str, const std::vector<AB::Boundaries>& bounds);
         void parse(int start = 0, int end = -1);
+
     public:
-        std::list<RootBlock> m_blocks;
         std::string m_txt;
+        std::list<RootBlock> m_blocks;
         std::vector<int> m_line_begins;
         std::vector<Equation> m_equations;
         std::vector<Header> m_headers;
