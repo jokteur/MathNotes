@@ -47,7 +47,7 @@ namespace RichText {
             m_draw_list.Split(2);
             m_draw_list.SetCurrentChannel(1);
             for (auto pair : m_root_elements) {
-                pair.second->draw(m_draw_list, y_cursor, 0.f, boundaries);
+                // pair.second->draw(m_draw_list, y_cursor, 0.f, boundaries);
             }
             m_draw_list.Merge();
         }
@@ -114,6 +114,7 @@ namespace RichText {
             }
             /* Blocks to destroy before */
             else if (start > m_block_idx_start) {
+                std::cout << "Destroy " << m_block_idx_start << " to " << start << " (pre)" << std::endl;
                 for (int i = m_block_idx_start; i < start;i++) {
                     to_destroy.insert(i);
                 }
@@ -125,6 +126,7 @@ namespace RichText {
             }
             /* Blocks to destroy after */
             else if (end < m_block_idx_end) {
+                std::cout << "Destroy " << end << " to " << m_block_idx_end << std::endl;
                 for (int i = end; i < m_block_idx_end;i++) {
                     to_destroy.insert(i);
                 }

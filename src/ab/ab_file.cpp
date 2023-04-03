@@ -126,7 +126,7 @@ namespace AB {
             bounds.end.block_idx = end_idx;
         }
         while (!found) {
-            if (m_blocks[midpoint_idx]->line_end < line_end) {
+            if (m_blocks[midpoint_idx]->line_end < line_end - 1) {
                 start_idx = midpoint_idx;
                 midpoint_idx = start_idx + (end_idx - start_idx) / 2;
             }
