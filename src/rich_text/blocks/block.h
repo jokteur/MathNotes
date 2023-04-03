@@ -19,8 +19,6 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
-        bool m_widget_dirty = true;
-
         bool hk_build_delimiter_chars();
         bool hk_build_widget(float x_offset);
         bool hk_build_widget_post(float x_offset);

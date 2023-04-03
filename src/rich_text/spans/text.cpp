@@ -42,6 +42,8 @@ namespace RichText {
                 s += 1;
             }
             bool force_breakable = false;
+            if (c == '\r')
+                continue;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;
             auto char_ptr = std::make_shared<ImChar>(font_out.font_id, static_cast<ImWchar>(c), font_size, m_style.font_color, force_breakable);
@@ -76,7 +78,7 @@ namespace RichText {
     bool TextString::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         bool ret = true;
         // We do not update cursor_y_pos in text span (taken care of parent block)
-        if (isInsideRectY(m_position, boundaries)) {
+        if (isInsideRectY(m_position.y, boundaries)) {
             // Draw all backgrounds
             if (m_style.font_bg_color != Colors::transparent) {
                 auto cursor_pos = ImGui::GetCursorScreenPos();
@@ -92,7 +94,7 @@ namespace RichText {
             }
             // Draw all chars
             for (auto ptr : m_draw_chars) {
-                if (!ptr->draw(draw_list, ImVec2(x_offset, cursor_y_pos)))
+                if (!ptr->draw(draw_list, boundaries, ImVec2(x_offset, cursor_y_pos)))
                     ret = false;
             }
         }

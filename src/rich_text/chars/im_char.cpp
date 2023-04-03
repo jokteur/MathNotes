@@ -41,7 +41,7 @@ namespace RichText {
         advance = scale * glyph->AdvanceX;
     }
 
-    bool ImChar::draw(Draw::DrawList& draw_list, ImVec2 draw_offset) {
+    bool ImChar::draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset) {
         auto font = Tempo::GetImFont(m_font_id);
 
         if (font->im_font == nullptr)
@@ -51,10 +51,11 @@ namespace RichText {
         if (!is_linebreak) {
             // ImGui RenderChar takes offset into account, this is why it is substracted
             ImVec2 position = _calculated_position + cursor_pos - offset + draw_offset;
-            font->im_font->RenderChar(*draw_list,
-                m_font_size,
-                position,
-                m_color, m_char);
+            if (isInsideRectY(position.y - cursor_pos.y, boundaries))
+                font->im_font->RenderChar(*draw_list,
+                    m_font_size,
+                    position,
+                    m_color, m_char);
         }
         return true;
     }

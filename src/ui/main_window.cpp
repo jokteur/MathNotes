@@ -92,30 +92,20 @@ void MainApp::FrameUpdate() {
         if (m_ab_file != nullptr)
             delete m_ab_file;
 
-        m_ab_file = new AB::File(m_big_text, false);
+        m_ab_file = new AB::File(m_txt, false);
 
         auto t2 = std::chrono::high_resolution_clock::now();
         auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
         std::cout << ms_int.count() << "ms (parse file) ";
 
-        t1 = std::chrono::high_resolution_clock::now();
-        m_ab_file->getBlocksBoundsContaining(30, 135488);
-        t2 = std::chrono::high_resolution_clock::now();
-        auto mu_int = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-        std::cout << mu_int.count() << "mus (test)";
-        std::cout << " " << sizeof(*m_ab_file) << std::endl;
-        std::cout << std::endl;
-
         std::cout << m_ab_file->m_blocks.size() * (sizeof(AB::RootBlock) + 24) << std::endl;
 
         if (m_widget_manager != nullptr) {
-            std::cout << "Before: " << RichText::AbstractElement::count << std::endl;
             delete m_widget_manager;
-            std::cout << "After: " << RichText::AbstractElement::count << std::endl;
         }
         t1 = std::chrono::high_resolution_clock::now();
         m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
-        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, 40, true });
+        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, true });
 
         text_set = true;
     }
@@ -125,13 +115,15 @@ void MainApp::FrameUpdate() {
         widget->draw();
     }
 
-    // if (m_in_text != m_prev_text) {
-    //     m_prev_text = m_in_text;
-    //     m_rich_text.setText(m_in_text);
-    // }
+    if (m_in_text != m_prev_text) {
+        m_prev_text = m_in_text;
+        m_txt = m_in_text;
+        text_set = false;
+    }
 
     if (ImGui::Button("SetBigText")) {
         text_set = false;
+        m_txt = m_big_text;
     }
     ImGui::End();
 

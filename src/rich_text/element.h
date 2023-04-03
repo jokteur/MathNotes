@@ -41,6 +41,8 @@ namespace RichText {
         AbstractElementWeakPtr m_parent;
         AB::RootBlockWeakPtr m_ref_to_root;
 
+        bool m_widget_dirty = true;
+
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
         bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
@@ -50,7 +52,7 @@ namespace RichText {
         void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
         bool virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
         void virtual hk_draw_background(Draw::DrawList& draw_list);
-        void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list);
+        void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list, float cursor_y_pos, const Rect& boundaries);
 
         Style m_style;
         Style m_special_chars_style;

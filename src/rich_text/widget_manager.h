@@ -12,8 +12,8 @@ namespace RichText {
     typedef int WidgetId;
     struct WidgetConfig {
         float line_start;
-        int line_lookahead_window = 40;
         bool interactive = false;
+        float min_scroll_height = 10.f;
     };
 
     class WidgetManager;
@@ -21,6 +21,7 @@ namespace RichText {
     class Widget: public Drawable {
     private:
         bool m_redo_positions = false;
+        bool m_recalculate_line_height = true;
 
         WidgetConfig m_config;
         AB::File* m_file;
@@ -32,9 +33,17 @@ namespace RichText {
         float m_current_line = 0.f;
         float m_current_width = 0.f;
         float m_y_scroll = 0.f;
+        float m_scale = 1.f;
 
-        std::unordered_map<AB::RootBlockPtr, AbstractElementPtr> m_root_elements;
+        int m_line_lookahead_window = 2000;
 
+        float m_display_height = 0.f;
+        float m_approximate_min_height = 0.f;
+        float m_line_height = 10.f;
+
+        std::map<int, AbstractElementPtr> m_root_elements;
+
+        void calculate_heights();
         void manage_elements();
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}

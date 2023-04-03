@@ -42,6 +42,7 @@ namespace RichText {
         m_parser.text = [&](AB::TEXT_TYPE t_type, const std::vector<AB::Boundaries>& bounds) {
             return this->text(t_type, bounds);
         };
+        m_root_ptr = std::make_shared<RootNode>(m_ui_state);
     }
     ABToWidgets::ABToWidgets() {
         configure_parser();
@@ -62,7 +63,9 @@ namespace RichText {
 
             auto ptr = std::static_pointer_cast<AbstractElement>(text);
 
+            m_level++;
             push_to_tree(ptr);
+            m_level--;
             tree_up();
             m_last_text_ptr = ptr;
         }
@@ -70,6 +73,15 @@ namespace RichText {
     }
     int ABToWidgets::block(AB::BLOCK_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::BlockDetailPtr detail) {
         AbstractElementPtr ptr = nullptr;
+        if (enter) {
+            m_level++;
+        }
+        else {
+            m_level--;
+        }
+        if (m_level == 1) {
+            m_current_ptr = m_root_ptr;
+        }
         switch (type) {
         case AB::BLOCK_DOC:
             break;
@@ -106,12 +118,6 @@ namespace RichText {
         default:
             break;
         }
-        if (enter) {
-            m_level++;
-        }
-        else {
-            m_level--;
-        }
         if (ptr != nullptr) {
             if (enter) {
                 push_to_tree(ptr);
@@ -125,6 +131,12 @@ namespace RichText {
     }
     int ABToWidgets::span(AB::SPAN_TYPE type, bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::SpanDetailPtr detail) {
         AbstractElementPtr ptr = nullptr;
+        if (enter) {
+            m_level++;
+        }
+        else {
+            m_level--;
+        }
         switch (type) {
         case AB::SPAN_EM:
             ptr = SPAN_EM(enter, bounds, attributes);
@@ -178,8 +190,7 @@ namespace RichText {
         // m_tree.push_back(node);
         if (m_level == 1) {
             m_current_ptr = nullptr;
-            auto block_ptr = m_ab_file->m_blocks[m_root_idx_current];
-            (*m_root_elements)[block_ptr] = node;
+            (*m_root_elements)[m_root_idx_current] = node;
             m_root_idx_current++;
         }
         // node->m_txt_offset = m_text_start_idx;
@@ -479,7 +490,9 @@ namespace RichText {
             return m_current_ptr;
         }
     }
-    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::unordered_map<AB::RootBlockPtr, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config) {
+    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config) {
+        if (root_idx_end < 0 || root_idx_start < 0)
+            return;
         m_ab_file = file;
         m_root_idx_start = root_idx_start;
         m_root_idx_current = root_idx_start;

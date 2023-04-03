@@ -19,6 +19,6 @@ inline bool isInsideRect(const ImVec2& pos, const Rect& rect) {
 inline bool isInsideRectX(const ImVec2& pos, const Rect& rect) {
     return pos.x >= rect.x && pos.x <= rect.x + rect.w;
 }
-inline bool isInsideRectY(const ImVec2& pos, const Rect& rect) {
-    return pos.y >= rect.y && pos.y <= rect.y + rect.h;
+inline bool isInsideRectY(const float pos_y, const Rect& rect) {
+    return pos_y >= rect.y && pos_y <= rect.y + rect.h;
 }

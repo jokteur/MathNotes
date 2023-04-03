@@ -1,13 +1,17 @@
 #include "widget_manager.h"
 
+#include <cmath>
+
+#include "rich_text/chars/im_char.h"
+
 using namespace AB;
 
 namespace RichText {
     void Widget::draw() {
-        manage_elements();
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
+        ImGui::Dummy(ImVec2(0, 50));
         float width = ImGui::GetWindowContentRegionWidth();
         ImVec2 vMin = ImGui::GetWindowContentRegionMin();
         ImVec2 vMax = ImGui::GetWindowContentRegionMax();
@@ -17,6 +21,20 @@ namespace RichText {
         vMax.x += ImGui::GetWindowPos().x;
         vMax.y += ImGui::GetWindowPos().y;
         auto mouse_pos = ImGui::GetMousePos();
+
+        /* Once we know the height of the page,
+         * we can estimate how many lines we should
+         * look ahead for block element construction*/
+        m_display_height = vMax.y - vMin.y;
+        calculate_heights();
+        manage_elements();
+
+        for (auto pair : m_root_elements) {
+            if (m_current_width != width || pair.second->m_widget_dirty) {
+                m_current_width = width;
+                pair.second->setWidth(width);
+            }
+        }
 
         if (!m_root_elements.empty()) {
             Rect boundaries;
@@ -34,7 +52,8 @@ namespace RichText {
             m_draw_list.Merge();
         }
         if (isInsideRect(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y })) {
-            m_y_scroll += ImGui::GetIO().MouseWheel * 40;
+            m_y_scroll += ImGui::GetIO().MouseWheel * 70;
+            m_y_scroll = roundf(m_y_scroll);
             if (m_y_scroll > 0.f)
                 m_y_scroll = 0.f;
         }
@@ -42,17 +61,28 @@ namespace RichText {
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
         ImGui::PopStyleColor();
-
-        if (m_current_width != width) {
-            m_current_width = width;
-            for (auto pair : m_root_elements) {
-                pair.second->setWidth(width);
+    }
+    void Widget::calculate_heights() {
+        if (m_recalculate_line_height) {
+            using namespace Fonts;
+            FontRequestInfo font_request;
+            font_request.size_wish = 18.f;
+            FontInfoOut font_out;
+            m_ui_state->font_manager.requestFont(font_request, font_out);
+            auto font = Tempo::GetImFont(font_out.font_id);
+            if (font->im_font != nullptr) {
+                m_recalculate_line_height = false;
+                m_line_height = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
             }
         }
+        float lines_per_display = m_display_height / m_line_height;
+        float num_pages_for_min_scroll = m_display_height / m_config.min_scroll_height;
+        m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
+        // std::cout << m_line_lookahead_window << std::endl;
     }
 
     void Widget::manage_elements() {
-        int half_window = m_config.line_lookahead_window / 2;
+        int half_window = m_line_lookahead_window / 2;
         int start_line = m_current_line - half_window;
         int end_line = m_current_line + half_window;
         auto bounds = m_file->getBlocksBoundsContaining(start_line, end_line);
@@ -60,10 +90,10 @@ namespace RichText {
         int start = bounds.start.block_idx;
         int end = bounds.end.block_idx;
 
-        std::unordered_set<AB::RootBlockPtr> to_destroy;
+        std::unordered_set<int> to_destroy;
 
         /* Widget was just created or jumped to another location */
-        if (m_block_idx_end == -1 || start >= m_block_idx_end) {
+        if (m_block_idx_start >= 0 && (m_block_idx_end == -1 || start >= m_block_idx_end)) {
             if (start >= m_block_idx_end) {
                 m_root_elements.clear();
             }
@@ -85,7 +115,7 @@ namespace RichText {
             /* Blocks to destroy before */
             else if (start > m_block_idx_start) {
                 for (int i = m_block_idx_start; i < start;i++) {
-                    to_destroy.insert(m_file->m_blocks[i]);
+                    to_destroy.insert(i);
                 }
             }
             /* Blocks to build after */
@@ -96,12 +126,12 @@ namespace RichText {
             /* Blocks to destroy after */
             else if (end < m_block_idx_end) {
                 for (int i = end; i < m_block_idx_end;i++) {
-                    to_destroy.insert(m_file->m_blocks[i]);
+                    to_destroy.insert(i);
                 }
             }
 
-            for (auto ptr : to_destroy) {
-                m_root_elements.erase(ptr);
+            for (auto idx : to_destroy) {
+                m_root_elements.erase(idx);
             }
 
             m_block_idx_start = start;

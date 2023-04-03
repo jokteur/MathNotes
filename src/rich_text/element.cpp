@@ -35,9 +35,9 @@ namespace RichText {
         bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
-        if (isInsideRectY(m_position, boundaries)) {
+        if (isInsideRectY(m_position.y, boundaries)) {
             for (auto ptr : m_draw_chars) {
-                if (!ptr->draw(draw_list, m_position + padding_before))
+                if (!ptr->draw(draw_list, boundaries, m_position + padding_before))
                     ret = false;
             }
         }
@@ -50,8 +50,8 @@ namespace RichText {
     void AbstractElement::hk_draw_background(Draw::DrawList& draw_list) {
 
     }
-    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList& draw_list) {
-        if (m_show_boundaries) {
+    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList& draw_list, float cursor_y_pos, const Rect& boundaries) {
+        if (m_show_boundaries && isInsideRectY(cursor_y_pos, boundaries)) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             ImVec2 p_min = cursor_pos + m_position;
             ImVec2 p_max = cursor_pos + m_position + m_dimensions;
@@ -66,7 +66,7 @@ namespace RichText {
             ret = false;
         hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
         hk_draw_background(draw_list);
-        hk_draw_show_boundaries(draw_list);
+        hk_draw_show_boundaries(draw_list, cursor_y_pos, boundaries);
         return ret;
     }
     void AbstractElement::setWidth(float width) {

@@ -66,14 +66,14 @@ namespace AB {
         if (end < 0 || end > m_safe_txt->size()) {
             end = m_safe_txt->size();
         }
-        if (start > end)
+        if (start >= end)
             return;
 
         AB::parse(m_safe_txt.get(), start, end, &parser);
     }
 
     BlockBounds File::getBlocksBoundsContaining(int line_start, int line_end) {
-        if (line_start > line_end) {
+        if (line_start > line_end || m_blocks.empty()) {
             return BlockBounds{ };
         }
         BlockBounds bounds;
