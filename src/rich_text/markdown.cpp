@@ -453,7 +453,17 @@ namespace RichText {
         }
     }
     AbstractElementPtr ABToWidgets::SPAN_LATEXMATH(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
-        return nullptr;
+        if (enter) {
+            auto p = std::make_shared<LatexWidget>(m_ui_state);
+            p->m_text_boundaries = bounds;
+            p->m_attributes = attributes;
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(MarkdownConfig::LATEX, std::static_pointer_cast<AbstractElement>(p));
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
     }
     // AbstractElementPtr MarkdownToWidgets::SPAN_WIKILINK(const MD_SPAN_WIKILINK_DETAIL*, bool) {
     //     return nullptr;

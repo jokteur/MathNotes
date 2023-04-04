@@ -74,6 +74,9 @@ namespace RichText {
         // highlight
         styles[HIGHLIGHT].set_font_bg_color(Colors::yellow);
 
+        // highlight
+        // styles[P].set_line_space(1.4f);
+
         // markdown characters (non-visible usually)
         styles[SPECIAL].set_font_color(Colors::gray);
     }
