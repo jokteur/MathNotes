@@ -51,11 +51,10 @@ namespace RichText {
         if (!is_linebreak) {
             // ImGui RenderChar takes offset into account, this is why it is substracted
             ImVec2 position = _calculated_position + cursor_pos - offset + draw_offset;
-            if (isInsideRectY(position.y - cursor_pos.y, boundaries))
-                font->im_font->RenderChar(*draw_list,
-                    m_font_size,
-                    position,
-                    m_color, m_char);
+            font->im_font->RenderChar(*draw_list,
+                m_font_size,
+                position,
+                m_color, m_char);
         }
         return true;
     }

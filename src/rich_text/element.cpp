@@ -30,6 +30,7 @@ namespace RichText {
         m_dimensions.y = cursor_y_pos - last_y_pos;
 
         cursor_y_pos += m_style.v_margins.y;
+        m_is_dimension_set = true;
     }
     bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         bool ret = true;
@@ -51,7 +52,7 @@ namespace RichText {
 
     }
     void AbstractElement::hk_draw_show_boundaries(Draw::DrawList& draw_list, float cursor_y_pos, const Rect& boundaries) {
-        if (m_show_boundaries && isInsideRectY(cursor_y_pos, boundaries)) {
+        if (m_show_boundaries && isInsideRectY(m_position.y, boundaries) && isInsideRectY(m_position.y + m_dimensions.y + m_dimensions.y, boundaries)) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             ImVec2 p_min = cursor_pos + m_position;
             ImVec2 p_max = cursor_pos + m_position + m_dimensions;
@@ -71,6 +72,7 @@ namespace RichText {
     }
     void AbstractElement::setWidth(float width) {
         m_window_width = width;
+        m_is_dimension_set = false;
         for (auto ptr : m_childrens) {
             ptr->setWidth(width);
         }

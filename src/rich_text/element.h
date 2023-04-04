@@ -70,6 +70,7 @@ namespace RichText {
         // Widget position and size
         ImVec2 m_position;
         ImVec2 m_dimensions;
+        bool m_is_dimension_set = false;
         float m_scale = 1.f;
         float m_window_width = 1.f;
 

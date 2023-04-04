@@ -22,6 +22,9 @@ namespace RichText {
         vMax.y += ImGui::GetWindowPos().y;
         auto mouse_pos = ImGui::GetMousePos();
 
+        vMin.y += 100;
+        vMax.y -= 100;
+
         /* Once we know the height of the page,
          * we can estimate how many lines we should
          * look ahead for block element construction*/
@@ -43,16 +46,22 @@ namespace RichText {
             boundaries.w = width;
             m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
 
+            m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
+
             // Background, ForeGround
             m_draw_list.Split(2);
             m_draw_list.SetCurrentChannel(1);
             for (auto pair : m_root_elements) {
-                // pair.second->draw(m_draw_list, y_cursor, 0.f, boundaries);
+                pair.second->draw(m_draw_list, y_cursor, 0.f, boundaries);
             }
             m_draw_list.Merge();
         }
         if (isInsideRect(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y })) {
-            m_y_scroll += ImGui::GetIO().MouseWheel * 70;
+            if (ImGui::IsKeyDown(ImGuiKey_ModShift)) {
+                m_y_scroll += ImGui::GetIO().MouseWheel * 70;
+            }
+            else
+                m_y_scroll += ImGui::GetIO().MouseWheel * 20;
             m_y_scroll = roundf(m_y_scroll);
             if (m_y_scroll > 0.f)
                 m_y_scroll = 0.f;
