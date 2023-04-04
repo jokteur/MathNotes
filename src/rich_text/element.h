@@ -57,6 +57,9 @@ namespace RichText {
         bool virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
         void virtual hk_draw_background(Draw::DrawList& draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list, float cursor_y_pos, const Rect& boundaries);
+        /* Debug prints object info in a special window created by parent */
+        void virtual hk_debug(const std::string& prefix = "");
+        void virtual hk_debug_attributes();
 
         Style m_style;
         Style m_special_chars_style;

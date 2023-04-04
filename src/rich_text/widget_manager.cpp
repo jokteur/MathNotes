@@ -70,6 +70,34 @@ namespace RichText {
         ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
         ImGui::PopStyleColor();
+
+        debug_window();
+    }
+
+    void Widget::debug_window() {
+        ImGui::Begin("Debug window");
+        if (ImGui::CollapsingHeader("Currently displayed")) {
+            for (auto pair : m_root_elements) {
+                for (auto pair : m_root_elements) {
+                    if (pair.second->m_display_status == 2)
+                        pair.second->hk_debug(std::to_string(pair.first));
+                }
+            }
+        }
+        if (ImGui::CollapsingHeader("Not displayed but waiting to be built")) {
+            for (auto pair : m_root_elements) {
+                for (auto pair : m_root_elements) {
+                    if (pair.second->m_display_status == 1)
+                        pair.second->hk_debug(std::to_string(pair.first));
+                }
+            }
+        }
+        if (ImGui::CollapsingHeader("Parsed blocks")) {
+            for (auto pair : m_root_elements) {
+                pair.second->hk_debug(std::to_string(pair.first));
+            }
+        }
+        ImGui::End();
     }
     void Widget::calculate_heights() {
         if (m_recalculate_line_height) {

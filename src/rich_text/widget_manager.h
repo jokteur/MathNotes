@@ -45,6 +45,7 @@ namespace RichText {
 
         void calculate_heights();
         void manage_elements();
+        void debug_window();
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}
         Widget(const Widget&) = delete;

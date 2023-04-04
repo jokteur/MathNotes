@@ -50,4 +50,6 @@ namespace RichText {
             draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
         }
     }
+    void AbstractSpan::hk_debug_attributes() {
+    }
 }

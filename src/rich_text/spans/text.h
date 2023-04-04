@@ -13,5 +13,7 @@ namespace RichText {
         inline float hk_set_position(float& cursor_y_pos, float& x_offset) override;
         inline void hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) override;
         inline bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
+
+        void hk_debug(const std::string& prefix = "") override;
     };
 }

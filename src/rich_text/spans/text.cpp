@@ -67,4 +67,12 @@ namespace RichText {
         }
         return ret;
     }
+    void TextString::hk_debug(const std::string&) {
+        if (ImGui::TreeNode((std::string("T: ") + type_to_name(m_type) + "##" + std::to_string(m_id)).c_str())) {
+            std::string str;
+            AB::str_from_text_boundaries(*m_safe_string, str, m_text_boundaries);
+            ImGui::TextWrapped("%s", str.c_str());
+            ImGui::TreePop();
+        }
+    }
 }
