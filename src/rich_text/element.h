@@ -47,6 +47,8 @@ namespace RichText {
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
         bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
+        bool is_in_boundaries(const Rect& boundaries);
+
         // Draw hooks
         float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
         void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);

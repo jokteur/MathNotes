@@ -79,7 +79,7 @@ namespace RichText {
         else {
             m_level--;
         }
-        if (m_level == 1) {
+        if (m_level == 1 && enter) {
             m_current_ptr = m_root_ptr;
         }
         switch (type) {

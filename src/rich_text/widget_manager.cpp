@@ -42,6 +42,7 @@ namespace RichText {
         if (!m_root_elements.empty()) {
             Rect boundaries;
             float y_cursor = m_y_scroll;
+            boundaries.y = 100.f;
             boundaries.h = vMax.y - vMin.y;
             boundaries.w = width;
             m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
