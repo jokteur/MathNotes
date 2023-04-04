@@ -96,6 +96,9 @@ namespace RichText {
         int end_line = m_current_line + half_window;
         auto bounds = m_file->getBlocksBoundsContaining(start_line, end_line);
 
+        if (bounds.start.block_idx == -1)
+            return;
+
         int start = bounds.start.block_idx;
         int end = bounds.end.block_idx;
 

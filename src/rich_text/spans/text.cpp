@@ -78,25 +78,23 @@ namespace RichText {
     bool TextString::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         bool ret = true;
         // We do not update cursor_y_pos in text span (taken care of parent block)
-        if (isInsideRectY(m_position.y, boundaries)) {
             // Draw all backgrounds
-            if (m_style.font_bg_color != Colors::transparent) {
-                auto cursor_pos = ImGui::GetCursorScreenPos();
-                int i = 0;
-                for (auto ptr : m_draw_chars) {
-                    ImVec2 p_min = cursor_pos + ptr->_calculated_position - ptr->offset;
-                    p_min.x += x_offset;
-                    p_min.y += cursor_y_pos;
-                    ImVec2 p_max = p_min + ImVec2(ptr->advance, ptr->ascent - ptr->descent);
-                    draw_list->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
-                    i++;
-                }
-            }
-            // Draw all chars
+        if (m_style.font_bg_color != Colors::transparent) {
+            auto cursor_pos = ImGui::GetCursorScreenPos();
+            int i = 0;
             for (auto ptr : m_draw_chars) {
-                if (!ptr->draw(draw_list, boundaries, ImVec2(x_offset, cursor_y_pos)))
-                    ret = false;
+                ImVec2 p_min = cursor_pos + ptr->_calculated_position - ptr->offset;
+                p_min.x += x_offset;
+                p_min.y += cursor_y_pos;
+                ImVec2 p_max = p_min + ImVec2(ptr->advance, ptr->ascent - ptr->descent);
+                draw_list->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
+                i++;
             }
+        }
+        // Draw all chars
+        for (auto ptr : m_draw_chars) {
+            if (!ptr->draw(draw_list, boundaries, ImVec2(x_offset, cursor_y_pos)))
+                ret = false;
         }
         return ret;
     }

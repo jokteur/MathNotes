@@ -36,11 +36,9 @@ namespace RichText {
         bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
-        if (isInsideRectY(m_position.y, boundaries)) {
-            for (auto ptr : m_draw_chars) {
-                if (!ptr->draw(draw_list, boundaries, m_position + padding_before))
-                    ret = false;
-            }
+        for (auto ptr : m_draw_chars) {
+            if (!ptr->draw(draw_list, boundaries, m_position + padding_before))
+                ret = false;
         }
         for (auto& ptr : m_childrens) {
             if (!ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries))

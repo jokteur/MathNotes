@@ -9,7 +9,7 @@ namespace RichText {
      * ===== */
     bool AbstractSpan::hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars) {
         bool success = true;
-        if (m_is_selected && m_type != T_BLOCK_QUOTE) {
+        if (m_is_selected) {
             auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.front().pre, m_text_boundaries.front().beg, m_special_chars_style, true);
             if (!res) {
                 success = false;

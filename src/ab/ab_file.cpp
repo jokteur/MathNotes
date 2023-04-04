@@ -30,7 +30,7 @@ namespace AB {
                 m_blocks.push_back(std::make_shared<RootBlock>(RootBlock{
                     bounds.front().line_number,
                     bounds.front().pre,
-                    bounds.back().line_number,
+                    bounds.back().line_number + 1,
                     bounds.back().post,
                     b_type,
                     0 }));
@@ -73,7 +73,7 @@ namespace AB {
     }
 
     BlockBounds File::getBlocksBoundsContaining(int line_start, int line_end) {
-        if (line_start > line_end || m_blocks.empty()) {
+        if (line_start > line_end || m_blocks.empty() || line_start == 0 && line_start == line_end) {
             return BlockBounds{ };
         }
         BlockBounds bounds;
@@ -126,7 +126,7 @@ namespace AB {
             bounds.end.block_idx = end_idx;
         }
         while (!found) {
-            if (m_blocks[midpoint_idx]->line_end < line_end - 1) {
+            if (m_blocks[midpoint_idx]->line_end < line_end) {
                 start_idx = midpoint_idx;
                 midpoint_idx = start_idx + (end_idx - start_idx) / 2;
             }
