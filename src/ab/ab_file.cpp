@@ -2,6 +2,17 @@
 #include "utils.h"
 
 namespace AB {
+    void str_from_text_boundaries(const std::string& raw_text, std::string& str, const std::vector<AB::Boundaries>& text_boundaries) {
+        int j = 0;
+        for (auto& bound : text_boundaries) {
+            if (j > 0)
+                str += '\n';
+            for (int i = bound.beg;i < bound.end;i++) {
+                str += raw_text[i];
+            }
+            j++;
+        }
+    }
     void File::add_to_text(std::string& str, const std::vector<AB::Boundaries>& bounds) {
         auto& ref = *m_safe_txt;
         for (auto& bound : bounds) {

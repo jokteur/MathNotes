@@ -6,57 +6,55 @@ namespace RichText {
         case T_ROOT:
             return "T_ROOT";
         case T_BLOCK_P:
-            return "T_BLOCK_P";
+            return "paragraph";
         case T_BLOCK_CODE:
-            return "T_BLOCK_CODE";
+            return "code";
         case T_BLOCK_QUOTE:
-            return "T_BLOCK_QUOTE";
-        case T_BLOCK_HTML:
-            return "T_BLOCK_HTML";
+            return "quote";
+        case T_BLOCK_HIDDENSPACE:
+            return "hidden";
         case T_BLOCK_TABLE:
-            return "T_BLOCK_TABLE";
+            return "table";
         case T_BLOCK_THEAD:
-            return "T_BLOCK_THEAD";
+            return "thead";
         case T_BLOCK_TBODY:
-            return "T_BLOCK_TBODY";
+            return "tbody";
         case T_BLOCK_TR:
-            return "T_BLOCK_TR";
+            return "tr";
         case T_BLOCK_TH:
-            return "T_BLOCK_TH";
+            return "th";
         case T_BLOCK_TD:
-            return "T_BLOCK_TD";
+            return "td";
         case T_BLOCK_UL:
-            return "T_BLOCK_UL";
+            return "ul";
         case T_BLOCK_LI:
-            return "T_BLOCK_LI";
+            return "li";
         case T_BLOCK_OL:
-            return "T_BLOCK_OL";
+            return "ol";
         case T_BLOCK_HR:
-            return "T_BLOCK_HR";
+            return "hr";
         case T_BLOCK_H:
-            return "T_BLOCK_H";
+            return "h";
         case T_SPAN_EM:
-            return "T_SPAN_EM";
+            return "em";
         case T_SPAN_STRONG:
-            return "T_SPAN_STRONG";
+            return "strong";
         case T_SPAN_A:
-            return "T_SPAN_A";
+            return "a";
         case T_SPAN_WIKILINK:
-            return "T_SPAN_WIKILINK";
+            return "wikilink";
         case T_SPAN_DEL:
-            return "T_SPAN_DEL";
+            return "del";
         case T_SPAN_CODE:
-            return "T_SPAN_CODE";
+            return "code";
         case T_SPAN_U:
-            return "T_SPAN_U";
+            return "underline";
         case T_SPAN_LATEX:
-            return "T_SPAN_LATEX";
+            return "latex";
         case T_SPAN_DISPLAY:
             return "T_SPAN_DISPLAY";
         case T_TEXT:
-            return "T_TEXT";
-        case T_INTERTEXT:
-            return "T_INTERTEXT";
+            return "text";
         }
         return "NOT VALID";
     }

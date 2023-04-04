@@ -1,7 +1,12 @@
 #include "element.h"
+
+#include <sstream>
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
+
 #include "rich_text/chars/im_char.h"
+#include "ab/ab_file.h"
 
 namespace RichText {
     // AbstractElement
@@ -12,7 +17,7 @@ namespace RichText {
         count--;
     }
     bool AbstractElement::is_in_boundaries(const Rect& boundaries) {
-        if (m_is_dimension_set) {
+        if (m_is_dimension_set && !m_widget_dirty) {
             return isInsideRectY(m_position.y, boundaries) || isInsideRectY(m_position.y + m_dimensions.y, boundaries);
         }
         return true;
@@ -64,11 +69,70 @@ namespace RichText {
         }
     }
 
+    void AbstractElement::hk_debug_attributes() {
+        ImGui::Checkbox("Is dirty", &m_widget_dirty);
+        ImGui::Checkbox("Is selected", &m_is_selected);
+        ImGui::Checkbox("Show boundaries", &m_show_boundaries);
+        ImGui::Text("%s %s", "Display status: ", (m_display_status == 0) ? "hidden" : ((m_display_status == 1) ? "hidden but dirty" : "visible"));
+        std::stringstream pos, dimension;
+        pos << "Position: x=" << m_position.x << " y=" << m_position.y;
+        dimension << "Dimension: x=" << m_dimensions.x << " y=" << m_dimensions.y;
+        ImGui::TextUnformatted(pos.str().c_str());
+        ImGui::TextUnformatted(dimension.str().c_str());
+    }
+    void AbstractElement::hk_debug(const std::string& prefix) {
+        std::string cat = "B: ";
+        if (m_category == C_SPAN)
+            cat = "S: ";
+        else if (m_category == C_TEXT)
+            cat = "T: ";
+
+        if (ImGui::TreeNode((prefix + cat + type_to_name(m_type) + "##" + std::to_string(m_id)).c_str())) {
+            if (ImGui::TreeNode("Attributes")) {
+                hk_debug_attributes();
+                ImGui::TreePop();
+            }
+            if (!m_childrens.empty())
+                if (ImGui::TreeNode("Children")) {
+                    for (auto ptr : m_childrens) {
+                        ptr->hk_debug("");
+                    }
+                    ImGui::TreePop();
+                }
+            if (ImGui::TreeNode("Content")) {
+                std::string str;
+                AB::str_from_text_boundaries(*m_safe_string, str, m_text_boundaries);
+                using namespace Fonts;
+                FontRequestInfo font_request;
+                font_request.font_styling.family = F_MONOSPACE;
+                FontInfoOut font_out;
+                m_ui_state->font_manager.requestFont(font_request, font_out);
+                Tempo::PushFont(font_out.font_id);
+                ImGui::TextWrapped("%s", str.c_str());
+                Tempo::PopFont();
+                ImGui::TreePop();
+            }
+            ImGui::TreePop();
+        }
+    }
+
     bool AbstractElement::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         bool ret = true;
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
-        if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries))
-            ret = false;
+        if (is_in_boundaries(boundaries)) {
+            if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
+                m_widget_dirty = true;
+                ret = false;
+                m_display_status = 1;
+            }
+            else {
+                m_display_status = 2;
+            }
+        }
+        else {
+            m_display_status = 0;
+            cursor_y_pos += m_dimensions.y;
+        }
         hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
         hk_draw_background(draw_list);
         hk_draw_show_boundaries(draw_list, cursor_y_pos, boundaries);
@@ -76,6 +140,7 @@ namespace RichText {
     }
     void AbstractElement::setWidth(float width) {
         m_window_width = width;
+        m_widget_dirty = true;
         m_is_dimension_set = false;
         for (auto ptr : m_childrens) {
             ptr->setWidth(width);

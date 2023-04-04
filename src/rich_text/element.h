@@ -28,12 +28,13 @@ namespace RichText {
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<DrawableCharPtr> m_draw_delimiter_chars;
         std::vector<WrapCharPtr> m_wrap_chars;
+        int m_id = 0;
 
     public:
         Type m_type;
         Category m_category;
         static int count;
-        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) { count++; }
+        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) { count++; m_id = count; }
         ~AbstractElement();
 
         // Informations about the tree structure
@@ -42,6 +43,7 @@ namespace RichText {
         AB::RootBlockWeakPtr m_ref_to_root;
 
         bool m_widget_dirty = true;
+        int m_display_status = 0;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);

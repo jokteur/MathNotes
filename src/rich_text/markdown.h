@@ -15,8 +15,6 @@
 
 namespace RichText {
     // Inspired from https://github.com/mekhontsev/imgui_md
-
-    void str_from_text_boundaries(const std::string& raw_text, std::string& str, const std::vector<AB::Boundaries>& text_boundaries);
     struct RootBlock {
         int line_start;
         int line_end;

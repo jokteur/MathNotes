@@ -34,8 +34,6 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
-        bool m_widget_dirty = true;
-
         bool hk_build_widget(float x_offset);
         bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
     };

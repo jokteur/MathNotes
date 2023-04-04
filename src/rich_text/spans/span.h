@@ -14,7 +14,6 @@
 
 namespace RichText {
     struct AbstractSpan: public AbstractElement {
-        std::string m_processed_text;
         AbstractSpan(UIState_ptr ui_state): AbstractElement(ui_state) {
             m_category = C_SPAN;
         }

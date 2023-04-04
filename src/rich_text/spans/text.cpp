@@ -12,45 +12,14 @@ namespace RichText {
         m_draw_chars.clear();
         bool success = true;
 
-        using namespace Fonts;
-        FontRequestInfo font_request;
-        font_request.font_styling = m_style.font_styling;
-        font_request.size_wish = m_style.font_size;
-
-        FontInfoOut font_out;
-        m_ui_state->font_manager.requestFont(font_request, font_out);
-        auto font = Tempo::GetImFont(font_out.font_id);
-
-        if (m_safe_string == nullptr || font->im_font == nullptr) {
-            return false;
-        }
-
         success = hk_add_pre_chars(wrap_chars);
 
-        float font_size = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
-        int i = 0;
-        char* s = (char*)m_processed_text.c_str();
-        const char* end = s + m_processed_text.size();
-        while (s < end) {
-            unsigned int c = (unsigned int)*s;
-            if (c >= 0x80) {
-                s += ImTextCharFromUtf8(&c, s, end);
-                if (c == 0) // Malformed UTF-8?
-                    break;
-            }
-            else {
-                s += 1;
-            }
-            bool force_breakable = false;
-            if (c == '\r')
-                continue;
-            if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
-                force_breakable = true;
-            auto char_ptr = std::make_shared<ImChar>(font_out.font_id, static_cast<ImWchar>(c), font_size, m_style.font_color, force_breakable);
-            m_draw_chars.push_back(std::static_pointer_cast<DrawableChar>(char_ptr));
-            wrap_chars.push_back(std::static_pointer_cast<WrapCharacter>(char_ptr));
-        }
-        success = hk_add_post_chars(wrap_chars);
+        if (!Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.front().beg, m_text_boundaries.front().end, m_style))
+            success = false;
+
+
+        if (!hk_add_post_chars(wrap_chars))
+            success = false;
         return success;
     }
     float TextString::hk_set_position(float& cursor_y_pos, float& x_offset) {

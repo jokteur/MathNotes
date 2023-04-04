@@ -11,7 +11,6 @@ namespace RichText {
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
-        ImGui::Dummy(ImVec2(0, 50));
         float width = ImGui::GetWindowContentRegionWidth();
         ImVec2 vMin = ImGui::GetWindowContentRegionMin();
         ImVec2 vMax = ImGui::GetWindowContentRegionMax();
@@ -22,8 +21,8 @@ namespace RichText {
         vMax.y += ImGui::GetWindowPos().y;
         auto mouse_pos = ImGui::GetMousePos();
 
-        vMin.y += 100;
-        vMax.y -= 100;
+        vMin.y += 300;
+        vMax.y -= 300;
 
         /* Once we know the height of the page,
          * we can estimate how many lines we should
@@ -42,7 +41,7 @@ namespace RichText {
         if (!m_root_elements.empty()) {
             Rect boundaries;
             float y_cursor = m_y_scroll;
-            boundaries.y = 100.f;
+            boundaries.y = 300.f;
             boundaries.h = vMax.y - vMin.y;
             boundaries.w = width;
             m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());

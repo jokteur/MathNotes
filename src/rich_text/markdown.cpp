@@ -14,18 +14,6 @@
 #include "spans/special_spans.h"
 
 namespace RichText {
-    void str_from_text_boundaries(const std::string& raw_text, std::string& str, const std::vector<AB::Boundaries>& text_boundaries) {
-        int j = 0;
-        for (auto& bound : text_boundaries) {
-            if (j > 0)
-                str += '\n';
-            for (int i = bound.beg;i < bound.end;i++) {
-                str += raw_text[i];
-            }
-            j++;
-        }
-    }
-
     void ABToWidgets::configure_parser() {
         m_parser.enter_block = [&](AB::BLOCK_TYPE b_type, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::BlockDetailPtr detail) -> bool {
             return this->block(b_type, true, bounds, attributes, detail);
@@ -57,7 +45,6 @@ namespace RichText {
             using namespace Fonts;
             auto text = std::make_shared<TextString>(m_ui_state);
             text->m_text_boundaries = bounds;
-            str_from_text_boundaries(*m_safe_text, text->m_processed_text, bounds);
 
             set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(text));
 
