@@ -51,14 +51,6 @@ namespace RichText {
         }
     }
     void AbstractSpan::hk_debug_attributes() {
-        ImGui::Checkbox("Is dirty", &m_widget_dirty);
-        ImGui::Checkbox("Is selected", &m_is_selected);
-        ImGui::Checkbox("Show boundaries", &m_show_boundaries);
-        ImGui::Text("%s %s", "Display status: ", (m_display_status == 0) ? "hidden" : ((m_display_status == 1) ? "hidden but dirty" : "visible"));
-        std::stringstream pos, dimension;
-        pos << "Position: x=" << m_position.x << " y=" << m_position.y;
-        dimension << "Dimension: x=" << m_dimensions.x << " y=" << m_dimensions.y;
-        ImGui::TextUnformatted(pos.str().c_str());
-        ImGui::TextUnformatted(dimension.str().c_str());
+        AbstractElement::hk_debug_attributes();
     }
 }

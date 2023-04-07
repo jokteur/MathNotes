@@ -35,6 +35,8 @@ namespace RichText {
         float m_y_scroll = 0.f;
         float m_scale = 1.f;
 
+        AbstractElementPtr m_top_displayed_ptr = nullptr;
+
         int m_line_lookahead_window = 2000;
 
         float m_display_height = 0.f;

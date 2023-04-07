@@ -31,6 +31,7 @@ namespace RichText {
         calculate_heights();
         manage_elements();
 
+
         if (m_current_width != width) {
             for (auto pair : m_root_elements) {
                 m_current_width = width;
@@ -52,8 +53,13 @@ namespace RichText {
             // Background, ForeGround
             m_draw_list.Split(2);
             m_draw_list.SetCurrentChannel(1);
+            bool found_top = false;
             for (auto pair : m_root_elements) {
                 pair.second->draw(m_draw_list, y_cursor, 0.f, boundaries);
+                if (!found_top && pair.second->m_is_visible) {
+                    found_top = true;
+                    m_top_displayed_ptr = pair.second;
+                }
             }
             m_draw_list.Merge();
         }
@@ -82,6 +88,11 @@ namespace RichText {
                 pair.second->hk_debug(std::to_string(pair.first));
             }
         }
+        if (ImGui::CollapsingHeader("Top displayed block")) {
+            if (m_top_displayed_ptr != nullptr) {
+                m_top_displayed_ptr->hk_debug();
+            }
+        }
         ImGui::End();
     }
     void Widget::calculate_heights() {
@@ -98,9 +109,8 @@ namespace RichText {
             }
         }
         float lines_per_display = m_display_height / m_line_height;
-        float num_pages_for_min_scroll = m_display_height / m_config.min_scroll_height;
+        float num_pages_for_min_scroll = m_display_height / (m_config.min_scroll_height * Tempo::GetScaling());
         m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
-        // std::cout << m_line_lookahead_window << std::endl;
     }
 
     void Widget::manage_elements() {

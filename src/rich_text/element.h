@@ -43,7 +43,8 @@ namespace RichText {
         AB::RootBlockWeakPtr m_ref_to_root;
 
         bool m_widget_dirty = true;
-        int m_display_status = 0;
+        bool m_is_visible = false;
+
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);

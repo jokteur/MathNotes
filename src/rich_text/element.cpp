@@ -17,10 +17,7 @@ namespace RichText {
         count--;
     }
     bool AbstractElement::is_in_boundaries(const Rect& boundaries) {
-        if (m_is_dimension_set && !m_widget_dirty) {
-            return isInsideRectY(m_position.y, boundaries) || isInsideRectY(m_position.y + m_dimensions.y, boundaries);
-        }
-        return true;
+        return isInsideRectY(m_position.y, boundaries) || isInsideRectY(m_position.y + m_dimensions.y, boundaries);
     }
     int AbstractElement::count = 0;
     float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
@@ -70,10 +67,22 @@ namespace RichText {
     }
 
     void AbstractElement::hk_debug_attributes() {
+        /* State */
         ImGui::Checkbox("Is dirty", &m_widget_dirty);
         ImGui::Checkbox("Is selected", &m_is_selected);
+
+        /* Display */
         ImGui::Checkbox("Show boundaries", &m_show_boundaries);
-        ImGui::Text("%s %s", "Display status: ", (m_display_status == 0) ? "hidden" : ((m_display_status == 1) ? "hidden but dirty" : "visible"));
+        ImGui::Text("Display status: ");
+        ImGui::SameLine();
+        if (m_is_visible) {
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Colors::green), "visible");
+        }
+        else {
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Colors::red), "hidden");
+        }
+
+        /* Position and dimensions */
         std::stringstream pos, dimension;
         pos << "Position: x=" << m_position.x << " y=" << m_position.y;
         dimension << "Dimension: x=" << m_dimensions.x << " y=" << m_dimensions.y;
@@ -127,19 +136,15 @@ namespace RichText {
     bool AbstractElement::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         bool ret = true;
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
-        if (is_in_boundaries(boundaries)) {
+        m_is_visible = is_in_boundaries(boundaries);
+        if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
             if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
                 m_widget_dirty = true;
                 ret = false;
-                m_display_status = 1;
-            }
-            else {
-                m_display_status = 2;
             }
             hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
         }
         else {
-            m_display_status = 0;
             cursor_y_pos += m_dimensions.y;
         }
         // hk_draw_background(draw_list);
