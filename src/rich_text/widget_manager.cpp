@@ -21,8 +21,8 @@ namespace RichText {
         vMax.y += ImGui::GetWindowPos().y;
         auto mouse_pos = ImGui::GetMousePos();
 
-        vMin.y += 300;
-        vMax.y -= 300;
+        vMin.y += 0;
+        vMax.y -= 0;
 
         /* Once we know the height of the page,
          * we can estimate how many lines we should
@@ -40,8 +40,8 @@ namespace RichText {
 
         if (!m_root_elements.empty()) {
             Rect boundaries;
-            float y_cursor = m_y_scroll;
-            boundaries.y = 300.f;
+            float y_cursor = roundf(m_y_scroll);
+            boundaries.y = 0.f;
             boundaries.h = vMax.y - vMin.y;
             boundaries.w = width;
             m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
@@ -62,7 +62,7 @@ namespace RichText {
             }
             else
                 m_y_scroll += ImGui::GetIO().MouseWheel * 20;
-            m_y_scroll = roundf(m_y_scroll);
+            m_y_scroll = m_y_scroll;
             if (m_y_scroll > 0.f)
                 m_y_scroll = 0.f;
         }
@@ -76,22 +76,6 @@ namespace RichText {
 
     void Widget::debug_window() {
         ImGui::Begin("Debug window");
-        if (ImGui::CollapsingHeader("Currently displayed")) {
-            for (auto pair : m_root_elements) {
-                for (auto pair : m_root_elements) {
-                    if (pair.second->m_display_status == 2)
-                        pair.second->hk_debug(std::to_string(pair.first));
-                }
-            }
-        }
-        if (ImGui::CollapsingHeader("Not displayed but waiting to be built")) {
-            for (auto pair : m_root_elements) {
-                for (auto pair : m_root_elements) {
-                    if (pair.second->m_display_status == 1)
-                        pair.second->hk_debug(std::to_string(pair.first));
-                }
-            }
-        }
         if (ImGui::CollapsingHeader("Parsed blocks")) {
             for (auto pair : m_root_elements) {
                 pair.second->hk_debug(std::to_string(pair.first));

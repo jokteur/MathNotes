@@ -86,8 +86,18 @@ namespace RichText {
             cat = "S: ";
         else if (m_category == C_TEXT)
             cat = "T: ";
+        std::string str;
+        AB::str_from_text_boundaries(*m_safe_string, str, m_text_boundaries);
 
-        if (ImGui::TreeNode((prefix + cat + type_to_name(m_type) + "##" + std::to_string(m_id)).c_str())) {
+        int length = str.length();
+        std::string suffix = str;
+        if (length > 10) {
+            suffix = suffix.substr(0, 10) + "...";
+        }
+        suffix = "  /" + suffix;
+
+
+        if (ImGui::TreeNode((prefix + cat + type_to_name(m_type) + suffix + "##" + std::to_string(m_id)).c_str())) {
             if (ImGui::TreeNode("Attributes")) {
                 hk_debug_attributes();
                 ImGui::TreePop();
@@ -100,8 +110,6 @@ namespace RichText {
                     ImGui::TreePop();
                 }
             if (ImGui::TreeNode("Content")) {
-                std::string str;
-                AB::str_from_text_boundaries(*m_safe_string, str, m_text_boundaries);
                 using namespace Fonts;
                 FontRequestInfo font_request;
                 font_request.font_styling.family = F_MONOSPACE;
@@ -128,13 +136,13 @@ namespace RichText {
             else {
                 m_display_status = 2;
             }
+            hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
         }
         else {
             m_display_status = 0;
             cursor_y_pos += m_dimensions.y;
         }
-        hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
-        hk_draw_background(draw_list);
+        // hk_draw_background(draw_list);
         hk_draw_show_boundaries(draw_list, cursor_y_pos, boundaries);
         return ret;
     }

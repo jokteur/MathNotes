@@ -12,5 +12,7 @@ namespace RichText {
         }
 
         bool add_chars(std::vector<WrapCharPtr>& wrap_string) override;
+
+        void  hk_debug_attributes() override;
     };
 }

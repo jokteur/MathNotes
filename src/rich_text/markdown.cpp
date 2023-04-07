@@ -38,10 +38,7 @@ namespace RichText {
     int ABToWidgets::text(AB::TEXT_TYPE t_type, const std::vector<AB::Boundaries>& bounds) {
         if (t_type == AB::TEXT_LATEX) {
         }
-        else if (t_type == AB::TEXT_CODE) {
-
-        }
-        else {
+        else  {
             using namespace Fonts;
             auto text = std::make_shared<TextString>(m_ui_state);
             text->m_text_boundaries = bounds;

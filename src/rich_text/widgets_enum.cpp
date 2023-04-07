@@ -6,7 +6,7 @@ namespace RichText {
         case T_ROOT:
             return "T_ROOT";
         case T_BLOCK_P:
-            return "paragraph";
+            return "p";
         case T_BLOCK_CODE:
             return "code";
         case T_BLOCK_QUOTE:

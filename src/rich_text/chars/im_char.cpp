@@ -92,6 +92,8 @@ namespace RichText {
                 }
                 s += 1;
             }
+            if (c == '\r')
+                continue;
             bool force_breakable = false;
             if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
                 force_breakable = true;

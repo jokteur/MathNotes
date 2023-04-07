@@ -56,6 +56,7 @@ namespace Latex {
         m_image = std::make_shared<Image>();
         using namespace microtex;
         try {
+            std::locale::global(std::locale(""));
             // Default width large enough
             m_render = MicroTeX::parse(
                 latex_src,
