@@ -31,12 +31,13 @@ namespace RichText {
         calculate_heights();
         manage_elements();
 
-        for (auto pair : m_root_elements) {
-            if (m_current_width != width || pair.second->m_widget_dirty) {
+        if (m_current_width != width) {
+            for (auto pair : m_root_elements) {
                 m_current_width = width;
                 pair.second->setWidth(width);
             }
         }
+
 
         if (!m_root_elements.empty()) {
             Rect boundaries;

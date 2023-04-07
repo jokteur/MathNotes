@@ -148,7 +148,6 @@ namespace RichText {
     }
     void AbstractElement::setWidth(float width) {
         m_window_width = width;
-        m_widget_dirty = true;
         m_is_dimension_set = false;
         for (auto ptr : m_childrens) {
             ptr->setWidth(width);
