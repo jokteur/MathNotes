@@ -31,7 +31,6 @@ namespace RichText {
                     ret = false;
             }
         }
-
         cursor_y_pos += m_style.v_margins.y;
 
         return ret;
@@ -46,6 +45,9 @@ namespace RichText {
         }
     }
     bool AbstractBlock::hk_build_widget(float x_offset) {
+        if (m_widget_dirty) {
+            // m_widget_dirty = false;
+        }
         return true;
     }
     bool AbstractBlock::hk_build_widget_post(float x_offset) {

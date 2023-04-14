@@ -107,7 +107,7 @@ namespace RichText {
 
 
         if (ImGui::TreeNode((prefix + cat + type_to_name(m_type) + suffix + "##" + std::to_string(m_id)).c_str())) {
-            if (ImGui::TreeNode("Attributes")) {
+            if (ImGui::TreeNode("Class attributes")) {
                 hk_debug_attributes();
                 ImGui::TreePop();
             }
@@ -127,6 +127,18 @@ namespace RichText {
                 Tempo::PushFont(font_out.font_id);
                 ImGui::TextWrapped("%s", str.c_str());
                 Tempo::PopFont();
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Text boundaries")) {
+                for (auto bounds : m_text_boundaries) {
+                    std::string bound_text;
+                    bound_text += "Line: " + std::to_string(bounds.line_number);
+                    bound_text += " Pre: " + std::to_string(bounds.pre);
+                    bound_text += " beg: " + std::to_string(bounds.beg);
+                    bound_text += " end: " + std::to_string(bounds.end);
+                    bound_text += " post: " + std::to_string(bounds.post);
+                    ImGui::Text(bound_text.c_str());
+                }
                 ImGui::TreePop();
             }
             ImGui::TreePop();

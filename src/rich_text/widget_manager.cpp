@@ -8,7 +8,6 @@ using namespace AB;
 
 namespace RichText {
     void Widget::draw() {
-
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
         float width = ImGui::GetWindowContentRegionWidth();
@@ -32,11 +31,13 @@ namespace RichText {
         manage_elements();
 
 
-        if (m_current_width != width) {
-            for (auto pair : m_root_elements) {
-                m_current_width = width;
+        for (auto pair : m_root_elements) {
+            if (m_current_width != width || pair.second->m_widget_dirty) {
                 pair.second->setWidth(width);
             }
+        }
+        if (m_current_width != width) {
+            m_current_width = width;
         }
 
 
@@ -59,6 +60,7 @@ namespace RichText {
                 if (!found_top && pair.second->m_is_visible) {
                     found_top = true;
                     m_top_displayed_ptr = pair.second;
+                    m_current_line = m_top_displayed_ptr->m_text_boundaries.front().line_number;
                 }
             }
             m_draw_list.Merge();
@@ -93,6 +95,8 @@ namespace RichText {
                 m_top_displayed_ptr->hk_debug();
             }
         }
+        ImGui::Text(("y_scroll: " + std::to_string(m_y_scroll)).c_str());
+        ImGui::Text(("current_line: " + std::to_string(m_current_line)).c_str());
         ImGui::End();
     }
     void Widget::calculate_heights() {
@@ -151,6 +155,8 @@ namespace RichText {
             else if (start > m_block_idx_start) {
                 std::cout << "Destroy " << m_block_idx_start << " to " << start << " (pre)" << std::endl;
                 for (int i = m_block_idx_start; i < start;i++) {
+                    if (m_root_elements.find(i) != m_root_elements.end())
+                        m_y_scroll += m_root_elements[i]->m_dimensions.y;
                     to_destroy.insert(i);
                 }
             }
@@ -162,7 +168,7 @@ namespace RichText {
             /* Blocks to destroy after */
             else if (end < m_block_idx_end) {
                 std::cout << "Destroy " << end << " to " << m_block_idx_end << std::endl;
-                for (int i = end; i < m_block_idx_end;i++) {
+                for (int i = end + 1; i <= m_block_idx_end;i++) {
                     to_destroy.insert(i);
                 }
             }
@@ -170,7 +176,6 @@ namespace RichText {
             for (auto idx : to_destroy) {
                 m_root_elements.erase(idx);
             }
-
             m_block_idx_start = start;
             m_block_idx_end = end;
         }

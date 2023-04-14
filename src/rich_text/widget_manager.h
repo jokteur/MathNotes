@@ -33,6 +33,7 @@ namespace RichText {
         float m_current_line = 0.f;
         float m_current_width = 0.f;
         float m_y_scroll = 0.f;
+        float m_delete_y_before = 0.f;
         float m_scale = 1.f;
 
         AbstractElementPtr m_top_displayed_ptr = nullptr;
