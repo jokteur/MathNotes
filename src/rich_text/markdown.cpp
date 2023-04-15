@@ -13,6 +13,8 @@
 #include "spans/inline_spans.h"
 #include "spans/special_spans.h"
 
+#include "profiling.h"
+
 namespace RichText {
     void ABToWidgets::configure_parser() {
         m_parser.enter_block = [&](AB::BLOCK_TYPE b_type, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::BlockDetailPtr detail) -> bool {
@@ -488,6 +490,7 @@ namespace RichText {
         }
     }
     void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config, bool no_y_update) {
+        ZoneScoped;
         if (root_idx_end < 0 || root_idx_start < 0)
             return;
         m_ab_file = file;

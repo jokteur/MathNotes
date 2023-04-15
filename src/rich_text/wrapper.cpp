@@ -1,6 +1,8 @@
 #include "wrapper.h"
 #include <iomanip>
 
+#include "profiling.h"
+
 #define min(X, Y)  ((X) < (Y) ? (X) : (Y))
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
@@ -21,10 +23,12 @@ namespace RichText {
         return 0;
     }
     inline void WrapAlgorithm::push_char_on_line(WrapCharPtr& c, float* cursor_pos_x) {
+        ZoneScoped;
         c->_calculated_position.x = *cursor_pos_x + c->offset.x;
         *cursor_pos_x += c->advance;
     }
     inline void WrapAlgorithm::push_new_line(std::list<Line>::iterator& line_it, int cursor_idx, float* cursor_pos_x) {
+        ZoneScoped;
         m_lines.insert(std::next(line_it), Line{ cursor_idx, 0.f });
         line_it++;
         *cursor_pos_x = 0.f;
@@ -54,6 +58,7 @@ namespace RichText {
 
         // Calculate line breaks
         {
+            ZoneScoped;
             auto current_line_it = m_lines.begin();
             float cursor_pos_x = 0.f;
 
@@ -118,38 +123,42 @@ namespace RichText {
         }
         // ==== SECTION 2 ====
         // Calculation of char vertical positions
-        float cursor_pos_y = 0.f;
-        float max_ascent = 0.f;
-        float max_descent = 0.f;
-        for (auto current_line_it = m_lines.begin();current_line_it != m_lines.end();current_line_it++) {
-            auto next_it = std::next(current_line_it);
-            current_line_it->line_pos_y = cursor_pos_y;
-            int line_end_idx = m_string.size();
-            if (next_it != m_lines.end()) {
-                line_end_idx = next_it->start;
-            }
+        {
+            ZoneScoped;
+            float cursor_pos_y = 0.f;
+            float max_ascent = 0.f;
+            float max_descent = 0.f;
+            for (auto current_line_it = m_lines.begin();current_line_it != m_lines.end();current_line_it++) {
+                auto next_it = std::next(current_line_it);
+                current_line_it->line_pos_y = cursor_pos_y;
+                int line_end_idx = m_string.size();
+                if (next_it != m_lines.end()) {
+                    line_end_idx = next_it->start;
+                }
 
-            // Find max char height relative to cursor pos
-            // ascent is the distance from origin to bearing
-            // descent is the distance from origin to bottom of char
-            max_ascent = 0.f;
-            max_descent = 0.f;
-            for (int j = current_line_it->start;j < line_end_idx;j++) {
-                WrapCharPtr& c = m_string[j];
-                max_ascent = max(max_ascent, c->ascent);
-                max_descent = max(max_descent, c->descent);
-            }
+                // Find max char height relative to cursor pos
+                // ascent is the distance from origin to bearing
+                // descent is the distance from origin to bottom of char
+                max_ascent = 0.f;
+                max_descent = 0.f;
+                for (int j = current_line_it->start;j < line_end_idx;j++) {
+                    WrapCharPtr& c = m_string[j];
+                    max_ascent = max(max_ascent, c->ascent);
+                    max_descent = max(max_descent, c->descent);
+                }
 
-            for (int j = current_line_it->start;j < line_end_idx;j++) {
-                WrapCharPtr& c = m_string[j];
-                c->_calculated_position.y = cursor_pos_y + max_ascent - c->ascent + c->offset.y;
+                for (int j = current_line_it->start;j < line_end_idx;j++) {
+                    WrapCharPtr& c = m_string[j];
+                    c->_calculated_position.y = cursor_pos_y + max_ascent - c->ascent + c->offset.y;
+                }
+                current_line_it->height = max_ascent + max_descent;
+                cursor_pos_y += current_line_it->height * m_line_space;
             }
-            current_line_it->height = max_ascent + max_descent;
-            cursor_pos_y += current_line_it->height * m_line_space;
+            m_height = cursor_pos_y;// + max_ascent + max_descent;
         }
-        m_height = cursor_pos_y;// + max_ascent + max_descent;
     }
     void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string) {
+        ZoneScoped;
         m_string = string;
         recalculate();
     }
@@ -158,10 +167,12 @@ namespace RichText {
         m_lines.clear();
     }
     void WrapAlgorithm::setWidth(float width) {
+        ZoneScoped;
         m_width = width;
         recalculate();
     }
     void WrapAlgorithm::setLineSpace(float line_space) {
+        ZoneScoped;
         m_line_space = line_space;
         recalculate();
     }

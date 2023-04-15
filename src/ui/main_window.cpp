@@ -11,6 +11,8 @@
 #include "translations/translate.h"
 #include "imgui_stdlib.h"
 
+#include "profiling.h"
+
 void setFonts(UIState_ptr state) {
     using namespace Fonts;
     using Fs = FontStyling;
@@ -82,6 +84,7 @@ void MainApp::AfterLoop() {
 }
 
 void MainApp::FrameUpdate() {
+    ZoneScoped;
     using namespace RichText;
     ImGui::ShowDemoWindow();
     ImGui::Begin("My window");

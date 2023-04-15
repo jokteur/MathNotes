@@ -8,6 +8,8 @@
 #include "rich_text/chars/im_char.h"
 #include "ab/ab_file.h"
 
+#include "profiling.h"
+
 namespace RichText {
     // AbstractElement
     bool AbstractElement::add_chars(std::vector<WrapCharPtr>&) {
@@ -46,6 +48,7 @@ namespace RichText {
         m_is_dimension_set = true;
     }
     bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        ZoneScoped;
         bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
@@ -151,6 +154,7 @@ namespace RichText {
     }
 
     bool AbstractElement::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        ZoneScoped;
         bool ret = true;
         float initial_y_pos = cursor_y_pos;
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
@@ -174,6 +178,7 @@ namespace RichText {
         return ret;
     }
     void AbstractElement::setWidth(float width) {
+        ZoneScoped;
         m_window_width = width;
         m_is_dimension_set = false;
         for (auto ptr : m_childrens) {

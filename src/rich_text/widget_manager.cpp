@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "rich_text/chars/im_char.h"
+#include "profiling.h" 
 
 using namespace AB;
 
@@ -67,6 +68,7 @@ namespace RichText {
     }
 
     void Widget::draw() {
+        ZoneScoped;
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
         float width = ImGui::GetWindowContentRegionWidth();
@@ -184,12 +186,14 @@ namespace RichText {
         m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
     }
     std::map<int, AbstractElementPtr>::iterator Widget::find_prev_ptr() {
+        ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end() || current_it == m_root_elements.begin())
             return current_it;
         return std::prev(current_it);
     }
     std::map<int, AbstractElementPtr>::iterator Widget::find_next_ptr() {
+        ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end()) {
             return current_it;
@@ -198,6 +202,7 @@ namespace RichText {
         return next;
     }
     void Widget::find_current_ptr() {
+        ZoneScoped;
         auto bounds = m_file->getBlocksBoundsContaining(m_current_line, m_current_line + 1);
         if (m_root_elements.find(bounds.start.block_idx) != m_root_elements.end()) {
             m_current_block_idx = bounds.start.block_idx;
@@ -205,6 +210,7 @@ namespace RichText {
         }
     }
     void Widget::go_to_line(int line_number) {
+        ZoneScoped;
         m_current_line = line_number;
         find_current_ptr();
         if (m_current_block_ptr != nullptr) {
@@ -212,6 +218,7 @@ namespace RichText {
         }
     }
     void Widget::scroll_down(float pixels) {
+        ZoneScoped;
         if (m_current_block_ptr == nullptr)
             return;
 
@@ -242,6 +249,7 @@ namespace RichText {
         }
     }
     void Widget::scroll_up(float pixels) {
+        ZoneScoped;
         if (m_current_block_ptr == nullptr)
             return;
 
@@ -274,6 +282,7 @@ namespace RichText {
     }
 
     void Widget::manage_elements() {
+        ZoneScoped;
         int half_window = m_line_lookahead_window / 2;
         int start_line = m_current_line - half_window;
         int end_line = m_current_line + half_window;

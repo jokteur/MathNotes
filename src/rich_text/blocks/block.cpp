@@ -3,11 +3,14 @@
 #include "imgui_internal.h"
 #include "rich_text/chars/im_char.h"
 
+#include "profiling.h"
+
 namespace RichText {
     bool AbstractBlock::hk_build_delimiter_chars() {
         return true;
     }
     bool AbstractBlock::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        ZoneScoped;
         bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
@@ -45,12 +48,14 @@ namespace RichText {
         }
     }
     bool AbstractBlock::hk_build_widget(float x_offset) {
+        ZoneScoped;
         if (m_widget_dirty) {
             // m_widget_dirty = false;
         }
         return true;
     }
     bool AbstractBlock::hk_build_widget_post(float x_offset) {
+        ZoneScoped;
         if (m_widget_dirty && m_is_selected) {
             // bool success = true;
             // m_wrap_chars.clear();
@@ -77,6 +82,7 @@ namespace RichText {
         return m_widget_dirty;
     }
     void AbstractBlock::setWidth(float width) {
+        ZoneScoped;
         float internal_size = m_dimensions.x - m_style.h_paddings.x - m_style.h_paddings.y;
         m_wrapper.setWidth(internal_size);
         m_window_width = width;
@@ -89,6 +95,7 @@ namespace RichText {
     }
 
     bool AbstractLeafBlock::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        ZoneScoped;
         bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
 
@@ -122,6 +129,7 @@ namespace RichText {
     }
 
     bool AbstractLeafBlock::hk_build_widget(float x_offset) {
+        ZoneScoped;
         if (m_widget_dirty) {
             m_wrap_chars.clear();
             m_draw_chars.clear();
@@ -154,6 +162,7 @@ namespace RichText {
      * HiddenSpace
      * =========== */
     bool HiddenSpace::hk_build_widget(float x_offset) {
+        ZoneScoped;
         if (m_widget_dirty) {
             m_wrap_chars.clear();
             m_draw_chars.clear();
@@ -174,6 +183,7 @@ namespace RichText {
         return m_widget_dirty;
     }
     bool HiddenSpace::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
+        ZoneScoped;
         bool success = true;
         m_draw_chars.clear();
         m_is_selected = true;

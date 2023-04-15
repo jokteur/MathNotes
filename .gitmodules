@@ -16,3 +16,6 @@
 [submodule "external/ab-parser"]
 	path = external/ab-parser
 	url = https://github.com/jokteur/ab-parser.git
+[submodule "external/tracy"]
+	path = external/tracy
+	url = https://github.com/wolfpld/tracy.git

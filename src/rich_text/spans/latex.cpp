@@ -2,11 +2,14 @@
 
 #include "rich_text/chars/latex_char.h"
 
+#include "profiling.h"
+
 namespace RichText {
     /* =====
      * SPANS
      * ===== */
     bool LatexWidget::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
+        ZoneScoped;
         bool success = true;
         m_draw_chars.clear();
 

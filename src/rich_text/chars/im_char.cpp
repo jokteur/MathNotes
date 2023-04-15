@@ -4,6 +4,8 @@
 #include "ui/state.h"
 #include <iostream>
 
+#include "profiling.h"
+
 namespace RichText {
     ImChar::ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, bool force_breakable) {
         m_font_id = font_id;
@@ -60,6 +62,7 @@ namespace RichText {
     }
 
     bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style, bool replace_spaces_by_points) {
+        ZoneScoped;
         if (start == end)
             return true;
 

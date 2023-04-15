@@ -56,6 +56,9 @@ add_subdirectory(external/ab-parser)
 include_directories(external/ab-parser/include)
 include_directories(external/ab-parser)
 
+# Profiling
+add_subdirectory(external/tracy)
+
 # Sources of program
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -77,7 +80,7 @@ add_library(${PROJECT_NAME}_lib ${source_list})
 # Main program executable
 add_executable(${PROJECT_NAME} src/main.cpp ${APP_ICON_RESOURCE_WINDOWS})
 
-set(LIB_LINK microtex-imgui ${CAIRO_LIBRARIES} md4c md4c-html AB-PARSER)
+set(LIB_LINK microtex-imgui ${CAIRO_LIBRARIES} md4c md4c-html AB-PARSER TracyClient)
 target_link_libraries(${PROJECT_NAME}_lib ${LIB_LINK})
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${LIB_LINK})
 
