@@ -84,7 +84,7 @@ void MainApp::AfterLoop() {
 }
 
 void MainApp::FrameUpdate() {
-    ZoneScoped;
+    //ZoneScoped;
     using namespace RichText;
     ImGui::ShowDemoWindow();
     ImGui::Begin("My window");

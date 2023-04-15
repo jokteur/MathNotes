@@ -34,7 +34,6 @@ namespace RichText {
         int m_root_idx_end;
         int m_text_size;
         int m_level = -1;
-        bool m_no_y_update = false;
 
         AbstractElementPtr m_current_ptr = nullptr;
         AbstractElementPtr m_root_ptr = nullptr;
@@ -81,6 +80,6 @@ namespace RichText {
     public:
         ABToWidgets();
 
-        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config = MarkdownConfig(), bool no_y_update = false);
+        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config = MarkdownConfig());
     };
 }

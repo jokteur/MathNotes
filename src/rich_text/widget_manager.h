@@ -2,6 +2,9 @@
 
 #include <string>
 #include <unordered_map>
+#include <mutex>
+#include <thread>
+
 #include "ab/ab_file.h"
 #include "markdown.h"
 #include "ui/drawable.h"
@@ -52,11 +55,16 @@ namespace RichText {
         int m_debug_root_max = 100;
 
         std::map<int, AbstractElementPtr> m_root_elements;
+        std::mutex m_root_mutex;
+        std::unordered_set<Tempo::jobId> m_current_jobs;
 
         void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void calculate_heights();
         void manage_elements();
         void debug_window();
+
+        void manage_jobs();
+        void parse_job(int start_idx, int end_idx);
 
         void find_current_ptr();
         std::map<int, AbstractElementPtr>::iterator find_prev_ptr();

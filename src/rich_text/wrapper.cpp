@@ -23,12 +23,12 @@ namespace RichText {
         return 0;
     }
     inline void WrapAlgorithm::push_char_on_line(WrapCharPtr& c, float* cursor_pos_x) {
-        ZoneScoped;
+        //ZoneScoped;
         c->_calculated_position.x = *cursor_pos_x + c->offset.x;
         *cursor_pos_x += c->advance;
     }
     inline void WrapAlgorithm::push_new_line(std::list<Line>::iterator& line_it, int cursor_idx, float* cursor_pos_x) {
-        ZoneScoped;
+        //ZoneScoped;
         m_lines.insert(std::next(line_it), Line{ cursor_idx, 0.f });
         line_it++;
         *cursor_pos_x = 0.f;
@@ -58,7 +58,7 @@ namespace RichText {
 
         // Calculate line breaks
         {
-            ZoneScoped;
+            //ZoneScoped;
             auto current_line_it = m_lines.begin();
             float cursor_pos_x = 0.f;
 
@@ -124,7 +124,7 @@ namespace RichText {
         // ==== SECTION 2 ====
         // Calculation of char vertical positions
         {
-            ZoneScoped;
+            //ZoneScoped;
             float cursor_pos_y = 0.f;
             float max_ascent = 0.f;
             float max_descent = 0.f;
@@ -158,7 +158,7 @@ namespace RichText {
         }
     }
     void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string) {
-        ZoneScoped;
+        //ZoneScoped;
         m_string = string;
         recalculate();
     }
@@ -167,12 +167,12 @@ namespace RichText {
         m_lines.clear();
     }
     void WrapAlgorithm::setWidth(float width) {
-        ZoneScoped;
+        //ZoneScoped;
         m_width = width;
         recalculate();
     }
     void WrapAlgorithm::setLineSpace(float line_space) {
-        ZoneScoped;
+        //ZoneScoped;
         m_line_space = line_space;
         recalculate();
     }

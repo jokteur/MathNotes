@@ -11,7 +11,7 @@ namespace RichText {
     }
 
     bool TextString::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
-        ZoneScoped;
+        //ZoneScoped;
         m_draw_chars.clear();
         bool success = true;
 
@@ -48,7 +48,7 @@ namespace RichText {
 
     }
     bool TextString::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
-        ZoneScoped;
+        //ZoneScoped;
         bool ret = true;
         // We do not update cursor_y_pos in text span (taken care of parent block)
             // Draw all backgrounds

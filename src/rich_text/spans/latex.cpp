@@ -9,7 +9,7 @@ namespace RichText {
      * SPANS
      * ===== */
     bool LatexWidget::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
-        ZoneScoped;
+        //ZoneScoped;
         bool success = true;
         m_draw_chars.clear();
 

@@ -185,7 +185,6 @@ namespace RichText {
         // node->m_line_offset = m_line_offset;
         node->m_safe_string = m_safe_text;
         node->m_rt_info = m_rt_info;
-        node->m_no_y_update = m_no_y_update;
         if (m_current_ptr != nullptr)
             set_infos(MarkdownConfig::SPECIAL, node, true);
         node->m_parent = m_current_ptr;
@@ -489,8 +488,8 @@ namespace RichText {
             return m_current_ptr;
         }
     }
-    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config, bool no_y_update) {
-        ZoneScoped;
+    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config) {
+        //ZoneScoped;
         if (root_idx_end < 0 || root_idx_start < 0)
             return;
         m_ab_file = file;
@@ -503,8 +502,6 @@ namespace RichText {
         m_config = config;
         m_ui_state = ui_state;
         m_safe_text = file->m_safe_txt;
-        m_no_y_update = no_y_update;
-
 
         int idx_start = m_ab_file->m_blocks[root_idx_start]->idx_start;
         int idx_end = m_ab_file->m_blocks[root_idx_end]->idx_end;

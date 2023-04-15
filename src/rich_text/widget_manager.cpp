@@ -68,7 +68,8 @@ namespace RichText {
     }
 
     void Widget::draw() {
-        ZoneScoped;
+        //ZoneScoped;
+
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
         float width = ImGui::GetWindowContentRegionWidth();
@@ -90,66 +91,70 @@ namespace RichText {
         m_display_height = vMax.y - vMin.y;
         calculate_heights();
         manage_elements();
-        find_current_ptr();
 
-        /* Set the width of the blocks recursively, even the ones that are not shown */
-        for (auto pair : m_root_elements) {
-            if (m_current_width != width || pair.second->m_widget_dirty) {
-                pair.second->setWidth(width);
-            }
-        }
-        if (m_current_width != width) {
-            m_current_width = width;
-        }
+        {
+            std::lock_guard lk(m_root_mutex);
+            find_current_ptr();
 
-
-        if (!m_root_elements.empty()) {
-            manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
-
-            Rect boundaries;
-            boundaries.y = 0.f;
-            boundaries.h = vMax.y - vMin.y;
-            boundaries.w = width;
-            m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
-
-            m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
-
-            // Background, ForeGround
-            m_draw_list.Split(2);
-            m_draw_list.SetCurrentChannel(1);
-
-            /* We want to separate elements in two groups:
-             * - before m_current_line
-             * - after m_current_line
-             *
-             * All the elements before should not be displayed, but they are still important
-             * to be build once to calculate the scroll height
-             *
-             * As the elements height can only be known when displaying them once, we still need
-             * to call the draw fct. This is why we first draw them safely outside of the screen
-             *
-             * Once we reach the m_current_line element, then we can set y_pos properly
-             */
-            bool found_current = false;
-            float y_pos = m_display_height + 1000.f;
-            /* Designates the height taken by the elements before the current one */
-            float before_height = 0.f;
+            /* Set the width of the blocks recursively, even the ones that are not shown */
             for (auto pair : m_root_elements) {
-                if (!found_current && pair.first >= m_current_block_idx) {
-                    found_current = true;
-                    before_height = y_pos - m_display_height - 1000.f;
-                    y_pos = -roundf(m_y_displacement);
+                if (m_current_width != width || pair.second->m_widget_dirty) {
+                    pair.second->setWidth(width);
                 }
-                pair.second->draw(m_draw_list, y_pos, 0.f, boundaries);
             }
-            m_draw_list.Merge();
+            if (m_current_width != width) {
+                m_current_width = width;
+            }
+
+
+            if (!m_root_elements.empty()) {
+                manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+
+                Rect boundaries;
+                boundaries.y = 0.f;
+                boundaries.h = vMax.y - vMin.y;
+                boundaries.w = width;
+                m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
+
+                m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
+
+                // Background, ForeGround
+                m_draw_list.Split(2);
+                m_draw_list.SetCurrentChannel(1);
+
+                /* We want to separate elements in two groups:
+                 * - before m_current_line
+                 * - after m_current_line
+                 *
+                 * All the elements before should not be displayed, but they are still important
+                 * to be build once to calculate the scroll height
+                 *
+                 * As the elements height can only be known when displaying them once, we still need
+                 * to call the draw fct. This is why we first draw them safely outside of the screen
+                 *
+                 * Once we reach the m_current_line element, then we can set y_pos properly
+                 */
+                bool found_current = false;
+                float y_pos = m_display_height + 1000.f;
+                /* Designates the height taken by the elements before the current one */
+                float before_height = 0.f;
+                for (auto pair : m_root_elements) {
+                    if (!found_current && pair.first >= m_current_block_idx) {
+                        found_current = true;
+                        before_height = y_pos - m_display_height - 1000.f;
+                        y_pos = -roundf(m_y_displacement);
+                    }
+                    pair.second->draw(m_draw_list, y_pos, 0.f, boundaries);
+                }
+                m_draw_list.Merge();
+            }
+
+            ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
+            ImGui::End();
+            ImGui::PopStyleColor();
+
+            debug_window();
         }
-
-        ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
-        ImGui::End();
-        ImGui::PopStyleColor();
-
-        debug_window();
     }
     void Widget::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
         if (isInsideRect(mouse_pos, box)) {
@@ -186,14 +191,14 @@ namespace RichText {
         m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
     }
     std::map<int, AbstractElementPtr>::iterator Widget::find_prev_ptr() {
-        ZoneScoped;
+        //ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end() || current_it == m_root_elements.begin())
             return current_it;
         return std::prev(current_it);
     }
     std::map<int, AbstractElementPtr>::iterator Widget::find_next_ptr() {
-        ZoneScoped;
+        //ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end()) {
             return current_it;
@@ -202,7 +207,7 @@ namespace RichText {
         return next;
     }
     void Widget::find_current_ptr() {
-        ZoneScoped;
+        //ZoneScoped;
         auto bounds = m_file->getBlocksBoundsContaining(m_current_line, m_current_line + 1);
         if (m_root_elements.find(bounds.start.block_idx) != m_root_elements.end()) {
             m_current_block_idx = bounds.start.block_idx;
@@ -210,7 +215,7 @@ namespace RichText {
         }
     }
     void Widget::go_to_line(int line_number) {
-        ZoneScoped;
+        //ZoneScoped;
         m_current_line = line_number;
         find_current_ptr();
         if (m_current_block_ptr != nullptr) {
@@ -218,7 +223,7 @@ namespace RichText {
         }
     }
     void Widget::scroll_down(float pixels) {
-        ZoneScoped;
+        //ZoneScoped;
         if (m_current_block_ptr == nullptr)
             return;
 
@@ -249,7 +254,7 @@ namespace RichText {
         }
     }
     void Widget::scroll_up(float pixels) {
-        ZoneScoped;
+        //ZoneScoped;
         if (m_current_block_ptr == nullptr)
             return;
 
@@ -282,7 +287,9 @@ namespace RichText {
     }
 
     void Widget::manage_elements() {
-        ZoneScoped;
+        //ZoneScoped;
+        manage_jobs();
+
         int half_window = m_line_lookahead_window / 2;
         int start_line = m_current_line - half_window;
         int end_line = m_current_line + half_window;
@@ -299,22 +306,18 @@ namespace RichText {
         /* Widget was just created or jumped to another location */
         if (m_block_idx_start >= 0 && (m_block_idx_end == -1 || start >= m_block_idx_end)) {
             if (start >= m_block_idx_end) {
+                std::lock_guard<std::mutex> lk(m_root_mutex);
                 m_root_elements.clear();
             }
             m_block_idx_start = start;
             m_block_idx_end = end;
             ABToWidgets parser;
-            auto t1 = std::chrono::high_resolution_clock::now();
             parser.parse(m_file, m_block_idx_start, m_block_idx_end, &m_root_elements, m_ui_state);
-            auto t2 = std::chrono::high_resolution_clock::now();
-            auto ms_int = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-            std::cout << ms_int.count() << "mus (parse widgets) " << std::endl;
         }
         else {
             /* Blocks to build before */
             if (start < m_block_idx_start) {
-                ABToWidgets parser;
-                parser.parse(m_file, start, m_block_idx_start, &m_root_elements, m_ui_state, RichText::MarkdownConfig(), true);
+                parse_job(start, m_block_idx_start);
             }
             /* Blocks to destroy before */
             else if (start > m_block_idx_start) {
@@ -325,8 +328,7 @@ namespace RichText {
             }
             /* Blocks to build after */
             if (end > m_block_idx_end) {
-                ABToWidgets parser;
-                parser.parse(m_file, m_block_idx_end, end, &m_root_elements, m_ui_state);
+                parse_job(m_block_idx_end, end);
             }
             /* Blocks to destroy after */
             else if (end < m_block_idx_end) {
@@ -336,12 +338,41 @@ namespace RichText {
                 }
             }
 
-            for (auto idx : to_destroy) {
-                m_root_elements.erase(idx);
+            {
+                std::lock_guard<std::mutex> lk(m_root_mutex);
+                for (auto idx : to_destroy) {
+                    m_root_elements.erase(idx);
+                }
             }
             m_block_idx_start = start;
             m_block_idx_end = end;
         }
+    }
+    void Widget::manage_jobs() {
+        for (auto job_id : m_current_jobs) {
+            auto& scheduler = Tempo::JobScheduler::getInstance();
+            if (scheduler.getJobInfo(job_id).state == Tempo::Job::JOB_STATE_FINISHED) {
+                std::cout << "Finished job " << job_id << std::endl;
+            }
+        }
+    }
+    void Widget::parse_job(int start_idx, int end_idx) {
+        Tempo::jobFct job = [=](float& progress, bool& abort) -> std::shared_ptr<Tempo::JobResult> {
+            ABToWidgets parser;
+            std::map<int, AbstractElementPtr> tmp_roots;
+            parser.parse(m_file, start_idx, end_idx, &tmp_roots, m_ui_state);
+            {
+                std::lock_guard<std::mutex> lk(m_root_mutex);
+                for (auto pair : tmp_roots) {
+                    m_root_elements[pair.first] = pair.second;
+                }
+            }
+            Tempo::JobResult jr;
+            jr.success = true;
+            return std::make_shared<Tempo::JobResult>(jr);
+        };
+        auto& scheduler = Tempo::JobScheduler::getInstance();
+        auto job_id = scheduler.addJob("parse_ab_segment", job);
     }
 
     WidgetManager::WidgetManager(const File& file, UIState_ptr ui_state): m_file(file), m_empty_widget(nullptr) {
