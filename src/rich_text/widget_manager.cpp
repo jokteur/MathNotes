@@ -102,8 +102,9 @@ namespace RichText {
 
 
         if (!m_root_elements.empty()) {
+            manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+
             Rect boundaries;
-            float y_cursor = roundf(m_y_scroll);
             boundaries.y = 0.f;
             boundaries.h = vMax.y - vMin.y;
             boundaries.w = width;
@@ -135,13 +136,21 @@ namespace RichText {
                 if (!found_current && pair.first >= m_current_block_idx) {
                     found_current = true;
                     before_height = y_pos - m_display_height - 1000.f;
-                    y_pos = -m_y_displacement;
+                    y_pos = -roundf(m_y_displacement);
                 }
                 pair.second->draw(m_draw_list, y_pos, 0.f, boundaries);
             }
             m_draw_list.Merge();
         }
-        if (isInsideRect(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y })) {
+
+        ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
+        ImGui::End();
+        ImGui::PopStyleColor();
+
+        debug_window();
+    }
+    void Widget::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
+        if (isInsideRect(mouse_pos, box)) {
             float mouse_wheel = ImGui::GetIO().MouseWheel;
             if (ImGui::IsKeyDown(ImGuiKey_ModShift))
                 mouse_wheel *= 70;
@@ -155,12 +164,6 @@ namespace RichText {
                 scroll_down(mouse_wheel);
             }
         }
-
-        ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
-        ImGui::End();
-        ImGui::PopStyleColor();
-
-        debug_window();
     }
 
     void Widget::calculate_heights() {
@@ -244,7 +247,7 @@ namespace RichText {
 
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->m_dimensions.y - m_y_displacement;
-        if (pixels < m_y_displacement) {
+        if (pixels < m_y_displacement || m_current_block_idx == 0) {
             m_y_displacement -= pixels;
             if (m_y_displacement < 0.f)
                 m_y_displacement = 0.f;
@@ -253,7 +256,6 @@ namespace RichText {
         bool arrived_at_beg = false;
         float total_height = remaining_height;
         while (true) {
-            /* Go to the next ptr */
             auto prev = find_prev_ptr();
             if (prev == m_root_elements.begin() && prev->first > 0) {
                 arrived_at_beg = true;
@@ -263,7 +265,9 @@ namespace RichText {
             float element_height = m_current_block_ptr->m_dimensions.y;
             total_height += element_height;
             if (pixels < total_height) {
-                m_y_displacement = 0.f; //total_height - pixels;
+                m_y_displacement = element_height - pixels;
+                if (m_y_displacement < 0.f)
+                    m_y_displacement = 0.f;
                 return;
             }
         }
@@ -307,8 +311,6 @@ namespace RichText {
             else if (start > m_block_idx_start) {
                 std::cout << "Destroy " << m_block_idx_start << " to " << start << " (pre)" << std::endl;
                 for (int i = m_block_idx_start; i < start;i++) {
-                    if (m_root_elements.find(i) != m_root_elements.end())
-                        m_y_scroll += m_root_elements[i]->m_dimensions.y;
                     to_destroy.insert(i);
                 }
             }

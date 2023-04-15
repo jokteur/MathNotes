@@ -31,8 +31,6 @@ namespace RichText {
 
         Draw::DrawList m_draw_list;
         float m_current_width = 0.f;
-        float m_y_scroll = 0.f;
-        float m_delete_y_before = 0.f;
         float m_scale = 1.f;
 
         /* Here, current_xxx designates the element that should
@@ -55,6 +53,7 @@ namespace RichText {
 
         std::map<int, AbstractElementPtr> m_root_elements;
 
+        void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void calculate_heights();
         void manage_elements();
         void debug_window();

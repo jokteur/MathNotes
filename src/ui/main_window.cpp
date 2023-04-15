@@ -83,6 +83,7 @@ void MainApp::AfterLoop() {
 
 void MainApp::FrameUpdate() {
     using namespace RichText;
+    ImGui::ShowDemoWindow();
     ImGui::Begin("My window");
     ImGui::InputTextMultiline("input", &m_in_text, ImVec2(0, 0),
         ImGuiInputTextFlags_CallbackAlways, TextInputCallback, (void*)this);
