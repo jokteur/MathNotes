@@ -44,6 +44,7 @@ namespace RichText {
 
         bool m_widget_dirty = true;
         bool m_is_visible = false;
+        bool m_no_y_update = false;
 
 
         // Returns false if not succesfully build chars

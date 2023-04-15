@@ -30,13 +30,18 @@ namespace RichText {
         friend class WidgetManager;
 
         Draw::DrawList m_draw_list;
-        float m_current_line = 0.f;
         float m_current_width = 0.f;
         float m_y_scroll = 0.f;
         float m_delete_y_before = 0.f;
         float m_scale = 1.f;
 
-        AbstractElementPtr m_top_displayed_ptr = nullptr;
+        /* Here, current_xxx designates the element that should
+         * be drawn at the top of the widget */
+        AbstractElementPtr m_current_block_ptr = nullptr;
+        int m_current_block_idx = -1;
+        /* Current_line is the first line corresponding in the raw text of the current element */
+        int m_current_line = 0.f;
+        float m_y_displacement = 0.f;
 
         int m_line_lookahead_window = 2000;
 
@@ -44,11 +49,22 @@ namespace RichText {
         float m_approximate_min_height = 0.f;
         float m_line_height = 10.f;
 
+        /* Debug infos */
+        int m_debug_root_min = 0;
+        int m_debug_root_max = 100;
+
         std::map<int, AbstractElementPtr> m_root_elements;
 
         void calculate_heights();
         void manage_elements();
         void debug_window();
+
+        void find_current_ptr();
+        std::map<int, AbstractElementPtr>::iterator find_prev_ptr();
+        std::map<int, AbstractElementPtr>::iterator find_next_ptr();
+        void go_to_line(int line_number);
+        void scroll_up(float pixels);
+        void scroll_down(float pixels);
     public:
         Widget(UIState_ptr ui_state): Drawable(ui_state) {}
         Widget(const Widget&) = delete;

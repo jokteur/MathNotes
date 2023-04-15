@@ -126,8 +126,6 @@ void MainApp::FrameUpdate() {
         m_txt = m_big_text;
     }
     ImGui::End();
-
-    // m_rich_text.FrameUpdate();
 }
 
 void MainApp::BeforeFrameUpdate() {
