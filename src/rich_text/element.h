@@ -14,7 +14,7 @@
 
 #include "widgets_enum.h"
 #include "rich_text_context.h"
-#include "markdown_config.h"
+#include "ab_config.h"
 #include "wrapper.h"
 #include "chars/drawable_char.h"
 

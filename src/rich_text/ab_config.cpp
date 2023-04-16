@@ -1,8 +1,8 @@
-#include "markdown_config.h"
+#include "ab_config.h"
 
 namespace RichText {
     using namespace Fonts;
-    MarkdownConfig::MarkdownConfig() {
+    ABConfig::ABConfig() {
         // Paragraph
         styles[P].set_line_space(1.4f);
         styles[P].set_v_margins(ImVec2(0.f, 0.f));
@@ -80,7 +80,7 @@ namespace RichText {
         // markdown characters (non-visible usually)
         styles[SPECIAL].set_font_color(Colors::gray);
     }
-    void MarkdownConfig::make_bold(FontStyling& styling) {
+    void ABConfig::make_bold(FontStyling& styling) {
         if (styling.family == F_MONOSPACE) {
             styling.weight = W_BOLD;
         }
@@ -94,13 +94,13 @@ namespace RichText {
         }
     }
 
-    void MarkdownConfig::make_em(FontStyling& styling) {
+    void ABConfig::make_em(FontStyling& styling) {
         styling.style = S_ITALIC;
         if (styling.family == F_MONOSPACE) {
             styling.weight = W_REGULAR;
         }
     }
-    void MarkdownConfig::make_monospace(FontStyling& styling) {
+    void ABConfig::make_monospace(FontStyling& styling) {
         styling.family = F_MONOSPACE;
         if (styling.weight != W_REGULAR) {
             styling.weight = W_BOLD;

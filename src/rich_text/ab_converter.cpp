@@ -45,7 +45,7 @@ namespace RichText {
             auto text = std::make_shared<TextString>(m_ui_state);
             text->m_text_boundaries = bounds;
 
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(text));
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(text));
 
             auto ptr = std::static_pointer_cast<AbstractElement>(text);
 
@@ -186,7 +186,7 @@ namespace RichText {
         node->m_safe_string = m_safe_text;
         node->m_rt_info = m_rt_info;
         if (m_current_ptr != nullptr)
-            set_infos(MarkdownConfig::SPECIAL, node, true);
+            set_infos(ABConfig::SPECIAL, node, true);
         node->m_parent = m_current_ptr;
         if (m_current_ptr != nullptr) {
             m_current_ptr->m_childrens.push_back(node);
@@ -207,7 +207,7 @@ namespace RichText {
             m_href.clear();
         }
     }
-    void ABToWidgets::set_infos(MarkdownConfig::type type, AbstractElementPtr ptr, bool special_style) {
+    void ABToWidgets::set_infos(ABConfig::type type, AbstractElementPtr ptr, bool special_style) {
         auto style = m_config.styles[type];
         Style* current_style = nullptr;
 
@@ -263,7 +263,7 @@ namespace RichText {
             }
             ul_list->mark = detail.marker;
             ul_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(ul_list));
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(ul_list));
             auto ptr = std::static_pointer_cast<AbstractElement>(ul_list);
             return ptr;
         }
@@ -285,7 +285,7 @@ namespace RichText {
             }
             // ol_list->start = detail->start;
             ol_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(ol_list));
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(ol_list));
             auto ptr = std::static_pointer_cast<AbstractElement>(ol_list);
             return ptr;
         }
@@ -308,7 +308,7 @@ namespace RichText {
                 list_el->list_level = std::static_pointer_cast<OLWidget>(m_current_ptr)->list_level;
             }
             list_el->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(list_el));
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(list_el));
             auto ptr = std::static_pointer_cast<AbstractElement>(list_el);
             return ptr;
         }
@@ -327,7 +327,7 @@ namespace RichText {
             header->m_text_boundaries = bounds;
             header->m_attributes = attributes;
             header->hlevel = detail.level;
-            set_infos((MarkdownConfig::type)detail.level, std::static_pointer_cast<AbstractElement>(header));
+            set_infos((ABConfig::type)detail.level, std::static_pointer_cast<AbstractElement>(header));
             auto ptr = std::static_pointer_cast<AbstractElement>(header);
             return ptr;
         }
@@ -343,7 +343,7 @@ namespace RichText {
             if (m_current_ptr->m_type == T_BLOCK_QUOTE) {
                 auto parent = std::static_pointer_cast<QuoteWidget>(m_current_ptr);
             }
-            set_infos(MarkdownConfig::QUOTE, std::static_pointer_cast<AbstractElement>(quote));
+            set_infos(ABConfig::QUOTE, std::static_pointer_cast<AbstractElement>(quote));
             auto ptr = std::static_pointer_cast<AbstractElement>(quote);
             return ptr;
         }
@@ -358,7 +358,7 @@ namespace RichText {
             code->m_text_boundaries = bounds;
             code->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(code);
-            set_infos(MarkdownConfig::CODE, ptr);
+            set_infos(ABConfig::CODE, ptr);
             return ptr;
         }
         else {
@@ -372,7 +372,7 @@ namespace RichText {
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(p));
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -386,7 +386,7 @@ namespace RichText {
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
-            set_infos(MarkdownConfig::P, std::static_pointer_cast<AbstractElement>(p));
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -401,7 +401,7 @@ namespace RichText {
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
-            set_infos(MarkdownConfig::HREF, std::static_pointer_cast<AbstractElement>(p));
+            set_infos(ABConfig::HREF, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -414,7 +414,7 @@ namespace RichText {
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
-            set_infos(MarkdownConfig::EM, std::static_pointer_cast<AbstractElement>(p));
+            set_infos(ABConfig::EM, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -427,7 +427,7 @@ namespace RichText {
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
-            set_infos(MarkdownConfig::STRONG, std::static_pointer_cast<AbstractElement>(p));
+            set_infos(ABConfig::STRONG, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -444,9 +444,9 @@ namespace RichText {
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
             if (m_current_ptr->m_type == T_BLOCK_CODE)
-                set_infos(MarkdownConfig::CODE, std::static_pointer_cast<AbstractElement>(p));
+                set_infos(ABConfig::CODE, std::static_pointer_cast<AbstractElement>(p));
             else
-                set_infos(MarkdownConfig::INLINE_CODE, std::static_pointer_cast<AbstractElement>(p));
+                set_infos(ABConfig::INLINE_CODE, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -459,7 +459,7 @@ namespace RichText {
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
-            set_infos(MarkdownConfig::LATEX, std::static_pointer_cast<AbstractElement>(p));
+            set_infos(ABConfig::LATEX, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
@@ -481,14 +481,14 @@ namespace RichText {
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
-            set_infos(MarkdownConfig::HIGHLIGHT, std::static_pointer_cast<AbstractElement>(p));
+            set_infos(ABConfig::HIGHLIGHT, std::static_pointer_cast<AbstractElement>(p));
             return ptr;
         }
         else {
             return m_current_ptr;
         }
     }
-    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config) {
+    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, ABConfig config) {
         //ZoneScoped;
         if (root_idx_end < 0 || root_idx_start < 0)
             return;

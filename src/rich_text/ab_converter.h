@@ -9,9 +9,9 @@
 #include <ab_parser.h>
 #include "element.h"
 #include "ui/fonts.h"
-#include "markdown_config.h"
 #include "rich_text_context.h"
 #include "ab/ab_file.h"
+#include "ab_config.h"
 
 namespace RichText {
     // Inspired from https://github.com/mekhontsev/imgui_md
@@ -24,7 +24,7 @@ namespace RichText {
     class ABToWidgets {
     private:
         AB::Parser m_parser;
-        MarkdownConfig m_config;
+        ABConfig m_config;
 
         SafeString m_safe_text;
         RichTextInfo* m_rt_info;
@@ -53,7 +53,7 @@ namespace RichText {
         void push_to_tree(AbstractElementPtr& node);
         void set_href(bool enter, const std::string& src);
         void tree_up();
-        void set_infos(MarkdownConfig::type type, AbstractElementPtr ptr, bool special_style = false);
+        void set_infos(ABConfig::type type, AbstractElementPtr ptr, bool special_style = false);
 
         AbstractElementPtr BLOCK_QUOTE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractElementPtr BLOCK_UL(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockUlDetail&);
@@ -80,6 +80,6 @@ namespace RichText {
     public:
         ABToWidgets();
 
-        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, MarkdownConfig config = MarkdownConfig());
+        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, ABConfig config = ABConfig());
     };
 }

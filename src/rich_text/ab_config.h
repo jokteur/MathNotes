@@ -31,8 +31,8 @@ namespace RichText {
 
         NEW_STYLE_ELEMENT(scale, float, 1.f);
     };
-    struct MarkdownConfig {
-        MarkdownConfig();
+    struct ABConfig {
+        ABConfig();
 
         // Everything is specified in pixel (which are scaled to zoom level and monitor scaling)
         enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, HREF, EM, STRONG, HIGHLIGHT, LATEX, SPECIAL };
