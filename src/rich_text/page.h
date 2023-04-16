@@ -52,6 +52,7 @@ namespace RichText {
         std::mutex m_root_mutex;
         std::unordered_set<Tempo::jobId> m_current_jobs;
 
+        void display_scrollbar(const Rect& boundaries);
         void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void calculate_heights();
         void manage_elements();

@@ -73,6 +73,7 @@ namespace RichText {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
         float width = ImGui::GetWindowContentRegionWidth();
+        width -= ImGui::GetStyle().ScrollbarSize;
         ImVec2 vMin = ImGui::GetWindowContentRegionMin();
         ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 
@@ -118,6 +119,9 @@ namespace RichText {
 
                 m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
 
+                display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+
+
                 // Background, ForeGround
                 m_draw_list.Split(2);
                 m_draw_list.SetCurrentChannel(1);
@@ -155,6 +159,14 @@ namespace RichText {
 
             debug_window();
         }
+    }
+    void Page::display_scrollbar(const Rect& b) {
+        float scroll_width = ImGui::GetStyle().ScrollbarSize;
+        float rounding = ImGui::GetStyle().ScrollbarRounding;
+        auto color_bg = ImGui::GetColorU32(ImGuiCol_ScrollbarBg);
+        ImVec2 top_left(5 + b.w + b.x - scroll_width, b.y);
+        ImVec2 bottom_right(5 + b.w + b.x, b.h + b.y);
+        m_draw_list->AddRectFilled(top_left, bottom_right, color_bg, rounding);
     }
     void Page::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
         if (isInsideRect(mouse_pos, box)) {
@@ -369,6 +381,7 @@ namespace RichText {
         }
     }
     void Page::parse_job(int start_idx, int end_idx) {
+        /* TODO: after job is finished, check if the job is not obsolete */
         Tempo::jobFct job = [=](float& progress, bool& abort) -> std::shared_ptr<Tempo::JobResult> {
             ABToWidgets parser;
             std::map<int, AbstractElementPtr> tmp_roots;
