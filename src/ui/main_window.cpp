@@ -108,8 +108,8 @@ void MainApp::FrameUpdate() {
             delete m_widget_manager;
         }
         t1 = std::chrono::high_resolution_clock::now();
-        m_widget_manager = new WidgetManager(*m_ab_file, m_ui_state);
-        m_widget_id = m_widget_manager->createWidget(WidgetConfig{ 0.f, true });
+        m_widget_manager = new PageManager(*m_ab_file, m_ui_state);
+        m_widget_id = m_widget_manager->createPage(PageConfig{ 0.f, true });
 
         text_set = true;
     }

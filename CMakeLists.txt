@@ -57,6 +57,7 @@ include_directories(external/ab-parser/include)
 include_directories(external/ab-parser)
 
 # Profiling
+set(TRACY_ENABLE OFF)
 add_subdirectory(external/tracy)
 
 # Sources of program

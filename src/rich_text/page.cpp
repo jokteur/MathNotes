@@ -1,14 +1,12 @@
-#include "widget_manager.h"
+#include "page.h"
 
 #include <cmath>
 
-#include "rich_text/chars/im_char.h"
-#include "profiling.h" 
-
-using namespace AB;
+#include "ab/ab_file.h"
+#include "markdown.h"
 
 namespace RichText {
-    void Widget::debug_window() {
+    void Page::debug_window() {
         ImGui::Begin("Widget info");
         ImGui::Text("y disp: %f", m_y_displacement);
         ImGui::Text("current_line: %d", m_current_line);
@@ -67,8 +65,10 @@ namespace RichText {
         ImGui::End();
     }
 
-    void Widget::draw() {
+    void Page::draw() {
         //ZoneScoped;
+
+        manage_jobs();
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
         ImGui::Begin("RichText window");
@@ -156,7 +156,7 @@ namespace RichText {
             debug_window();
         }
     }
-    void Widget::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
+    void Page::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
         if (isInsideRect(mouse_pos, box)) {
             float mouse_wheel = ImGui::GetIO().MouseWheel;
             if (ImGui::IsKeyDown(ImGuiKey_ModShift))
@@ -173,7 +173,7 @@ namespace RichText {
         }
     }
 
-    void Widget::calculate_heights() {
+    void Page::calculate_heights() {
         if (m_recalculate_line_height) {
             using namespace Fonts;
             FontRequestInfo font_request;
@@ -190,14 +190,14 @@ namespace RichText {
         float num_pages_for_min_scroll = m_display_height / (m_config.min_scroll_height * Tempo::GetScaling());
         m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
     }
-    std::map<int, AbstractElementPtr>::iterator Widget::find_prev_ptr() {
+    std::map<int, AbstractElementPtr>::iterator Page::find_prev_ptr() {
         //ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end() || current_it == m_root_elements.begin())
             return current_it;
         return std::prev(current_it);
     }
-    std::map<int, AbstractElementPtr>::iterator Widget::find_next_ptr() {
+    std::map<int, AbstractElementPtr>::iterator Page::find_next_ptr() {
         //ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end()) {
@@ -206,7 +206,7 @@ namespace RichText {
         auto next = std::next(current_it);
         return next;
     }
-    void Widget::find_current_ptr() {
+    void Page::find_current_ptr() {
         //ZoneScoped;
         auto bounds = m_file->getBlocksBoundsContaining(m_current_line, m_current_line + 1);
         if (m_root_elements.find(bounds.start.block_idx) != m_root_elements.end()) {
@@ -214,7 +214,7 @@ namespace RichText {
             m_current_block_ptr = m_root_elements[m_current_block_idx];
         }
     }
-    void Widget::go_to_line(int line_number) {
+    void Page::go_to_line(int line_number) {
         //ZoneScoped;
         m_current_line = line_number;
         find_current_ptr();
@@ -222,7 +222,7 @@ namespace RichText {
             m_current_line = m_current_block_ptr->m_text_boundaries.front().line_number;
         }
     }
-    void Widget::scroll_down(float pixels) {
+    void Page::scroll_down(float pixels) {
         //ZoneScoped;
         if (m_current_block_ptr == nullptr)
             return;
@@ -253,7 +253,7 @@ namespace RichText {
             }
         }
     }
-    void Widget::scroll_up(float pixels) {
+    void Page::scroll_up(float pixels) {
         //ZoneScoped;
         if (m_current_block_ptr == nullptr)
             return;
@@ -286,7 +286,7 @@ namespace RichText {
         }
     }
 
-    void Widget::manage_elements() {
+    void Page::manage_elements() {
         //ZoneScoped;
         manage_jobs();
 
@@ -348,15 +348,15 @@ namespace RichText {
             m_block_idx_end = end;
         }
     }
-    void Widget::manage_jobs() {
+    void Page::manage_jobs() {
         for (auto job_id : m_current_jobs) {
             auto& scheduler = Tempo::JobScheduler::getInstance();
-            if (scheduler.getJobInfo(job_id).state == Tempo::Job::JOB_STATE_FINISHED) {
+            if (scheduler.getJobInfo(job_id).state == Tempo::Job::JOB_STATE_NOTEXISTING) {
                 std::cout << "Finished job " << job_id << std::endl;
             }
         }
     }
-    void Widget::parse_job(int start_idx, int end_idx) {
+    void Page::parse_job(int start_idx, int end_idx) {
         Tempo::jobFct job = [=](float& progress, bool& abort) -> std::shared_ptr<Tempo::JobResult> {
             ABToWidgets parser;
             std::map<int, AbstractElementPtr> tmp_roots;
@@ -373,62 +373,10 @@ namespace RichText {
         };
         auto& scheduler = Tempo::JobScheduler::getInstance();
         auto job_id = scheduler.addJob("parse_ab_segment", job);
+        m_current_jobs.insert(job_id->id);
     }
-
-    WidgetManager::WidgetManager(const File& file, UIState_ptr ui_state): m_file(file), m_empty_widget(nullptr) {
-        m_ui_state = ui_state;
-    }
-
-    WidgetId WidgetManager::createWidget(const WidgetConfig& config) {
-        WidgetId widget_id = 1;
-
-        bool available_slot = false;
-        for (int i = 1;i <= 32;i++) {
-            if (m_current_widgets ^ widget_id) {
-                available_slot = true;
-                break;
-            }
-            widget_id = widget_id << 1;
-        }
-
-        if (!available_slot)
-            return 0;
-
-        m_current_widgets |= widget_id;
-
-        auto widget = std::make_shared<Widget>(m_ui_state);
-        widget->m_config = config;
-        widget->m_file = &m_file;
-        widget->m_current_line = config.line_start;
-        m_widgets[widget_id] = widget;
-        return widget_id;
-    }
-    void WidgetManager::removeWidget(WidgetId id) {
-        auto it = m_widgets.find(id);
-        if (it != m_widgets.end()) {
-            m_widgets.erase(it);
-            m_current_widgets ^= id;
-        }
-    }
-    WidgetPtr WidgetManager::getWidget(WidgetId id) {
-        auto it = m_widgets.find(id);
-        if (it != m_widgets.end()) {
-            return it->second;
-        }
-        return nullptr;
-    }
-    WidgetManager::~WidgetManager() {
-    }
-
-    void WidgetManager::manage() {
-        int widget_id = 1;
-        for (int i = 1;i <= 32;i++) {
-            if (m_current_widgets & widget_id) {
-                // std::cout << "Managing " << widget_id << " ";
-                // auto& widget = getWidget(widget_id);
-                // int current_line = widget.m_current_line;
-            }
-            widget_id = widget_id << 1;
-        }
+    Page::~Page() {
+        auto& scheduler = Tempo::JobScheduler::getInstance();
+        // scheduler.getJobInfo
     }
 }
