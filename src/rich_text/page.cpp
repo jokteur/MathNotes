@@ -228,6 +228,7 @@ namespace RichText {
             return;
 
         pixels = abs(pixels);
+        std::cout << "Scroll down " << pixels << std::endl;
 
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->m_dimensions.y - m_y_displacement;
@@ -258,9 +259,11 @@ namespace RichText {
         if (m_current_block_ptr == nullptr)
             return;
 
+        std::cout << "Scroll up " << pixels << std::endl;
+
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->m_dimensions.y - m_y_displacement;
-        if (pixels < m_y_displacement || m_current_block_idx == 0) {
+        if (pixels <= m_y_displacement || m_current_block_idx == 0) {
             m_y_displacement -= pixels;
             if (m_y_displacement < 0.f)
                 m_y_displacement = 0.f;
@@ -275,9 +278,12 @@ namespace RichText {
                 break;
             }
             go_to_line(prev->second->m_text_boundaries.front().line_number);
+            if (prev->second->m_dimensions.y == 0.f && prev->first > 0) {
+                continue;
+            }
             float element_height = m_current_block_ptr->m_dimensions.y;
             total_height += element_height;
-            if (pixels < total_height) {
+            if (pixels <= total_height) {
                 m_y_displacement = element_height - pixels;
                 if (m_y_displacement < 0.f)
                     m_y_displacement = 0.f;
@@ -349,11 +355,17 @@ namespace RichText {
         }
     }
     void Page::manage_jobs() {
+        std::vector<Tempo::jobId> to_remove;
         for (auto job_id : m_current_jobs) {
             auto& scheduler = Tempo::JobScheduler::getInstance();
-            if (scheduler.getJobInfo(job_id).state == Tempo::Job::JOB_STATE_NOTEXISTING) {
-                std::cout << "Finished job " << job_id << std::endl;
+            auto job = scheduler.getJobInfo(job_id);
+            std::cout << "Job " << job_id << " pending" << std::endl;
+            if (job.state == Tempo::Job::JOB_STATE_NOTEXISTING) {
+                to_remove.push_back(job_id);
             }
+        }
+        for (auto job_id : to_remove) {
+            m_current_jobs.erase(job_id);
         }
     }
     void Page::parse_job(int start_idx, int end_idx) {
@@ -377,6 +389,9 @@ namespace RichText {
     }
     Page::~Page() {
         auto& scheduler = Tempo::JobScheduler::getInstance();
-        // scheduler.getJobInfo
+        while (!m_current_jobs.empty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            manage_jobs();
+        }
     }
 }
