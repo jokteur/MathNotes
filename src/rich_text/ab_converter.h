@@ -64,6 +64,7 @@ namespace RichText {
         AbstractElementPtr BLOCK_CODE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockCodeDetail&);
         AbstractElementPtr BLOCK_P(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractElementPtr BLOCK_HIDDENSPACE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
+        AbstractElementPtr BLOCK_NOT_IMPLEMENTED(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
 
         AbstractElementPtr SPAN_EM(bool e, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractElementPtr SPAN_STRONG(bool e, const std::vector<AB::Boundaries>&, const AB::Attributes&);

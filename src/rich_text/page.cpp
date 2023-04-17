@@ -11,6 +11,8 @@ namespace RichText {
         ImGui::Text("y disp: %f", m_y_displacement);
         ImGui::Text("current_line: %d", m_current_line);
         ImGui::Text("current block idx: %d", m_current_block_idx);
+        ImGui::Text("height before current: %f", m_before_height);
+        ImGui::Text("height after current: %f", m_after_height);
         ImGui::End();
 
         ImGui::Begin("Parsed blocks");
@@ -119,9 +121,6 @@ namespace RichText {
 
                 m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
 
-                display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
-
-
                 // Background, ForeGround
                 m_draw_list.Split(2);
                 m_draw_list.SetCurrentChannel(1);
@@ -141,16 +140,17 @@ namespace RichText {
                 bool found_current = false;
                 float y_pos = m_display_height + 1000.f;
                 /* Designates the height taken by the elements before the current one */
-                float before_height = 0.f;
                 for (auto pair : m_root_elements) {
                     if (!found_current && pair.first >= m_current_block_idx) {
                         found_current = true;
-                        before_height = y_pos - m_display_height - 1000.f;
+                        m_before_height = y_pos - m_display_height - 1000.f;
                         y_pos = -roundf(m_y_displacement);
                     }
                     pair.second->draw(m_draw_list, y_pos, 0.f, boundaries);
                 }
+                m_after_height = y_pos + m_y_displacement;
                 m_draw_list.Merge();
+                display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
             }
 
             ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
@@ -161,20 +161,27 @@ namespace RichText {
         }
     }
     void Page::display_scrollbar(const Rect& b) {
+        /* Scroll bar properties */
         float scroll_width = ImGui::GetStyle().ScrollbarSize;
         float rounding = ImGui::GetStyle().ScrollbarRounding;
         auto color_bg = ImGui::GetColorU32(ImGuiCol_ScrollbarBg);
-        ImVec2 top_left(5 + b.w + b.x - scroll_width, b.y);
-        ImVec2 bottom_right(5 + b.w + b.x, b.h + b.y);
+
+        float before = m_before_height + m_y_displacement;
+        float after = m_after_height - m_y_displacement;
+        float display_height = b.h;
+        float elements_height = before + after + display_height;
+        float scroll_height = b.h * (display_height / elements_height);
+        float percentage = before / (before + after);
+        float scroll_pos = b.y + (b.h - scroll_height) * percentage;
+
+        ImVec2 top_left(5 + b.w + b.x - scroll_width, scroll_pos);
+        ImVec2 bottom_right(5 + b.w + b.x, scroll_pos + scroll_height);
         m_draw_list->AddRectFilled(top_left, bottom_right, color_bg, rounding);
     }
     void Page::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
         if (isInsideRect(mouse_pos, box)) {
             float mouse_wheel = ImGui::GetIO().MouseWheel;
-            if (ImGui::IsKeyDown(ImGuiKey_ModShift))
-                mouse_wheel *= 70;
-            else
-                mouse_wheel *= 20;
+            mouse_wheel *= 40;
 
             if (mouse_wheel > 0.f) {
                 scroll_up(mouse_wheel);
@@ -258,6 +265,7 @@ namespace RichText {
                 break;
             }
             go_to_line(next->second->m_text_boundaries.front().line_number);
+
             float element_height = m_current_block_ptr->m_dimensions.y;
             total_height += element_height;
             if (pixels < total_height) {
@@ -311,6 +319,10 @@ namespace RichText {
         int half_window = m_line_lookahead_window / 2;
         int start_line = m_current_line - half_window;
         int end_line = m_current_line + half_window;
+        if (start_line < 0) {
+            end_line += -start_line;
+            start_line = 0;
+        }
         auto bounds = m_file->getBlocksBoundsContaining(start_line, end_line);
 
         if (bounds.start.block_idx == -1)

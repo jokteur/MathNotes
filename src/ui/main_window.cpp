@@ -77,8 +77,7 @@ void MainApp::InitializationBeforeLoop() {
     setFonts(m_ui_state);
     defineStyle();
     getFileContents("data/bigfile.md", m_big_text);
-    // for (int i = 0;i < 3;i++)
-    //     m_big_text += m_big_text;
+    getFileContents("data/ab_test.ab", m_normal_text);
 }
 void MainApp::AfterLoop() {
 }
@@ -128,6 +127,10 @@ void MainApp::FrameUpdate() {
     if (ImGui::Button("SetBigText")) {
         text_set = false;
         m_txt = m_big_text;
+    }
+    if (ImGui::Button("SetNormalText")) {
+        text_set = false;
+        m_txt = m_normal_text;
     }
     ImGui::End();
 }

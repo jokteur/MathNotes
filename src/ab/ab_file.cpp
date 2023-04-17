@@ -88,6 +88,7 @@ namespace AB {
             return BlockBounds{ };
         }
         BlockBounds bounds;
+        /* FIXME: this algorithm is broken */
 
         /* Start bound */
         bool found = false;
@@ -106,7 +107,7 @@ namespace AB {
                 midpoint_idx = start_idx + (end_idx - start_idx) / 2;
             }
             else if (m_blocks[midpoint_idx]->line_start < line_start) {
-                if (m_blocks[midpoint_idx]->line_end > line_start) {
+                if (m_blocks[midpoint_idx]->line_end > line_start || midpoint_idx == start_idx) {
                     bounds.start.txt_idx = m_blocks[midpoint_idx]->idx_start;
                     bounds.start.line_idx = m_blocks[midpoint_idx]->line_start;
                     bounds.start.block_idx = midpoint_idx;
@@ -137,7 +138,7 @@ namespace AB {
             bounds.end.block_idx = end_idx;
         }
         while (!found) {
-            if (m_blocks[midpoint_idx]->line_end < line_end) {
+            if (m_blocks[midpoint_idx]->line_end < line_end && midpoint_idx != start_idx) {
                 start_idx = midpoint_idx;
                 midpoint_idx = start_idx + (end_idx - start_idx) / 2;
             }

@@ -43,6 +43,8 @@ namespace RichText {
         float m_display_height = 0.f;
         float m_approximate_min_height = 0.f;
         float m_line_height = 10.f;
+        float m_before_height = 0.f;
+        float m_after_height = 0.f;
 
         /* Debug infos */
         int m_debug_root_min = 0;

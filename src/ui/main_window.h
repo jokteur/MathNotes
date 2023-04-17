@@ -23,6 +23,7 @@ private:
     std::string m_txt;
     std::string m_prev_text;
     std::string m_big_text;
+    std::string m_normal_text;
     bool text_set = true;
 
 public:

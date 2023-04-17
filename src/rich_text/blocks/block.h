@@ -39,6 +39,17 @@ namespace RichText {
         bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
     };
 
+    /* Empty block does not do anything
+     * Use this for non implemented blocks yet
+     */
+    struct EmptyBlock: public AbstractBlock {
+    public:
+        EmptyBlock(UIState_ptr ui_state): AbstractBlock(ui_state) {
+            m_category = C_BLOCK;
+            m_type = T_BLOCK_EMPTY;
+        }
+    };
+
     struct HiddenSpace: public AbstractLeafBlock {
         HiddenSpace(UIState_ptr ui_state): AbstractLeafBlock(ui_state) {
             m_category = C_BLOCK;

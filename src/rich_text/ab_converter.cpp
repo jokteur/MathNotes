@@ -99,9 +99,10 @@ namespace RichText {
             ptr = BLOCK_HIDDENSPACE(enter, bounds, attributes);
             break;
             // case AB::BLOCK_DIV:
-            //     ptr = BLOCK_TABLE((MD_BLOCK_TABLE_DETAIL*)detail, enter);
-            //     break;
+                // ptr = BLOCK_DIV((MD_BLOCK_TABLE_DETAIL*)detail, enter);
+                // break;
         default:
+            ptr = BLOCK_NOT_IMPLEMENTED(enter, bounds, attributes);
             break;
         }
         if (ptr != nullptr) {
@@ -383,6 +384,19 @@ namespace RichText {
     AbstractElementPtr ABToWidgets::BLOCK_HIDDENSPACE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<HiddenSpace>(m_ui_state);
+            p->m_text_boundaries = bounds;
+            p->m_attributes = attributes;
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(p));
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
+    }
+    AbstractElementPtr ABToWidgets::BLOCK_NOT_IMPLEMENTED(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+        if (enter) {
+            auto p = std::make_shared<EmptyBlock>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);
