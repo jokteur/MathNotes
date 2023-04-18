@@ -25,8 +25,6 @@ namespace RichText {
         bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
         void hk_draw_background(Draw::DrawList& draw_list) override;
         void hk_debug_attributes() override;
-
-        void setWidth(float width) override;
     };
 
     struct AbstractLeafBlock: public AbstractBlock {

@@ -50,7 +50,7 @@ namespace RichText {
     bool AbstractBlock::hk_build_widget(float x_offset) {
         //ZoneScoped;
         if (m_widget_dirty) {
-            // m_widget_dirty = false;
+            m_widget_dirty = false;
         }
         return true;
     }
@@ -80,15 +80,6 @@ namespace RichText {
             //     m_widget_dirty = false;
         }
         return m_widget_dirty;
-    }
-    void AbstractBlock::setWidth(float width) {
-        //ZoneScoped;
-        float internal_size = m_dimensions.x - m_style.h_paddings.x - m_style.h_paddings.y;
-        m_wrapper.setWidth(internal_size);
-        m_window_width = width;
-        for (auto ptr : m_childrens) {
-            ptr->setWidth(width);
-        }
     }
     void AbstractBlock::hk_debug_attributes() {
         AbstractElement::hk_debug_attributes();
@@ -131,29 +122,34 @@ namespace RichText {
     bool AbstractLeafBlock::hk_build_widget(float x_offset) {
         //ZoneScoped;
         if (m_widget_dirty) {
-            m_wrap_chars.clear();
-            m_draw_chars.clear();
+            if (m_widget_dirty & DIRTY_CHARS) {
+                m_wrap_chars.clear();
+                m_draw_chars.clear();
 
-            bool success = true;
+                bool success = true;
 
-            for (auto ptr : m_childrens) {
-                if (ptr->m_category != C_SPAN) {
-                    break;
+                for (auto ptr : m_childrens) {
+                    if (ptr->m_category != C_SPAN) {
+                        break;
+                    }
+                    auto res = ptr->add_chars(m_wrap_chars);
+                    if (!res) {
+                        success = false;
+                    }
                 }
-                auto res = ptr->add_chars(m_wrap_chars);
-                if (!res) {
-                    success = false;
-                }
+                if (success)
+                    m_widget_dirty ^= DIRTY_CHARS;
+
+                m_wrapper.clear();
+                m_wrapper.setLineSpace(m_style.line_space, false);
+                m_wrapper.setString(m_wrap_chars, false);
             }
-
-            m_wrapper.clear();
-            float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
-            m_wrapper.setWidth(internal_size);
-            m_wrapper.setLineSpace(m_style.line_space);
-            m_wrapper.setString(m_wrap_chars);
-
-            if (success)
-                m_widget_dirty = false;
+            if (m_widget_dirty & DIRTY_WIDTH) {
+                float internal_size = m_window_width - x_offset - m_style.h_paddings.x - m_style.h_paddings.y;
+                m_wrapper.setWidth(internal_size, false);
+                m_widget_dirty ^= DIRTY_WIDTH;
+            }
+            m_wrapper.recalculate();
         }
         return m_widget_dirty;
     }

@@ -101,8 +101,8 @@ namespace RichText {
 
             /* Set the width of the blocks recursively, even the ones that are not shown */
             for (auto pair : m_root_elements) {
-                if (m_current_width != width || pair.second->m_widget_dirty) {
-                    pair.second->setWidth(width);
+                if (m_current_width != width) {
+                    pair.second->setWindowWidth(width);
                 }
             }
             if (m_current_width != width) {
@@ -184,7 +184,7 @@ namespace RichText {
     void Page::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
         if (isInsideRect(mouse_pos, box)) {
             float mouse_wheel = ImGui::GetIO().MouseWheel;
-            mouse_wheel *= 40;
+            mouse_wheel *= 60;
 
             if (mouse_wheel > 0.f) {
                 scroll_up(mouse_wheel);

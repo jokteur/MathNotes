@@ -76,7 +76,7 @@ namespace RichText {
 
     void AbstractElement::hk_debug_attributes() {
         /* State */
-        ImGui::Checkbox("Is dirty", &m_widget_dirty);
+        ImGui::Text("Dirty state %d", &m_widget_dirty);
         ImGui::Checkbox("Is selected", &m_is_selected);
 
         /* Display */
@@ -177,12 +177,12 @@ namespace RichText {
         }
         return ret;
     }
-    void AbstractElement::setWidth(float width) {
+    void AbstractElement::setWindowWidth(float width) {
         //ZoneScoped;
         m_window_width = width;
-        m_is_dimension_set = false;
+        m_widget_dirty |= DIRTY_WIDTH;
         for (auto ptr : m_childrens) {
-            ptr->setWidth(width);
+            ptr->setWindowWidth(width);
         }
     }
 }

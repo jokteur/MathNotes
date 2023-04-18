@@ -157,23 +157,26 @@ namespace RichText {
             m_height = cursor_pos_y;// + max_ascent + max_descent;
         }
     }
-    void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string) {
+    void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string, bool redo) {
         //ZoneScoped;
         m_string = string;
-        recalculate();
+        if (redo)
+            recalculate();
     }
     void WrapAlgorithm::clear() {
         m_string.clear();
         m_lines.clear();
     }
-    void WrapAlgorithm::setWidth(float width) {
+    void WrapAlgorithm::setWidth(float width, bool redo) {
         //ZoneScoped;
         m_width = width;
-        recalculate();
+        if (redo)
+            recalculate();
     }
-    void WrapAlgorithm::setLineSpace(float line_space) {
+    void WrapAlgorithm::setLineSpace(float line_space, bool redo) {
         //ZoneScoped;
         m_line_space = line_space;
-        recalculate();
+        if (redo)
+            recalculate();
     }
 }

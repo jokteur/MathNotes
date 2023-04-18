@@ -94,7 +94,6 @@ namespace RichText {
         inline void push_char_on_line(WrapCharPtr& c, float* cursor_x_coord);
         inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
-        void recalculate();
     public:
         /**
          * @brief Construct a new Text Wrapper object
@@ -106,13 +105,14 @@ namespace RichText {
         WrapAlgorithm();
         ~WrapAlgorithm();
 
-        void setString(const std::vector<WrapCharPtr>& string);
+        void setString(const std::vector<WrapCharPtr>& string, bool redo = true);
         void clear();
+        void recalculate();
 
         const std::list<Line>& getLines() { return m_lines; }
         float getHeight() { return m_height; }
 
-        void setWidth(float width);
-        void setLineSpace(float line_space);
+        void setWidth(float width, bool redo = true);
+        void setLineSpace(float line_space, bool redo = true);
     };
 }

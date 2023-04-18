@@ -30,6 +30,10 @@ namespace RichText {
         std::vector<WrapCharPtr> m_wrap_chars;
         int m_id = 0;
 
+        const int DIRTY_WIDTH = 0x1;
+        const int DIRTY_CHARS = 0x2;
+        const int ALL_DIRTY = ~0;
+
     public:
         Type m_type;
         Category m_category;
@@ -42,7 +46,7 @@ namespace RichText {
         AbstractElementWeakPtr m_parent;
         AB::RootBlockWeakPtr m_ref_to_root;
 
-        bool m_widget_dirty = true;
+        int m_widget_dirty = ALL_DIRTY;
         bool m_is_visible = false;
         bool m_no_y_update = false;
 
@@ -94,7 +98,7 @@ namespace RichText {
         void virtual onClick() {}
         void virtual onSelect() {}
         void virtual onDeselect() {}
-        void virtual setWidth(float width);
+        void virtual setWindowWidth(float width);
     };
 
     struct RootNode: public AbstractElement {
