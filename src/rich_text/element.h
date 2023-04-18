@@ -30,11 +30,11 @@ namespace RichText {
         std::vector<WrapCharPtr> m_wrap_chars;
         int m_id = 0;
 
-        const int DIRTY_WIDTH = 0x1;
-        const int DIRTY_CHARS = 0x2;
-        const int ALL_DIRTY = ~0;
-
     public:
+        const unsigned int DIRTY_WIDTH = 0x1;
+        const unsigned int DIRTY_CHARS = 0x2;
+        const unsigned int ALL_DIRTY = DIRTY_WIDTH | DIRTY_CHARS;
+
         Type m_type;
         Category m_category;
         static int count;
@@ -46,7 +46,7 @@ namespace RichText {
         AbstractElementWeakPtr m_parent;
         AB::RootBlockWeakPtr m_ref_to_root;
 
-        int m_widget_dirty = ALL_DIRTY;
+        unsigned int m_widget_dirty = ALL_DIRTY;
         bool m_is_visible = false;
         bool m_no_y_update = false;
 

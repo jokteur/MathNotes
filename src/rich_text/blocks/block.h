@@ -45,4 +45,12 @@ namespace RichText {
         bool hk_build_widget(float x_offset);
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
+    struct HrBlock: public AbstractLeafBlock {
+        HrBlock(UIState_ptr ui_state): AbstractLeafBlock(ui_state) {
+            m_category = C_BLOCK;
+            m_type = T_BLOCK_HR;
+        }
+        // bool hk_build_widget(float x_offset);
+        // bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
+    };
 }

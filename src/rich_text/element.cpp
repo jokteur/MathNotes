@@ -76,7 +76,7 @@ namespace RichText {
 
     void AbstractElement::hk_debug_attributes() {
         /* State */
-        ImGui::Text("Dirty state %d", &m_widget_dirty);
+        ImGui::Text("Dirty state %u", &m_widget_dirty);
         ImGui::Checkbox("Is selected", &m_is_selected);
 
         /* Display */

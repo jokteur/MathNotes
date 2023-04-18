@@ -101,7 +101,7 @@ namespace RichText {
 
             /* Set the width of the blocks recursively, even the ones that are not shown */
             for (auto pair : m_root_elements) {
-                if (m_current_width != width) {
+                if (m_current_width != width || pair.second->m_widget_dirty & pair.second->DIRTY_WIDTH) {
                     pair.second->setWindowWidth(width);
                 }
             }
@@ -306,7 +306,7 @@ namespace RichText {
             }
             float element_height = m_current_block_ptr->m_dimensions.y;
             total_height += element_height;
-            if (pixels <= total_height) {
+            if (pixels <= total_height || prev == m_root_elements.begin()) {
                 m_y_displacement = element_height - pixels;
                 if (m_y_displacement < 0.f)
                     m_y_displacement = 0.f;

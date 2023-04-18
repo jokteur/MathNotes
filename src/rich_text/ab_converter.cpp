@@ -110,9 +110,6 @@ namespace RichText {
         case AB::BLOCK_LATEX:
             ptr = BLOCK_LATEX(enter, bounds, attributes);
             break;
-            // case AB::BLOCK_DIV:
-                // ptr = BLOCK_DIV((MD_BLOCK_TABLE_DETAIL*)detail, enter);
-                // break;
         default:
             ptr = BLOCK_NOT_IMPLEMENTED(enter, bounds, attributes);
             break;
@@ -331,7 +328,17 @@ namespace RichText {
     }
 
     AbstractElementPtr ABToWidgets::BLOCK_HR(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
-        return nullptr;
+        if (enter) {
+            auto header = std::make_shared<HrBlock>(m_ui_state);
+            header->m_text_boundaries = bounds;
+            header->m_attributes = attributes;
+            set_infos(ABConfig::P, std::static_pointer_cast<AbstractElement>(header));
+            auto ptr = std::static_pointer_cast<AbstractElement>(header);
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
     }
 
     AbstractElementPtr ABToWidgets::BLOCK_H(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockHDetail& detail) {
@@ -348,6 +355,7 @@ namespace RichText {
             return m_current_ptr;
         }
     }
+
     AbstractElementPtr ABToWidgets::BLOCK_QUOTE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto quote = std::make_shared<QuoteWidget>(m_ui_state);
