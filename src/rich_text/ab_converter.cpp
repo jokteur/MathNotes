@@ -7,6 +7,9 @@
 #include "blocks/lists.h"
 #include "blocks/table.h"
 #include "blocks/quote.h"
+#include "blocks/definition.h"
+#include "blocks/div.h"
+#include "blocks/latex.h"
 
 #include "spans/latex.h"
 #include "spans/text.h"
@@ -97,6 +100,15 @@ namespace RichText {
             break;
         case AB::BLOCK_HIDDEN:
             ptr = BLOCK_HIDDENSPACE(enter, bounds, attributes);
+            break;
+        case AB::BLOCK_DIV:
+            ptr = BLOCK_DIV(enter, bounds, attributes);
+            break;
+        case AB::BLOCK_DEF:
+            ptr = BLOCK_DEF(enter, bounds, attributes);
+            break;
+        case AB::BLOCK_LATEX:
+            ptr = BLOCK_LATEX(enter, bounds, attributes);
             break;
             // case AB::BLOCK_DIV:
                 // ptr = BLOCK_DIV((MD_BLOCK_TABLE_DETAIL*)detail, enter);
@@ -366,7 +378,6 @@ namespace RichText {
             return m_current_ptr;
         }
     }
-
     AbstractElementPtr ABToWidgets::BLOCK_P(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<ParagraphWidget>(m_ui_state);
@@ -380,7 +391,45 @@ namespace RichText {
             return m_current_ptr;
         }
     }
-
+    AbstractElementPtr ABToWidgets::BLOCK_DEF(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+        if (enter) {
+            auto p = std::make_shared<DefinitionWidget>(m_ui_state);
+            p->m_text_boundaries = bounds;
+            p->m_attributes = attributes;
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(ABConfig::DEF, std::static_pointer_cast<AbstractElement>(p));
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
+    }
+    AbstractElementPtr ABToWidgets::BLOCK_DIV(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+        if (enter) {
+            auto p = std::make_shared<DivWidget>(m_ui_state);
+            p->m_text_boundaries = bounds;
+            p->m_attributes = attributes;
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(ABConfig::DIV, ptr);
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
+    }
+    AbstractElementPtr ABToWidgets::BLOCK_LATEX(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
+        if (enter) {
+            auto p = std::make_shared<DisplayLatexWidget>(m_ui_state);
+            p->m_text_boundaries = bounds;
+            p->m_attributes = attributes;
+            auto ptr = std::static_pointer_cast<AbstractElement>(p);
+            set_infos(ABConfig::B_LATEX, ptr);
+            return ptr;
+        }
+        else {
+            return m_current_ptr;
+        }
+    }
     AbstractElementPtr ABToWidgets::BLOCK_HIDDENSPACE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
             auto p = std::make_shared<HiddenSpace>(m_ui_state);
@@ -396,7 +445,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_NOT_IMPLEMENTED(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = std::make_shared<EmptyBlock>(m_ui_state);
+            auto p = std::make_shared<ParagraphWidget>(m_ui_state);
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = std::static_pointer_cast<AbstractElement>(p);

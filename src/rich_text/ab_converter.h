@@ -59,10 +59,13 @@ namespace RichText {
         AbstractElementPtr BLOCK_UL(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockUlDetail&);
         AbstractElementPtr BLOCK_OL(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockOlDetail&);
         AbstractElementPtr BLOCK_LI(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockLiDetail&);
-        AbstractElementPtr BLOCK_HR(bool e, const std::vector<AB::Boundaries>&, const AB::Attributes&);
+        AbstractElementPtr BLOCK_HR(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractElementPtr BLOCK_H(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockHDetail& d);
         AbstractElementPtr BLOCK_CODE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&, const AB::BlockCodeDetail&);
         AbstractElementPtr BLOCK_P(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
+        AbstractElementPtr BLOCK_DIV(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
+        AbstractElementPtr BLOCK_DEF(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
+        AbstractElementPtr BLOCK_LATEX(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractElementPtr BLOCK_HIDDENSPACE(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
         AbstractElementPtr BLOCK_NOT_IMPLEMENTED(bool, const std::vector<AB::Boundaries>&, const AB::Attributes&);
 

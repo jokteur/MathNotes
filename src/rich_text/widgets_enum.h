@@ -21,6 +21,9 @@ namespace RichText {
         T_BLOCK_OL,
         T_BLOCK_HR,
         T_BLOCK_H,
+        T_BLOCK_DIV,
+        T_BLOCK_DEF,
+        T_BLOCK_LATEX,
         T_BLOCK_EMPTY,
         // Spans
         T_SPAN_EM,

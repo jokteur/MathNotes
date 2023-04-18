@@ -13,6 +13,12 @@ namespace RichText {
             return "quote";
         case T_BLOCK_HIDDENSPACE:
             return "hidden";
+        case T_BLOCK_DIV:
+            return "div";
+        case T_BLOCK_DEF:
+            return "def";
+        case T_BLOCK_LATEX:
+            return "latex";
         case T_BLOCK_TABLE:
             return "table";
         case T_BLOCK_THEAD:

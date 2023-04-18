@@ -61,6 +61,21 @@ namespace RichText {
         styles[QUOTE].set_v_margins(ImVec2(0.f, 0.f));
         styles[QUOTE].set_v_paddings(ImVec2(0.f, 0.f));
 
+        // Display latex
+        styles[B_LATEX].set_h_margins(ImVec2(15.f, 0.f));
+        styles[B_LATEX].set_v_margins(ImVec2(0.f, 0.f));
+        styles[B_LATEX].set_v_paddings(ImVec2(0.f, 0.f));
+
+        // div
+        styles[DIV].set_h_margins(ImVec2(15.f, 0.f));
+        styles[DIV].set_v_margins(ImVec2(0.f, 0.f));
+        styles[DIV].set_v_paddings(ImVec2(0.f, 0.f));
+
+        // definition
+        styles[DEF].set_h_margins(ImVec2(15.f, 0.f));
+        styles[DEF].set_v_margins(ImVec2(0.f, 0.f));
+        styles[DEF].set_v_paddings(ImVec2(0.f, 0.f));
+
         // href
         styles[HREF].set_font_underline(true);
         styles[HREF].set_font_color(Colors::blue);

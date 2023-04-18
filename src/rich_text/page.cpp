@@ -171,7 +171,10 @@ namespace RichText {
         float display_height = b.h;
         float elements_height = before + after + display_height;
         float scroll_height = b.h * (display_height / elements_height);
-        float percentage = before / (before + after);
+        float percentage = 0.f;
+        if (before + after > 0.f)
+            percentage = before / (before + after);
+
         float scroll_pos = b.y + (b.h - scroll_height) * percentage;
 
         ImVec2 top_left(5 + b.w + b.x - scroll_width, scroll_pos);
