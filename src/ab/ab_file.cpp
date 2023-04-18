@@ -101,29 +101,26 @@ namespace AB {
             bounds.start.line_idx = 0;
             bounds.start.block_idx = 0;
         }
-        while (!found) {
-            if (m_blocks[midpoint_idx]->line_start > line_start) {
-                end_idx = midpoint_idx;
-                midpoint_idx = start_idx + (end_idx - start_idx) / 2;
+
+        while (!found && start_idx <= end_idx) {
+            midpoint_idx = (end_idx + start_idx) / 2;
+            if (m_blocks[midpoint_idx]->line_start < line_start) {
+                start_idx = midpoint_idx + 1;
             }
-            else if (m_blocks[midpoint_idx]->line_start < line_start) {
-                if (m_blocks[midpoint_idx]->line_end > line_start || midpoint_idx == start_idx) {
-                    bounds.start.txt_idx = m_blocks[midpoint_idx]->idx_start;
-                    bounds.start.line_idx = m_blocks[midpoint_idx]->line_start;
-                    bounds.start.block_idx = midpoint_idx;
-                    found = true;
-                }
-                else {
-                    start_idx = midpoint_idx;
-                    midpoint_idx = start_idx + (end_idx - start_idx) / 2;
-                }
+            else if (m_blocks[midpoint_idx]->line_start > line_start) {
+                end_idx = midpoint_idx - 1;
             }
             else {
-                bounds.start.txt_idx = m_blocks[midpoint_idx]->idx_start;
-                bounds.start.line_idx = line_start;
-                bounds.start.block_idx = midpoint_idx;
                 found = true;
+                bounds.start.txt_idx = m_blocks[midpoint_idx]->idx_start;
+                bounds.start.line_idx = m_blocks[midpoint_idx]->line_start;
+                bounds.start.block_idx = midpoint_idx;
+                break;
             }
+        }
+        /* We asked for a starting boundary outside of the file */
+        if (!found && m_blocks.back()->line_end < line_start) {
+            return BlockBounds{};
         }
 
         /* Bounds end */
@@ -137,29 +134,28 @@ namespace AB {
             bounds.end.line_idx = m_blocks.back()->line_end;
             bounds.end.block_idx = end_idx;
         }
-        while (!found) {
-            if (m_blocks[midpoint_idx]->line_end < line_end && midpoint_idx != start_idx) {
-                start_idx = midpoint_idx;
-                midpoint_idx = start_idx + (end_idx - start_idx) / 2;
+
+        while (!found && start_idx <= end_idx) {
+            midpoint_idx = (end_idx + start_idx) / 2;
+            if (m_blocks[midpoint_idx]->line_end < line_end) {
+                start_idx = midpoint_idx + 1;
             }
             else if (m_blocks[midpoint_idx]->line_end > line_end) {
-                if (m_blocks[midpoint_idx]->line_start < line_end) {
-                    bounds.end.txt_idx = m_blocks[midpoint_idx]->idx_end;
-                    bounds.end.line_idx = m_blocks[midpoint_idx]->line_end;
-                    bounds.end.block_idx = midpoint_idx;
-                    found = true;
-                }
-                else {
-                    end_idx = midpoint_idx;
-                    midpoint_idx = start_idx + (end_idx - start_idx) / 2;
-                }
+                end_idx = midpoint_idx - 1;
             }
             else {
-                bounds.end.txt_idx = m_blocks[midpoint_idx]->idx_end;
-                bounds.end.line_idx = line_end;
-                bounds.end.block_idx = midpoint_idx;
                 found = true;
+                bounds.end.txt_idx = m_blocks[midpoint_idx]->idx_end;
+                bounds.end.line_idx = m_blocks[midpoint_idx]->line_end;
+                bounds.end.block_idx = midpoint_idx;
+                break;
             }
+        }
+        /* It's okay if we asked end_line outside of file, we just return the last possible index */
+        if (!found) {
+            bounds.end.txt_idx = m_blocks[midpoint_idx]->idx_end;
+            bounds.end.line_idx = m_blocks[midpoint_idx]->line_end;
+            bounds.end.block_idx = midpoint_idx;
         }
         return bounds;
     }
