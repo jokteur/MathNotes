@@ -50,7 +50,6 @@ namespace RichText {
         bool m_is_visible = false;
         bool m_no_y_update = false;
 
-
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
         bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);

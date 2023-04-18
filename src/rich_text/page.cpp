@@ -327,7 +327,11 @@ namespace RichText {
         //ZoneScoped;
         manage_jobs();
 
-        int half_window = m_line_lookahead_window / 2;
+        int half_window = 4000 * m_line_lookahead_window / 2;
+        /* We want a minimum half window for super tiny pages */
+        if (half_window < 100) {
+            half_window = 100;
+        }
         int start_line = m_current_line - half_window;
         int end_line = m_current_line + half_window;
         if (start_line < 0) {

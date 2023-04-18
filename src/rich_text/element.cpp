@@ -18,8 +18,9 @@ namespace RichText {
     AbstractElement::~AbstractElement() {
         count--;
     }
-    bool AbstractElement::is_in_boundaries(const Rect& boundaries) {
-        return isInsideRectY(m_position.y, boundaries) || isInsideRectY(m_position.y + m_dimensions.y, boundaries);
+    bool AbstractElement::is_in_boundaries(const Rect& b) {
+        return isInsideRectY(m_position.y, b) || isInsideRectY(m_position.y + m_dimensions.y, b)
+            || b.y > m_position.y && b.y + b.h < m_position.y + m_dimensions.y;
     }
     int AbstractElement::count = 0;
     float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
@@ -159,9 +160,9 @@ namespace RichText {
         float initial_y_pos = cursor_y_pos;
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
         m_is_visible = is_in_boundaries(boundaries);
-        if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
+        if (m_is_visible || !m_is_dimension_set || m_widget_dirty & DIRTY_CHARS) {
             if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
-                m_widget_dirty = true;
+                m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
             }
             hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
@@ -179,6 +180,8 @@ namespace RichText {
     }
     void AbstractElement::setWindowWidth(float width) {
         //ZoneScoped;
+        if (m_window_width == width)
+            return;
         m_window_width = width;
         m_widget_dirty |= DIRTY_WIDTH;
         for (auto ptr : m_childrens) {

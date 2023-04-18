@@ -13,7 +13,6 @@ namespace RichText {
         float m_font_size;
         ImU32 m_color;
         ImWchar m_char;
-        float m_y_offset;
     public:
         ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, bool force_blank = false);
 
