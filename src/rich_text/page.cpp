@@ -166,11 +166,19 @@ namespace RichText {
         float rounding = ImGui::GetStyle().ScrollbarRounding;
         auto color_bg = ImGui::GetColorU32(ImGuiCol_ScrollbarBg);
 
-        float before = m_before_height + m_y_displacement;
-        float after = m_after_height - m_y_displacement;
+        /* Find approximate height before the first parsed block
+         * and after the last parsed block */
+        int num_lines_before = m_file->m_blocks[m_block_idx_start]->line_start;
+        int num_lines_after = m_file->m_blocks.back()->line_end - m_file->m_blocks[m_block_idx_end]->line_end;
+
+        float before = m_before_height + m_y_displacement + num_lines_before * m_line_height;
+        float after = m_after_height - m_y_displacement + num_lines_after * m_line_height;
         float display_height = b.h;
         float elements_height = before + after + display_height;
         float scroll_height = b.h * (display_height / elements_height);
+        if (scroll_height < m_config.min_scroll_height) {
+            scroll_height = m_config.min_scroll_height;
+        }
         float percentage = 0.f;
         if (before + after > 0.f)
             percentage = before / (before + after);
