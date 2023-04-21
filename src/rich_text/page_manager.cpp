@@ -30,6 +30,7 @@ namespace RichText {
         m_current_widgets |= widget_id;
 
         auto widget = std::make_shared<Page>(m_ui_state);
+        widget->setName(std::to_string(widget_id));
         widget->m_config = config;
         widget->m_file = &m_file;
         widget->m_current_line = config.line_start;

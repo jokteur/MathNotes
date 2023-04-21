@@ -20,30 +20,42 @@
 
 namespace RichText {
     struct AbstractElement;
-    using AbstractElementPtr = std::shared_ptr<AbstractElement>;
-    using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
+    // using AbstractElementPtr = std::shared_ptr<AbstractElement>;
+    /**
+     * Unfortunately, shared_ptr have a big performance hit in tree structures
+     *
+     * Here is how memory is managed:
+     * - AbstractElements are created in ab_converted with the "new" keyword
+     * - each AbstractElement (and derived) is responsible for the memory
+     *   of its children
+     *    - thus, even though the memory is created in ab_convert.cpp, it is then handled
+     *      in AbstractElement destructor
+     * - memory of root AbstractElement is handled by RootNode
+     *
+     */
+    using AbstractElementPtr = AbstractElement*;
+    // using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
+    // using AbstractElementWeakPtr = AbstractElement*;
 
     struct AbstractElement: public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<DrawableCharPtr> m_draw_delimiter_chars;
         std::vector<WrapCharPtr> m_wrap_chars;
-        int m_id = 0;
-
     public:
+        static int count;
         const unsigned int DIRTY_WIDTH = 0x1;
         const unsigned int DIRTY_CHARS = 0x2;
         const unsigned int ALL_DIRTY = DIRTY_WIDTH | DIRTY_CHARS;
 
         Type m_type;
         Category m_category;
-        static int count;
-        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) { count++; m_id = count; }
+        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) { count++; }
         ~AbstractElement();
 
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
-        AbstractElementWeakPtr m_parent;
+        AbstractElementPtr m_parent;
         AB::RootBlockWeakPtr m_ref_to_root;
 
         unsigned int m_widget_dirty = ALL_DIRTY;
@@ -75,6 +87,7 @@ namespace RichText {
 
         // Position of the pointer in m_childrens;
         int m_child_number = -1;
+        bool m_is_root = false; /* Is used in ab_converter */
 
         std::vector<AB::Boundaries> m_text_boundaries;
         AB::Attributes m_attributes;
@@ -100,10 +113,23 @@ namespace RichText {
         void virtual setWindowWidth(float width);
     };
 
-    struct RootNode: public AbstractElement {
-        RootNode(UIState_ptr ui_state): AbstractElement(ui_state) {
-            m_type = T_ROOT;
-            m_category = C_ROOT;
+    class RootNode {
+    private:
+        AbstractElementPtr m_ptr = nullptr;
+    public:
+        RootNode(AbstractElementPtr ptr): m_ptr(ptr) {}
+
+        /* We don't want copy constructor to avoid accidentally deleting memory twice */
+        RootNode(const RootNode&) = delete;
+        RootNode& operator=(const RootNode&) = delete;
+
+        AbstractElement& get() {
+            return *m_ptr;
+        }
+        ~RootNode() {
+            delete m_ptr;
         }
     };
+
+    using RootNodePtr = std::shared_ptr<RootNode>;
 }

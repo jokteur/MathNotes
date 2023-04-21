@@ -36,10 +36,8 @@ namespace RichText {
         int m_level = -1;
 
         AbstractElementPtr m_current_ptr = nullptr;
-        AbstractElementPtr m_root_ptr = nullptr;
-        AbstractElementPtr m_last_text_ptr = nullptr;
-        AbstractElementPtr m_last_block_ptr = nullptr;
-        std::map<int, AbstractElementPtr>* m_root_elements;
+        RootNodePtr m_root_ptr = nullptr;
+        std::map<int, RootNodePtr>* m_root_elements;
 
         UIState_ptr m_ui_state = nullptr;
         AB::File* m_ab_file;
@@ -83,7 +81,8 @@ namespace RichText {
         void configure_parser();
     public:
         ABToWidgets();
+        ~ABToWidgets();
 
-        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, AbstractElementPtr>* root_elements, UIState_ptr ui_state, ABConfig config = ABConfig());
+        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, RootNodePtr>* root_elements, UIState_ptr ui_state, ABConfig config = ABConfig());
     };
 }

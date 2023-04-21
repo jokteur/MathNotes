@@ -18,6 +18,7 @@ private:
     RichText::PageManager* m_widget_manager = nullptr;
     AB::File* m_ab_file = nullptr;
     RichText::WidgetId m_widget_id;
+    RichText::WidgetId m_widget_id2;
 
     std::string m_in_text;
     std::string m_txt;

@@ -9,20 +9,25 @@
 #include "ab/ab_file.h"
 
 #include "profiling.h"
+#include "time_counter.h"
 
 namespace RichText {
     // AbstractElement
+    int AbstractElement::count = 0;
     bool AbstractElement::add_chars(std::vector<WrapCharPtr>&) {
         return true;
     }
     AbstractElement::~AbstractElement() {
+        if (!m_is_root)
+            for (auto ptr : m_childrens) {
+                delete ptr;
+            }
         count--;
     }
     bool AbstractElement::is_in_boundaries(const Rect& b) {
         return isInsideRectY(m_position.y, b) || isInsideRectY(m_position.y + m_dimensions.y, b)
             || b.y > m_position.y && b.y + b.h < m_position.y + m_dimensions.y;
     }
-    int AbstractElement::count = 0;
     float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
         x_offset += m_style.h_margins.x;
         cursor_y_pos += m_style.v_margins.y;
@@ -161,6 +166,7 @@ namespace RichText {
         float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
         m_is_visible = is_in_boundaries(boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty & DIRTY_CHARS) {
+            auto& timers = TimeCounter::getInstance();
             if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;

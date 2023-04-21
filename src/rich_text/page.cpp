@@ -13,12 +13,14 @@ namespace RichText {
         ImGui::Text("current block idx: %d", m_current_block_idx);
         ImGui::Text("height before current: %f", m_before_height);
         ImGui::Text("height after current: %f", m_after_height);
+        ImGui::Text("Element count: %d", AbstractElement::count);
+        ImGui::Separator();
         ImGui::End();
 
         ImGui::Begin("Parsed blocks");
         if (ImGui::TreeNode("Show")) {
-            for (auto pair : m_root_elements) {
-                pair.second->hk_debug(std::to_string(pair.first));
+            for (auto& pair : m_root_elements) {
+                pair.second->get().hk_debug(std::to_string(pair.first));
             }
             ImGui::TreePop();
         }
@@ -26,7 +28,7 @@ namespace RichText {
 
         ImGui::Begin("Top displayed block");
         if (m_current_block_ptr != nullptr) {
-            m_current_block_ptr->hk_debug();
+            m_current_block_ptr->get().hk_debug();
         }
         ImGui::End();
 
@@ -73,7 +75,7 @@ namespace RichText {
         manage_jobs();
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
-        ImGui::Begin("RichText window");
+        ImGui::Begin(("RichText window ##drawable " + m_name).c_str());
         float width = ImGui::GetWindowContentRegionWidth();
         width -= ImGui::GetStyle().ScrollbarSize;
         ImVec2 vMin = ImGui::GetWindowContentRegionMin();
@@ -100,14 +102,16 @@ namespace RichText {
             find_current_ptr();
 
             /* Set the width of the blocks recursively, even the ones that are not shown */
+            TimeCounter::getInstance().startCounter("Set widths");
             for (auto pair : m_root_elements) {
-                if (m_current_width != width || pair.second->m_widget_dirty & pair.second->DIRTY_WIDTH) {
-                    pair.second->setWindowWidth(width);
+                if (m_current_width != width || pair.second->get().m_widget_dirty & pair.second->get().DIRTY_WIDTH) {
+                    pair.second->get().setWindowWidth(width);
                 }
             }
             if (m_current_width != width) {
                 m_current_width = width;
             }
+            TimeCounter::getInstance().stopCounter("Set widths");
 
 
             if (!m_root_elements.empty()) {
@@ -140,16 +144,21 @@ namespace RichText {
                 bool found_current = false;
                 float y_pos = m_display_height + 1000.f;
                 /* Designates the height taken by the elements before the current one */
+
+                TimeCounter::getInstance().startCounter("DisplayAll");
                 for (auto pair : m_root_elements) {
                     if (!found_current && pair.first >= m_current_block_idx) {
                         found_current = true;
                         m_before_height = y_pos - m_display_height - 1000.f;
                         y_pos = -roundf(m_y_displacement);
                     }
-                    pair.second->draw(m_draw_list, y_pos, 0.f, boundaries);
+                    pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
                 }
+                TimeCounter::getInstance().stopCounter("DisplayAll");
                 m_after_height = y_pos + m_y_displacement;
+                TimeCounter::getInstance().startCounter("MergeDrawList");
                 m_draw_list.Merge();
+                TimeCounter::getInstance().stopCounter("MergeDrawList");
                 display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
             }
 
@@ -220,14 +229,14 @@ namespace RichText {
         float num_pages_for_min_scroll = m_display_height / (m_config.min_scroll_height * Tempo::GetScaling());
         m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
     }
-    std::map<int, AbstractElementPtr>::iterator Page::find_prev_ptr() {
+    std::map<int, RootNodePtr>::iterator Page::find_prev_ptr() {
         //ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end() || current_it == m_root_elements.begin())
             return current_it;
         return std::prev(current_it);
     }
-    std::map<int, AbstractElementPtr>::iterator Page::find_next_ptr() {
+    std::map<int, RootNodePtr>::iterator Page::find_next_ptr() {
         //ZoneScoped;
         auto current_it = m_root_elements.find(m_current_block_idx);
         if (current_it == m_root_elements.end()) {
@@ -249,7 +258,7 @@ namespace RichText {
         m_current_line = line_number;
         find_current_ptr();
         if (m_current_block_ptr != nullptr) {
-            m_current_line = m_current_block_ptr->m_text_boundaries.front().line_number;
+            m_current_line = m_current_block_ptr->get().m_text_boundaries.front().line_number;
         }
     }
     void Page::scroll_down(float pixels) {
@@ -258,10 +267,9 @@ namespace RichText {
             return;
 
         pixels = abs(pixels);
-        std::cout << "Scroll down " << pixels << std::endl;
 
         /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_current_block_ptr->m_dimensions.y - m_y_displacement;
+        float remaining_height = m_current_block_ptr->get().m_dimensions.y - m_y_displacement;
         if (pixels < remaining_height) {
             m_y_displacement += pixels;
             return;
@@ -275,9 +283,9 @@ namespace RichText {
                 arrived_at_end = true;
                 break;
             }
-            go_to_line(next->second->m_text_boundaries.front().line_number);
+            go_to_line(next->second->get().m_text_boundaries.front().line_number);
 
-            float element_height = m_current_block_ptr->m_dimensions.y;
+            float element_height = m_current_block_ptr->get().m_dimensions.y;
             total_height += element_height;
             if (pixels < total_height) {
                 m_y_displacement = element_height - (total_height - pixels);
@@ -290,10 +298,8 @@ namespace RichText {
         if (m_current_block_ptr == nullptr)
             return;
 
-        std::cout << "Scroll up " << pixels << std::endl;
-
         /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_current_block_ptr->m_dimensions.y - m_y_displacement;
+        float remaining_height = m_current_block_ptr->get().m_dimensions.y - m_y_displacement;
         if (pixels <= m_y_displacement || m_current_block_idx == 0) {
             m_y_displacement -= pixels;
             if (m_y_displacement < 0.f)
@@ -308,11 +314,11 @@ namespace RichText {
                 arrived_at_beg = true;
                 break;
             }
-            go_to_line(prev->second->m_text_boundaries.front().line_number);
-            if (prev->second->m_dimensions.y == 0.f && prev->first > 0) {
+            go_to_line(prev->second->get().m_text_boundaries.front().line_number);
+            if (prev->second->get().m_dimensions.y == 0.f && prev->first > 0) {
                 continue;
             }
-            float element_height = m_current_block_ptr->m_dimensions.y;
+            float element_height = m_current_block_ptr->get().m_dimensions.y;
             total_height += element_height;
             if (pixels <= total_height || prev == m_root_elements.begin()) {
                 m_y_displacement = element_height - pixels;
@@ -327,10 +333,10 @@ namespace RichText {
         //ZoneScoped;
         manage_jobs();
 
-        int half_window = 4000 * m_line_lookahead_window / 2;
+        int half_window = 3 * m_line_lookahead_window / 2;
         /* We want a minimum half window for super tiny pages */
-        if (half_window < 100) {
-            half_window = 100;
+        if (half_window < 500) {
+            half_window = 500;
         }
         int start_line = m_current_line - half_window;
         int end_line = m_current_line + half_window;
@@ -411,7 +417,7 @@ namespace RichText {
         /* TODO: after job is finished, check if the job is not obsolete */
         Tempo::jobFct job = [=](float& progress, bool& abort) -> std::shared_ptr<Tempo::JobResult> {
             ABToWidgets parser;
-            std::map<int, AbstractElementPtr> tmp_roots;
+            std::map<int, RootNodePtr> tmp_roots;
             parser.parse(m_file, start_idx, end_idx, &tmp_roots, m_ui_state);
             {
                 std::lock_guard<std::mutex> lk(m_root_mutex);

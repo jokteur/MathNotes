@@ -2,7 +2,7 @@
 
 #include "ui/drawable.h"
 #include "element.h"
-
+#include "time_counter.h"
 
 namespace RichText {
 
@@ -32,7 +32,7 @@ namespace RichText {
 
         /* Here, current_xxx designates the element that should
          * be drawn at the top of the widget */
-        AbstractElementPtr m_current_block_ptr = nullptr;
+        RootNodePtr m_current_block_ptr = nullptr;
         int m_current_block_idx = -1;
         /* Current_line is the first line corresponding in the raw text of the current element */
         int m_current_line = 0.f;
@@ -50,7 +50,9 @@ namespace RichText {
         int m_debug_root_min = 0;
         int m_debug_root_max = 100;
 
-        std::map<int, AbstractElementPtr> m_root_elements;
+        std::string m_name;
+
+        std::map<int, RootNodePtr> m_root_elements;
         std::mutex m_root_mutex;
         std::unordered_set<Tempo::jobId> m_current_jobs;
 
@@ -64,14 +66,16 @@ namespace RichText {
         void parse_job(int start_idx, int end_idx);
 
         void find_current_ptr();
-        std::map<int, AbstractElementPtr>::iterator find_prev_ptr();
-        std::map<int, AbstractElementPtr>::iterator find_next_ptr();
+        std::map<int, RootNodePtr>::iterator find_prev_ptr();
+        std::map<int, RootNodePtr>::iterator find_next_ptr();
         void go_to_line(int line_number);
         void scroll_up(float pixels);
         void scroll_down(float pixels);
     public:
         Page(UIState_ptr ui_state): Drawable(ui_state) {}
         Page(const Page&) = delete;
+
+        void setName(const std::string& name) { m_name = name; }
 
         ~Page();
         Page& operator= (const Page&) = delete;
