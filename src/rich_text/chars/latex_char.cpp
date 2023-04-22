@@ -3,9 +3,9 @@
 #include "imgui_internal.h"
 
 namespace RichText {
-    LatexChar::LatexChar(Latex::LatexImagePtr latex_image) {
-        m_latex_image = latex_image;
-        if (!latex_image->getLatexErrorMsg().empty())
+    LatexChar::LatexChar(Latex::LatexImageUPtr latex_image) {
+        m_latex_image = std::move(latex_image);
+        if (!m_latex_image->getLatexErrorMsg().empty())
             return;
 
         dimensions = m_latex_image->getDimensions();
@@ -13,7 +13,6 @@ namespace RichText {
         ascent = m_latex_image->getAscent();
         descent = m_latex_image->getDescent();
     }
-
 
     bool LatexChar::draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset) {
         auto cursor_pos = ImGui::GetCursorScreenPos();
@@ -30,8 +29,8 @@ namespace RichText {
 
     LatexCharPtr ToLatexChar(const std::string& latex_src, float font_size, float line_space, microtex::color text_color, ImVec2 scale, ImVec2 inner_padding, bool inlined) {
         if (inlined)
-            return std::make_shared<LatexChar>(std::make_shared<Latex::LatexImage>("$$" + latex_src + "$$", font_size, line_space, text_color, scale, inner_padding));
+            return std::make_shared<LatexChar>(std::make_unique<Latex::LatexImage>("$$" + latex_src + "$$", font_size, line_space, text_color, scale, inner_padding));
         else
-            return std::make_shared<LatexChar>(std::make_shared<Latex::LatexImage>(latex_src, font_size, line_space, text_color, scale, inner_padding));
+            return std::make_shared<LatexChar>(std::make_unique<Latex::LatexImage>(latex_src, font_size, line_space, text_color, scale, inner_padding));
     }
 }

@@ -99,4 +99,5 @@ namespace Latex {
     };
 
     using LatexImagePtr = std::shared_ptr<LatexImage>;
+    using LatexImageUPtr = std::unique_ptr<LatexImage>;
 }

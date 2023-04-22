@@ -42,6 +42,9 @@ namespace RichText {
 
         // This should be only modified by WrapAlgorithm
         ImVec2 _calculated_position;
+        static int count;
+        WrapCharacter() { count++; }
+        ~WrapCharacter() { count--; }
     };
 
     using WrapCharPtr = std::shared_ptr<WrapCharacter>;

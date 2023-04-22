@@ -14,6 +14,8 @@ namespace RichText {
         ImGui::Text("height before current: %f", m_before_height);
         ImGui::Text("height after current: %f", m_after_height);
         ImGui::Text("Element count: %d", AbstractElement::count);
+        ImGui::Text("Char count: %d", WrapCharacter::count);
+
         ImGui::Separator();
         ImGui::End();
 

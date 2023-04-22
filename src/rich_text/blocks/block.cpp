@@ -160,13 +160,13 @@ namespace RichText {
         m_draw_chars.clear();
         m_is_selected = true;
 
-        if (m_is_selected) {
-            auto& bounds = m_text_boundaries.front();
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, bounds.pre, bounds.end, m_special_chars_style, true);
-            if (!res) {
-                success = false;
-            }
-        }
+        // if (m_is_selected) {
+        //     auto& bounds = m_text_boundaries.front();
+        //     auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, bounds.pre, bounds.end, m_special_chars_style, true);
+        //     if (!res) {
+        //         success = false;
+        //     }
+        // }
         return success;
     }
 }
