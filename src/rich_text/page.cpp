@@ -12,8 +12,7 @@ namespace RichText {
         ImGui::Text("y disp: %f", m_y_displacement);
         ImGui::Text("current_line: %d", m_current_line);
         ImGui::Text("current block idx: %d", m_current_block_idx);
-        ImGui::Text("height before current: %f", m_before_height);
-        ImGui::Text("height after current: %f", m_after_height);
+        ImGui::Text("Heigts (b, a, t): %f %f %f", m_before_height, m_after_height, m_before_height + m_after_height);
         ImGui::Text("Element count: %d", AbstractElement::count);
         ImGui::Text("Char count: %d", WrapCharacter::count);
 
@@ -428,7 +427,8 @@ namespace RichText {
             {
                 std::lock_guard<std::mutex> lk(m_root_mutex);
                 for (auto pair : tmp_roots) {
-                    m_root_elements[pair.first] = pair.second;
+                    if (m_root_elements.find(pair.first) == m_root_elements.end())
+                        m_root_elements[pair.first] = pair.second;
                 }
             }
             Tempo::JobResult jr;
