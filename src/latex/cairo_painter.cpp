@@ -2,7 +2,6 @@
 
 using namespace microtex;
 
-
 inline float max(float a, float b) {
     if (a > b)
         return a;
@@ -19,7 +18,6 @@ void Cairo_Painter::destroy() {
         cairo_surface_destroy(m_surface);
         cairo_destroy(m_context);
     }
-    m_image_data = std::make_shared<ARGB_Image>();
 }
 
 void Cairo_Painter::start(ImVec2 dimensions, ImVec2 scale, ImVec2 inner_padding) {
@@ -40,12 +38,8 @@ void Cairo_Painter::start(ImVec2 dimensions, ImVec2 scale, ImVec2 inner_padding)
 }
 void Cairo_Painter::finish() {
     if (m_dimensions.x > 0 && m_dimensions.y > 0 && m_painting) {
-        unsigned char* data = cairo_image_surface_get_data(m_surface);
         // data is a borrowed pointer, its creation / destruction is managed by cairo
-        // this is why we copy
-        m_image_data = std::make_shared<ARGB_Image>();
-        m_image_data->resize(m_dimensions.x * m_dimensions.y * 4);
-        memcpy(&(*m_image_data)[0], data, sizeof(unsigned char) * m_dimensions.x * m_dimensions.y * 4);
+        m_image_data = cairo_image_surface_get_data(m_surface);
         m_painting = false;
     }
 }

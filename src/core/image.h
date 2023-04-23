@@ -25,8 +25,10 @@ private:
     void load_texture(Filtering filtering);
     void load_texture_from_file(const char* filename, Filtering filtering);
     void load_texture_from_memory(unsigned char* data, int width, int height, Filtering filtering);
+
+    static int count;
 public:
-    Image() = default;
+    Image() { count++; };
     ~Image();
 
     /**

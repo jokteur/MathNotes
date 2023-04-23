@@ -4,6 +4,8 @@
 #include <stb_image.h>
 
 
+int Image::count = 0;
+
 void Image::reset() {
     if (m_success) {
         m_success = false;

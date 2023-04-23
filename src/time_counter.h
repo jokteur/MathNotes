@@ -6,7 +6,7 @@
 #include <chrono>
 
 struct Timer {
-    std::chrono::steady_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point start;
     float total_time = 0.f;
 };
 

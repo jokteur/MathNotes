@@ -134,7 +134,7 @@ void MainApp::FrameUpdate() {
         text_set = false;
         m_txt = m_big_text;
     }
-    if (ImGui::Button("SetNormalText") | true) {
+    if (ImGui::Button("SetNormalText")) {
         text_set = false;
         m_txt = m_normal_text;
     }

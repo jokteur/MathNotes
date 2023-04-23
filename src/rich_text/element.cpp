@@ -82,7 +82,7 @@ namespace RichText {
 
     void AbstractElement::hk_debug_attributes() {
         /* State */
-        ImGui::Text("Dirty state %u", &m_widget_dirty);
+        ImGui::Text("Dirty state %u", m_widget_dirty);
         ImGui::Checkbox("Is selected", &m_is_selected);
 
         /* Display */
@@ -151,7 +151,7 @@ namespace RichText {
                     bound_text += " beg: " + std::to_string(bounds.beg);
                     bound_text += " end: " + std::to_string(bounds.end);
                     bound_text += " post: " + std::to_string(bounds.post);
-                    ImGui::Text(bound_text.c_str());
+                    ImGui::Text("%s", bound_text.c_str());
                 }
                 ImGui::TreePop();
             }

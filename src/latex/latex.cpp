@@ -44,8 +44,9 @@ namespace Latex {
         m_painter.start(ImVec2(round(m_render->getWidth()), round(m_render->getHeight())), scale, inner_padding);
         m_graphics.distributeCallList(&m_painter);
         m_painter.finish();
-        if (!m_painter.getImageDataPtr()->empty())
-            m_image->setImage(m_painter.getImageDataPtr(), m_painter.getImageDimensions().x, m_painter.getImageDimensions().y, Image::FILTER_BILINEAR);
+        auto data = m_painter.getImageData();
+        if (data != nullptr)
+            m_image->setImage(data, m_painter.getImageDimensions().x, m_painter.getImageDimensions().y, Image::FILTER_BILINEAR);
     }
 
     LatexImage::LatexImage(const std::string& latex_src, float font_size, float line_space, microtex::color text_color, ImVec2 scale, ImVec2 inner_padding) {
@@ -67,6 +68,7 @@ namespace Latex {
             m_ascent = height - m_descent;
 
             m_render->draw(m_graphics, 0.f, 0.f);
+            // m_render->~Render();
 
         }
         catch (std::exception& e) {
@@ -74,6 +76,11 @@ namespace Latex {
         }
         if (m_latex_error_msg.empty())
             render(scale, inner_padding);
+    }
+    LatexImage::~LatexImage() {
+        if (m_render != nullptr) {
+            delete m_render;
+        }
     }
 
     std::shared_ptr<Image> LatexImage::getImage() {

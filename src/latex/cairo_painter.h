@@ -4,7 +4,7 @@
 #include "core/image.h"
 
 namespace microtex {
-    class Cairo_Painter : public Painter {
+    class Cairo_Painter: public Painter {
     private:
         cairo_t* m_context = nullptr;
         cairo_surface_t* m_surface = nullptr;
@@ -17,7 +17,8 @@ namespace microtex {
 
         bool m_painting = false;
 
-        ARGB_Imageptr m_image_data;
+        // ARGB_Imageptr m_image_data;
+        unsigned char* m_image_data = nullptr;
 
         float m_dx = 0.f;
         float m_dy = 0.f;
@@ -33,7 +34,8 @@ namespace microtex {
         Cairo_Painter();
         ~Cairo_Painter();
 
-        ARGB_Imageptr getImageDataPtr() { return m_image_data; }
+        // ARGB_Imageptr getImageDataPtr() { return m_image_data; }
+        unsigned char* getImageData() { return m_image_data; }
 
         ImVec2 getImageDimensions() { return m_dimensions; }
 

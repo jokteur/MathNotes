@@ -29,6 +29,7 @@ void TimeCounter::manage() {
 
 void TimeCounter::startCounter(const std::string& name) {
     m_timers[name].push_back({ std::chrono::high_resolution_clock::now() });
+    auto t = std::chrono::high_resolution_clock::now();
 }
 void TimeCounter::stopCounter(const std::string& name) {
     if (m_timers.find(name) != m_timers.end()) {
