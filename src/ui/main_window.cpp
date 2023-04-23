@@ -87,6 +87,9 @@ void MainApp::FrameUpdate() {
     //ZoneScoped;
     using namespace RichText;
     ImGui::ShowDemoWindow();
+    /* ImGui configs */
+    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
+
     ImGui::Begin("My window");
     ImGui::InputTextMultiline("input", &m_in_text, ImVec2(0, 0),
         ImGuiInputTextFlags_CallbackAlways, TextInputCallback, (void*)this);
@@ -120,8 +123,8 @@ void MainApp::FrameUpdate() {
     if (m_widget_manager != nullptr) {
         auto widget = m_widget_manager->getWidget(m_widget_id);
         auto widget2 = m_widget_manager->getWidget(m_widget_id2);
-        widget->draw();
-        widget2->draw();
+        widget->FrameUpdate();
+        widget2->FrameUpdate();
     }
 
     if (m_in_text != m_prev_text) {

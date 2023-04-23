@@ -4,6 +4,7 @@
 
 #include "ab/ab_file.h"
 #include "ab_converter.h"
+#include "ui/ui_utils.h"
 
 namespace RichText {
     void Page::debug_window() {
@@ -71,13 +72,14 @@ namespace RichText {
         ImGui::End();
     }
 
-    void Page::draw() {
+    void Page::FrameUpdate() {
         //ZoneScoped;
-
         manage_jobs();
 
+        m_window_name = "RichText window ##drawable " + m_name;
+
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.f));
-        ImGui::Begin(("RichText window ##drawable " + m_name).c_str());
+        ImGui::Begin(m_window_name.c_str());
         float width = ImGui::GetWindowContentRegionWidth();
         width -= ImGui::GetStyle().ScrollbarSize;
         ImVec2 vMin = ImGui::GetWindowContentRegionMin();
@@ -117,7 +119,8 @@ namespace RichText {
 
 
             if (!m_root_elements.empty()) {
-                manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+                if (!m_scrollbar_grab)
+                    manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
 
                 Rect boundaries;
                 boundaries.y = 0.f;
@@ -161,6 +164,7 @@ namespace RichText {
                 TimeCounter::getInstance().startCounter("MergeDrawList");
                 m_draw_list.Merge();
                 TimeCounter::getInstance().stopCounter("MergeDrawList");
+
                 display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
             }
 
@@ -172,11 +176,6 @@ namespace RichText {
         }
     }
     void Page::display_scrollbar(const Rect& b) {
-        /* Scroll bar properties */
-        float scroll_width = ImGui::GetStyle().ScrollbarSize;
-        float rounding = ImGui::GetStyle().ScrollbarRounding;
-        auto color_bg = ImGui::GetColorU32(ImGuiCol_ScrollbarBg);
-
         /* Find approximate height before the first parsed block
          * and after the last parsed block */
         int num_lines_before = m_file->m_blocks[m_block_idx_start]->line_start;
@@ -184,24 +183,29 @@ namespace RichText {
 
         float before = m_before_height + m_y_displacement + num_lines_before * m_line_height;
         float after = m_after_height - m_y_displacement + num_lines_after * m_line_height;
-        float display_height = b.h;
-        float elements_height = before + after + display_height;
-        float scroll_height = b.h * (display_height / elements_height);
-        if (scroll_height < m_config.min_scroll_height) {
-            scroll_height = m_config.min_scroll_height;
+
+        float old_percentage = m_scrollbar.getPercentage();
+
+        m_scrollbar.setMinScrollHeight(m_config.min_scroll_height);
+        m_scrollbar.FrameUpdate(b, m_draw_list, before, after, m_window_name);
+        if (m_scrollbar.hasChanged()) {
+            float percentage = m_scrollbar.getPercentage();
+            float total_height = before + after;
+            if (percentage - old_percentage > 0.f) {
+                scroll_down((percentage - old_percentage) * total_height);
+            }
+            else if (percentage - old_percentage < 0.f) {
+                scroll_up((old_percentage - percentage) * total_height);
+            }
         }
-        float percentage = 0.f;
-        if (before + after > 0.f)
-            percentage = before / (before + after);
-
-        float scroll_pos = b.y + (b.h - scroll_height) * percentage;
-
-        ImVec2 top_left(5 + b.w + b.x - scroll_width, scroll_pos);
-        ImVec2 bottom_right(5 + b.w + b.x, scroll_pos + scroll_height);
-        m_draw_list->AddRectFilled(top_left, bottom_right, color_bg, rounding);
+        if (m_scrollbar.isGrabbing())
+            m_scrollbar_grab = true;
+        else
+            m_scrollbar_grab = false;
     }
+
     void Page::manage_scroll(const ImVec2& mouse_pos, const Rect& box) {
-        if (isInsideRect(mouse_pos, box)) {
+        if (isInsideRect(mouse_pos, box) && isOnTop(m_window_name)) {
             float mouse_wheel = ImGui::GetIO().MouseWheel;
             mouse_wheel *= 60;
 

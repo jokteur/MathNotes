@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui/drawable.h"
+#include "ui/scrollbar.h"
 #include "element.h"
 #include "time_counter.h"
 
@@ -30,6 +31,8 @@ namespace RichText {
         float m_current_width = 0.f;
         float m_scale = 1.f;
 
+        VerticalScrollBar m_scrollbar;
+
         /* Here, current_xxx designates the element that should
          * be drawn at the top of the widget */
         RootNodePtr m_current_block_ptr = nullptr;
@@ -37,6 +40,7 @@ namespace RichText {
         /* Current_line is the first line corresponding in the raw text of the current element */
         int m_current_line = 0.f;
         float m_y_displacement = 0.f;
+        bool m_scrollbar_grab = false;
 
         int m_line_lookahead_window = 2000;
 
@@ -51,6 +55,7 @@ namespace RichText {
         int m_debug_root_max = 100;
 
         std::string m_name;
+        std::string m_window_name;
 
         std::map<int, RootNodePtr> m_root_elements;
         std::mutex m_root_mutex;
@@ -72,14 +77,14 @@ namespace RichText {
         void scroll_up(float pixels);
         void scroll_down(float pixels);
     public:
-        Page(UIState_ptr ui_state): Drawable(ui_state) {}
+        Page(UIState_ptr ui_state): Drawable(ui_state), m_scrollbar(ui_state, VerticalScrollBar::FIT_UNTIL_LAST_LINE) {}
         Page(const Page&) = delete;
 
         void setName(const std::string& name) { m_name = name; }
 
         ~Page();
         Page& operator= (const Page&) = delete;
-        void draw();
+        void FrameUpdate() override;
     };
     typedef std::shared_ptr<Page> WidgetPtr;
 }
