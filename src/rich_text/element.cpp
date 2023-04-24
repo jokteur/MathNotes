@@ -29,11 +29,12 @@ namespace RichText {
             || b.y > m_position.y && b.y + b.h < m_position.y + m_dimensions.y;
     }
     float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
+        m_position.x = x_offset;
+        m_position.y = cursor_y_pos;
+
         x_offset += m_style.h_margins.x;
         cursor_y_pos += m_style.v_margins.y;
 
-        m_position.x = x_offset;
-        m_position.y = cursor_y_pos;
         float current_y_pos = cursor_y_pos;
 
         x_offset += m_style.h_paddings.x;
@@ -41,22 +42,20 @@ namespace RichText {
         return current_y_pos;
     }
     void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
-        float prev_height = m_dimensions.y;
         cursor_y_pos += m_style.v_paddings.y;
+        cursor_y_pos += m_style.v_margins.y;
+        
         m_dimensions.x = m_window_width - x_offset;
         m_dimensions.y = cursor_y_pos - last_y_pos;
 
-        // if ((m_dimensions.y - prev_height) > 1e-1) {
-        //     Tempo::SkipFrame();
-        // }
-
-        cursor_y_pos += m_style.v_margins.y;
         m_is_dimension_set = true;
     }
     bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
         ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
+        cursor_y_pos += m_style.v_paddings.x;
+        x_offset += m_style.h_paddings.x;
 
         for (auto ptr : m_draw_chars) {
             if (!ptr->draw(draw_list, boundaries, m_position + padding_before))
@@ -163,7 +162,7 @@ namespace RichText {
         //ZoneScoped;
         bool ret = true;
         float initial_y_pos = cursor_y_pos;
-        float last_y_pos = hk_set_position(cursor_y_pos, x_offset);
+        hk_set_position(cursor_y_pos, x_offset);
         m_is_visible = is_in_boundaries(boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty & DIRTY_CHARS) {
             auto& timers = TimeCounter::getInstance();
@@ -171,7 +170,7 @@ namespace RichText {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
             }
-            hk_set_dimensions(last_y_pos, cursor_y_pos, x_offset);
+            hk_set_dimensions(initial_y_pos, cursor_y_pos, x_offset);
         }
         else {
             cursor_y_pos += m_dimensions.y;

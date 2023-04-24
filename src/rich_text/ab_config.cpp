@@ -7,8 +7,8 @@ namespace RichText {
         styles[P].set_line_space(1.4f);
         styles[P].set_v_margins(ImVec2(0.f, 0.f));
         styles[P].set_h_margins(ImVec2(0.f, 0.f));
-        styles[P].set_v_paddings(ImVec2(0.f, 0.f));
-        styles[P].set_h_paddings(ImVec2(0.f, 0.f));
+        // styles[P].set_v_paddings(ImVec2(0.f, 0.f));
+        // styles[P].set_h_paddings(ImVec2(0.f, 0.f));
 
         // H1
         styles[H1].set_font_size(42.f);
@@ -44,9 +44,9 @@ namespace RichText {
         // Code
         styles[CODE].set_font_monospace(true);
         styles[CODE].set_h_margins(ImVec2(15.f, 0.f));
-        styles[CODE].set_v_margins(ImVec2(0.f, 0.f));
-        styles[CODE].set_h_paddings(ImVec2(15.f, 5.f));
-        styles[CODE].set_v_paddings(ImVec2(0.f, 0.f));
+        styles[CODE].set_v_margins(ImVec2(10.f, 0.f));
+        // styles[CODE].set_h_paddings(ImVec2(15.f, 5.f));
+        // styles[CODE].set_v_paddings(ImVec2(0.f, 0.f));
         styles[CODE].set_font_color(Colors::dimgray);
         styles[CODE].set_bg_color(Colors::gainsboro);
 
@@ -58,23 +58,23 @@ namespace RichText {
         // Quote
         styles[QUOTE].set_line_space(1.4f);
         styles[QUOTE].set_h_margins(ImVec2(15.f, 0.f));
-        styles[QUOTE].set_v_margins(ImVec2(0.f, 0.f));
-        styles[QUOTE].set_v_paddings(ImVec2(0.f, 0.f));
+        styles[QUOTE].set_v_margins(ImVec2(150.f, 0.f));
+        // styles[QUOTE].set_v_paddings(ImVec2(0.f, 0.f));
 
         // Display latex
         styles[B_LATEX].set_h_margins(ImVec2(15.f, 0.f));
         styles[B_LATEX].set_v_margins(ImVec2(0.f, 0.f));
-        styles[B_LATEX].set_v_paddings(ImVec2(0.f, 0.f));
+        // styles[B_LATEX].set_v_paddings(ImVec2(0.f, 0.f));
 
         // div
         styles[DIV].set_h_margins(ImVec2(15.f, 0.f));
         styles[DIV].set_v_margins(ImVec2(0.f, 0.f));
-        styles[DIV].set_v_paddings(ImVec2(0.f, 0.f));
+        // styles[DIV].set_v_paddings(ImVec2(0.f, 0.f));
 
         // definition
         styles[DEF].set_h_margins(ImVec2(15.f, 0.f));
         styles[DEF].set_v_margins(ImVec2(0.f, 0.f));
-        styles[DEF].set_v_paddings(ImVec2(0.f, 0.f));
+        // styles[DEF].set_v_paddings(ImVec2(0.f, 0.f));
 
         // href
         styles[HREF].set_font_underline(true);
