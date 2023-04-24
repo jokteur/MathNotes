@@ -14,71 +14,6 @@
 namespace RichText {
     // AbstractElement
     int AbstractElement::count = 0;
-    bool AbstractElement::add_chars(std::vector<WrapCharPtr>&) {
-        return true;
-    }
-    AbstractElement::~AbstractElement() {
-        if (!m_is_root)
-            for (auto ptr : m_childrens) {
-                delete ptr;
-            }
-        count--;
-    }
-    bool AbstractElement::is_in_boundaries(const Rect& b) {
-        return isInsideRectY(m_position.y, b) || isInsideRectY(m_position.y + m_dimensions.y, b)
-            || b.y > m_position.y && b.y + b.h < m_position.y + m_dimensions.y;
-    }
-    float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
-        m_position.x = x_offset;
-        m_position.y = cursor_y_pos;
-
-        x_offset += m_style.h_margins.x;
-        cursor_y_pos += m_style.v_margins.y;
-
-        float current_y_pos = cursor_y_pos;
-
-        x_offset += m_style.h_paddings.x;
-        cursor_y_pos += m_style.v_paddings.x;
-        return current_y_pos;
-    }
-    void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
-        cursor_y_pos += m_style.v_paddings.y;
-        cursor_y_pos += m_style.v_margins.y;
-        
-        m_dimensions.x = m_window_width - x_offset;
-        m_dimensions.y = cursor_y_pos - last_y_pos;
-
-        m_is_dimension_set = true;
-    }
-    bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
-        //ZoneScoped;
-        bool ret = true;
-        ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
-        cursor_y_pos += m_style.v_paddings.x;
-        x_offset += m_style.h_paddings.x;
-
-        for (auto ptr : m_draw_chars) {
-            if (!ptr->draw(draw_list, boundaries, m_position + padding_before))
-                ret = false;
-        }
-        for (auto& ptr : m_childrens) {
-            if (!ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries))
-                ret = false;
-        }
-        return ret;
-    }
-    void AbstractElement::hk_draw_background(Draw::DrawList& draw_list) {
-
-    }
-    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList& draw_list, float cursor_y_pos, const Rect& boundaries) {
-        if (m_show_boundaries && (isInsideRectY(m_position.y, boundaries) || isInsideRectY(m_position.y + m_dimensions.y, boundaries))) {
-            auto cursor_pos = ImGui::GetCursorScreenPos();
-            ImVec2 p_min = cursor_pos + m_position;
-            ImVec2 p_max = cursor_pos + m_position + m_dimensions;
-            draw_list->AddRect(p_min, p_max, Colors::blue);
-        }
-    }
-
     void AbstractElement::hk_debug_attributes() {
         /* State */
         ImGui::Text("Dirty state %u", m_widget_dirty);
@@ -157,14 +92,77 @@ namespace RichText {
             ImGui::TreePop();
         }
     }
+    bool AbstractElement::add_chars(std::vector<WrapCharPtr>&) {
+        return true;
+    }
+    AbstractElement::~AbstractElement() {
+        if (!m_is_root)
+            for (auto ptr : m_childrens) {
+                delete ptr;
+            }
+        count--;
+    }
+    bool AbstractElement::is_in_boundaries(const Rect& b) {
+        return isInsideRectY(m_position.y, b) || isInsideRectY(m_position.y + m_dimensions.y, b)
+            || b.y > m_position.y && b.y + b.h < m_position.y + m_dimensions.y;
+    }
+    float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
+        m_position.x = x_offset;
+        m_position.y = cursor_y_pos;
 
+        x_offset += m_style.h_margins.x;
+        cursor_y_pos += m_style.v_margins.y;
+
+        float current_y_pos = cursor_y_pos;
+
+        x_offset += m_style.h_paddings.x;
+        cursor_y_pos += m_style.v_paddings.x;
+        return current_y_pos;
+    }
+    void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
+        cursor_y_pos += m_style.v_paddings.y;
+        cursor_y_pos += m_style.v_margins.y;
+
+        m_dimensions.x = m_window_width - x_offset;
+        m_dimensions.y = cursor_y_pos - last_y_pos;
+
+        m_is_dimension_set = true;
+    }
+    bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+        //ZoneScoped;
+        bool ret = true;
+        ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
+        cursor_y_pos += m_style.v_paddings.x;
+        x_offset += m_style.h_paddings.x;
+
+        for (auto ptr : m_draw_chars) {
+            if (!ptr->draw(draw_list, boundaries, m_position + padding_before))
+                ret = false;
+        }
+        for (auto& ptr : m_childrens) {
+            if (!ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries))
+                ret = false;
+        }
+        return ret;
+    }
+    void AbstractElement::hk_draw_background(Draw::DrawList& draw_list) {
+
+    }
+    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList& draw_list, float cursor_y_pos, const Rect& boundaries) {
+        if (m_show_boundaries && (isInsideRectY(m_position.y, boundaries) || isInsideRectY(m_position.y + m_dimensions.y, boundaries))) {
+            auto cursor_pos = ImGui::GetCursorScreenPos();
+            ImVec2 p_min = cursor_pos + m_position;
+            ImVec2 p_max = cursor_pos + m_position + m_dimensions;
+            draw_list->AddRect(p_min, p_max, Colors::blue);
+        }
+    }
     bool AbstractElement::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
         float initial_y_pos = cursor_y_pos;
         hk_set_position(cursor_y_pos, x_offset);
         m_is_visible = is_in_boundaries(boundaries);
-        if (m_is_visible || !m_is_dimension_set || m_widget_dirty & DIRTY_CHARS) {
+        if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
             auto& timers = TimeCounter::getInstance();
             if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
                 m_widget_dirty |= DIRTY_CHARS;
@@ -185,8 +183,10 @@ namespace RichText {
     }
     void AbstractElement::setWindowWidth(float width) {
         //ZoneScoped;
-        if (m_window_width == width)
+        if (m_window_width == width) {
+            m_widget_dirty ^= DIRTY_WIDTH;
             return;
+        }
         m_window_width = width;
         m_widget_dirty |= DIRTY_WIDTH;
         for (auto ptr : m_childrens) {

@@ -105,13 +105,22 @@ namespace RichText {
             find_current_ptr();
 
             /* Set the width of the blocks recursively, even the ones that are not shown */
+            /* After a resize event, we want to make sure that the scroll stays at the same line
+             * This is why current_widget_y_size */
+            bool resize_event = false;
+            float current_widget_y_size = 0.f;
+            float updated_current_widget_y_size = 0.f;
             TimeCounter::getInstance().startCounter("Set widths");
             for (auto pair : m_root_elements) {
+                if (m_current_width != width && pair.second == m_current_block_ptr) {
+                    current_widget_y_size = m_current_block_ptr->get().m_dimensions.y;
+                }
                 if (m_current_width != width || pair.second->get().m_widget_dirty & pair.second->get().DIRTY_WIDTH) {
                     pair.second->get().setWindowWidth(width);
                 }
             }
             if (m_current_width != width) {
+                resize_event = true;
                 m_current_width = width;
             }
             TimeCounter::getInstance().stopCounter("Set widths");
@@ -155,17 +164,25 @@ namespace RichText {
                         found_current = true;
                         m_before_height = y_pos - m_display_height - 1000.f;
                         y_pos = -roundf(m_y_displacement);
+                        pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
+                        updated_current_widget_y_size = pair.second->get().m_dimensions.y;
+                        continue;
                     }
                     pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
                 }
                 TimeCounter::getInstance().stopCounter("DisplayAll");
                 m_after_height = y_pos + roundf(m_y_displacement);
-                TimeCounter::getInstance().startCounter("MergeDrawList");
+                m_after_height -= 2 * m_line_height;
+                if (m_after_height < 0.f)
+                    m_after_height = 0.f;
                 m_draw_list.Merge();
-                TimeCounter::getInstance().stopCounter("MergeDrawList");
 
                 display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
             }
+            /* Once all the roots have been displayed, if there has been some resize event, we need to correct
+             * for the next frame such that the user doesn't lose the line which was currently being drawn */
+            if (resize_event && abs(current_widget_y_size - updated_current_widget_y_size))
+                go_to_line(m_current_block_idx);
 
             ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
             ImGui::End();
@@ -192,11 +209,9 @@ namespace RichText {
             float total_height = before + after;
             if (percentage - old_percentage > 0.f) {
                 scroll_down((percentage - old_percentage) * total_height);
-                std::cout << percentage << " " << old_percentage << " " << percentage - old_percentage << std::endl;
             }
             else if (percentage - old_percentage < 0.f) {
                 scroll_up((old_percentage - percentage) * total_height);
-                std::cout << percentage << " " << old_percentage << " " << percentage - old_percentage << std::endl;
             }
             // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
@@ -217,6 +232,9 @@ namespace RichText {
             else if (mouse_wheel < 0.f) {
                 scroll_down(mouse_wheel);
             }
+        }
+        if (m_y_displacement > m_after_height) {
+            m_y_displacement = m_after_height;
         }
     }
 
@@ -275,7 +293,6 @@ namespace RichText {
             return;
 
         pixels = abs(pixels);
-        std::cout << "Scroll down " << pixels << std::endl;
 
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->get().m_dimensions.y - m_y_displacement;
@@ -306,8 +323,6 @@ namespace RichText {
         //ZoneScoped;
         if (m_current_block_ptr == nullptr)
             return;
-
-        std::cout << "Scroll up " << pixels << std::endl;
 
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->get().m_dimensions.y - m_y_displacement;

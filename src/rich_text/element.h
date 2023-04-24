@@ -61,6 +61,7 @@ namespace RichText {
         unsigned int m_widget_dirty = ALL_DIRTY;
         bool m_is_visible = false;
         bool m_no_y_update = false;
+        bool m_x_offset = 0.f;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
@@ -95,7 +96,7 @@ namespace RichText {
         // Widget position and size
         ImVec2 m_position;
         ImVec2 m_dimensions;
-        
+
         bool m_is_dimension_set = false;
         float m_scale = 1.f;
         float m_window_width = 1.f;

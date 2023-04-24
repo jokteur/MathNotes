@@ -128,6 +128,8 @@ namespace RichText {
                 m_wrapper.setString(m_wrap_chars, false);
             }
             if (m_widget_dirty & DIRTY_WIDTH) {
+                /* Save x offset for later uses (in setWindowWidth) */
+                m_x_offset = x_offset;
                 float internal_size = m_window_width - x_offset - m_style.h_paddings.y;
                 m_wrapper.setWidth(internal_size, false);
                 m_widget_dirty ^= DIRTY_WIDTH;
