@@ -71,8 +71,8 @@ void VerticalScrollBar::FrameUpdate(const Rect& b, Draw::DrawList& m_draw_list, 
         if (new_percentage != m_percentage) {
             m_percentage = new_percentage;
             scroll_pos = b.y + (b.h - scroll_height) * m_percentage;
-            top_left = ImVec2(5 + b.w + b.x - scroll_width, scroll_pos);
-            bottom_right = ImVec2(5 + b.w + b.x, scroll_pos + scroll_height);
+            // top_left = ImVec2(5 + b.w + b.x - scroll_width, scroll_pos);
+            // bottom_right = ImVec2(5 + b.w + b.x, scroll_pos + scroll_height);
             m_has_changed = true;
         }
     }

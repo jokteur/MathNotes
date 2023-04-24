@@ -44,9 +44,9 @@ namespace RichText {
         // Code
         styles[CODE].set_font_monospace(true);
         styles[CODE].set_h_margins(ImVec2(15.f, 0.f));
-        styles[CODE].set_v_margins(ImVec2(5.f, 5.f));
+        styles[CODE].set_v_margins(ImVec2(0.f, 0.f));
         styles[CODE].set_h_paddings(ImVec2(15.f, 5.f));
-        styles[CODE].set_v_paddings(ImVec2(10.f, 10.f));
+        styles[CODE].set_v_paddings(ImVec2(0.f, 0.f));
         styles[CODE].set_font_color(Colors::dimgray);
         styles[CODE].set_bg_color(Colors::gainsboro);
 

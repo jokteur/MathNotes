@@ -159,7 +159,7 @@ namespace RichText {
                     pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
                 }
                 TimeCounter::getInstance().stopCounter("DisplayAll");
-                m_after_height = y_pos + m_y_displacement;
+                m_after_height = y_pos + roundf(m_y_displacement);
                 TimeCounter::getInstance().startCounter("MergeDrawList");
                 m_draw_list.Merge();
                 TimeCounter::getInstance().stopCounter("MergeDrawList");
@@ -192,10 +192,13 @@ namespace RichText {
             float total_height = before + after;
             if (percentage - old_percentage > 0.f) {
                 scroll_down((percentage - old_percentage) * total_height);
+                std::cout << percentage << " " << old_percentage << " " << percentage - old_percentage << std::endl;
             }
             else if (percentage - old_percentage < 0.f) {
                 scroll_up((old_percentage - percentage) * total_height);
+                std::cout << percentage << " " << old_percentage << " " << percentage - old_percentage << std::endl;
             }
+            // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         if (m_scrollbar.isGrabbing())
             m_scrollbar_grab = true;
@@ -272,6 +275,7 @@ namespace RichText {
             return;
 
         pixels = abs(pixels);
+        std::cout << "Scroll down " << pixels << std::endl;
 
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->get().m_dimensions.y - m_y_displacement;
@@ -303,6 +307,8 @@ namespace RichText {
         if (m_current_block_ptr == nullptr)
             return;
 
+        std::cout << "Scroll up " << pixels << std::endl;
+
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->get().m_dimensions.y - m_y_displacement;
         if (pixels <= m_y_displacement || m_current_block_idx == 0) {
@@ -311,8 +317,13 @@ namespace RichText {
                 m_y_displacement = 0.f;
             return;
         }
+        // m_y_displacement = remaining_height;
+
         bool arrived_at_beg = false;
-        float total_height = remaining_height;
+        /* Remove y displacement already */
+        pixels -= m_y_displacement;
+        float total_height = 0.f;
+
         while (true) {
             auto prev = find_prev_ptr();
             if (prev == m_root_elements.begin() && prev->first > 0) {
@@ -326,7 +337,7 @@ namespace RichText {
             float element_height = m_current_block_ptr->get().m_dimensions.y;
             total_height += element_height;
             if (pixels <= total_height || prev == m_root_elements.begin()) {
-                m_y_displacement = element_height - pixels;
+                m_y_displacement = total_height - pixels;
                 if (m_y_displacement < 0.f)
                     m_y_displacement = 0.f;
                 return;
