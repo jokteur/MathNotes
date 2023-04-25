@@ -58,6 +58,7 @@ namespace RichText {
         std::string m_window_name;
 
         std::map<int, RootNodePtr> m_root_elements;
+        std::unordered_set<int> m_lastly_destroyed_elements;
         std::mutex m_root_mutex;
         std::unordered_set<Tempo::jobId> m_current_jobs;
 

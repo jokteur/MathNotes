@@ -14,6 +14,8 @@ void VerticalScrollBar::FrameUpdate(const Rect& b, Draw::DrawList& m_draw_list, 
 
     float display_height = b.h;
     float elements_height = before + after + display_height;
+    if (before + after == 0.f)
+        return;
 
     float scroll_height = b.h * (display_height / elements_height);
     if (scroll_height < m_min_scroll_height) {

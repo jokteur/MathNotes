@@ -122,6 +122,11 @@ namespace AB {
         if (!found && m_blocks.back()->line_end < line_start) {
             return BlockBounds{};
         }
+        if (!found) {
+            bounds.start.txt_idx = m_blocks[midpoint_idx]->idx_start;
+            bounds.start.line_idx = m_blocks[midpoint_idx]->line_start;
+            bounds.start.block_idx = midpoint_idx;
+        }
 
         /* Bounds end */
         found = false;

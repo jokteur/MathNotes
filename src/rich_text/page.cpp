@@ -172,7 +172,7 @@ namespace RichText {
                 }
                 TimeCounter::getInstance().stopCounter("DisplayAll");
                 m_after_height = y_pos + roundf(m_y_displacement);
-                m_after_height -= 2 * m_line_height;
+                // m_after_height -= 2 * m_line_height;
                 if (m_after_height < 0.f)
                     m_after_height = 0.f;
                 m_draw_list.Merge();
@@ -213,7 +213,6 @@ namespace RichText {
             else if (percentage - old_percentage < 0.f) {
                 scroll_up((old_percentage - percentage) * total_height);
             }
-            // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         if (m_scrollbar.isGrabbing())
             m_scrollbar_grab = true;
@@ -301,12 +300,15 @@ namespace RichText {
             return;
         }
         bool arrived_at_end = false;
+        int previous_line = m_current_line;
         float total_height = remaining_height;
         while (true) {
             /* Go to the next ptr */
             auto next = find_next_ptr();
+            /* We arrived at the end of file */
             if (next == m_root_elements.end()) {
-                arrived_at_end = true;
+                if (std::prev(next)->first != m_file->m_blocks.size() - 1)
+                    arrived_at_end = true;
                 break;
             }
             go_to_line(next->second->get().m_text_boundaries.front().line_number);
@@ -317,6 +319,16 @@ namespace RichText {
                 m_y_displacement = element_height - (total_height - pixels);
                 return;
             }
+        }
+        if (arrived_at_end && !m_root_elements.empty()) {
+            auto last_line = m_root_elements.rbegin()->second->get().m_text_boundaries.back().line_number;
+            /* Estimate the average line height with the current informations */
+            float estimated_additional_lines = (pixels - total_height) / m_line_height;
+            m_current_line = last_line + (int)estimated_additional_lines;
+            std::cout << "Change line " << m_current_line << std::endl;
+        }
+        if (!arrived_at_end) {
+            m_y_displacement = m_current_block_ptr->get().m_dimensions.y;
         }
     }
     void Page::scroll_up(float pixels) {
@@ -332,7 +344,6 @@ namespace RichText {
                 m_y_displacement = 0.f;
             return;
         }
-        // m_y_displacement = remaining_height;
 
         bool arrived_at_beg = false;
         /* Remove y displacement already */
@@ -341,7 +352,7 @@ namespace RichText {
 
         while (true) {
             auto prev = find_prev_ptr();
-            if (prev == m_root_elements.begin() && prev->first > 0) {
+            if (prev == m_root_elements.begin() && prev->first > 0 || prev == m_root_elements.end()) {
                 arrived_at_beg = true;
                 break;
             }
@@ -358,13 +369,22 @@ namespace RichText {
                 return;
             }
         }
+        if (arrived_at_beg && !m_root_elements.empty()) {
+            auto first_line = m_current_block_ptr->get().m_text_boundaries.front().line_number;
+            float estimated_additional_lines = (pixels - total_height) / m_line_height;
+            int estimated_line = first_line - (int)estimated_additional_lines;
+            if (estimated_line < 0)
+                estimated_line = 0;
+            m_current_line = estimated_line;
+            std::cout << "Change line " << m_current_line << std::endl;
+        }
     }
 
     void Page::manage_elements() {
         //ZoneScoped;
         manage_jobs();
 
-        int half_window = 3 * m_line_lookahead_window / 2;
+        int half_window = 2 * m_line_lookahead_window / 2;
         /* We want a minimum half window for super tiny pages */
         if (half_window < 500) {
             half_window = 500;
@@ -386,15 +406,22 @@ namespace RichText {
         std::unordered_set<int> to_destroy;
 
         /* Widget was just created or jumped to another location */
-        if (m_block_idx_start >= 0 && (m_block_idx_end == -1 || start >= m_block_idx_end)) {
-            if (start >= m_block_idx_end) {
-                std::lock_guard<std::mutex> lk(m_root_mutex);
+        if (m_block_idx_end == -1 || (start >= m_block_idx_end && start != 0) || end < m_block_idx_start) {
+            std::lock_guard<std::mutex> lk(m_root_mutex);
+            if (start >= m_block_idx_end || end < m_block_idx_start) {
                 m_root_elements.clear();
             }
             m_block_idx_start = start;
             m_block_idx_end = end;
             ABToWidgets parser;
             parser.parse(m_file, m_block_idx_start, m_block_idx_end, &m_root_elements, m_ui_state);
+            /* Move to the correct block_ptr corresponding to the current line */
+            auto current_bounds = m_file->getBlocksBoundsContaining(m_current_line, m_current_line);
+            auto it = m_root_elements.find(current_bounds.start.block_idx);
+            if (it != m_root_elements.end()) {
+                m_current_block_idx = it->first;
+                m_current_block_ptr = it->second;
+            }
         }
         else {
             /* Blocks to build before */
@@ -423,6 +450,7 @@ namespace RichText {
             {
                 std::lock_guard<std::mutex> lk(m_root_mutex);
                 for (auto idx : to_destroy) {
+                    // m_lastly_destroyed_elements.insert(idx);
                     m_root_elements.erase(idx);
                 }
             }
