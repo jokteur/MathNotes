@@ -98,8 +98,6 @@ namespace RichText {
 
     AbstractElement::AbstractElement(UIState_ptr ui_state): Drawable(ui_state) {
         count++;
-        // m_ext_dimensions.push_back(Rect{});
-        // m_int_dimensions.push_back(Rect{});
     }
     AbstractElement::~AbstractElement() {
         for (auto ptr : m_childrens) {
@@ -108,41 +106,40 @@ namespace RichText {
         count--;
     }
     bool AbstractElement::is_in_boundaries(const Rect& b) {
-        const auto& dims = m_ext_dimensions.front();
+        const auto& dims = m_ext_dimensions.getGlobalRect();
         return isInsideRectY(dims.y, b) || isInsideRectY(dims.y + dims.y + dims.h, b)
             || b.y > dims.y && b.y + b.h < dims.y + dims.y;
     }
-    float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
-        m_ext_dimensions.front() = Rect{ x_offset, cursor_y_pos };
+    emfloat AbstractElement::hk_set_position(emfloat& cursor_y_pos, emfloat& x_offset) {
+        m_ext_dimensions.setGlobalPosition(x_offset, cursor_y_pos);
         // m_position.x = x_offset;
         // m_position.y = cursor_y_pos;
 
         x_offset += m_style.h_margins.x;
         cursor_y_pos += m_style.v_margins.x;
 
-        m_int_dimensions.front() = Rect{ x_offset, cursor_y_pos };
+        m_int_dimensions.setGlobalPosition(x_offset, cursor_y_pos);
 
-        float current_y_pos = cursor_y_pos;
+        emfloat current_y_pos = cursor_y_pos;
 
         x_offset += m_style.h_paddings.x;
         cursor_y_pos += m_style.v_paddings.x;
         return current_y_pos;
     }
-    void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
-        auto& int_dim = m_int_dimensions.front();
-        auto& ext_dim = m_ext_dimensions.front();
-
+    void AbstractElement::hk_set_dimensions(emfloat last_y_pos, emfloat& cursor_y_pos, emfloat x_offset) {
         cursor_y_pos += m_style.v_paddings.y;
-        int_dim.h = cursor_y_pos - last_y_pos;
-        int_dim.w = m_window_width - x_offset - m_style.h_paddings.y - m_style.h_margins.y;
+        emfloat h = cursor_y_pos - last_y_pos;
+        emfloat w = m_window_width - x_offset - m_style.h_paddings.y - m_style.h_margins.y;
+        m_int_dimensions.setGlobalDimensions(w, h);
 
         cursor_y_pos += m_style.v_margins.y;
-        ext_dim.h = cursor_y_pos - last_y_pos;
-        ext_dim.w = m_window_width - x_offset;
+        h = cursor_y_pos - last_y_pos;
+        w = m_window_width - x_offset;
+        m_ext_dimensions.setGlobalPosition(w, h);
 
         m_is_dimension_set = true;
     }
-    bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, emfloat& cursor_y_pos, emfloat x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
         // ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
@@ -173,10 +170,10 @@ namespace RichText {
             draw_list->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
         }
     }
-    bool AbstractElement::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractElement::draw(Draw::DrawList& draw_list, emfloat& cursor_y_pos, emfloat x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
-        float initial_y_pos = cursor_y_pos;
+        emfloat initial_y_pos = cursor_y_pos;
         hk_set_position(cursor_y_pos, x_offset);
         m_is_visible = is_in_boundaries(boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
@@ -198,7 +195,7 @@ namespace RichText {
         }
         return ret;
     }
-    void AbstractElement::setWindowWidth(float width) {
+    void AbstractElement::setWindowWidth(emfloat width) {
         //ZoneScoped;
         if (m_window_width == width) {
             m_widget_dirty ^= DIRTY_WIDTH;

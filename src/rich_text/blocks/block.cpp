@@ -9,7 +9,7 @@ namespace RichText {
     bool AbstractBlock::hk_build_delimiter_chars() {
         return true;
     }
-    bool AbstractBlock::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractBlock::hk_draw_main(Draw::DrawList& draw_list, emfloat& cursor_y_pos, emfloat x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
         // At this point, margins have already been taken into account
@@ -50,14 +50,14 @@ namespace RichText {
             draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
         }
     }
-    bool AbstractBlock::hk_build_widget(float x_offset) {
+    bool AbstractBlock::hk_build_widget(emfloat x_offset) {
         //ZoneScoped;
         if (m_widget_dirty) {
             m_widget_dirty = 0;
         }
         return true;
     }
-    bool AbstractBlock::hk_build_widget_post(float x_offset) {
+    bool AbstractBlock::hk_build_widget_post(emfloat x_offset) {
         //ZoneScoped;
         if (m_widget_dirty && m_is_selected) {
         }
@@ -67,7 +67,7 @@ namespace RichText {
         AbstractElement::hk_debug_attributes();
     }
 
-    bool AbstractLeafBlock::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractLeafBlock::hk_draw_main(Draw::DrawList& draw_list, emfloat& cursor_y_pos, emfloat x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
         // ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
@@ -103,7 +103,7 @@ namespace RichText {
         return ret;
     }
 
-    bool AbstractLeafBlock::hk_build_widget(float x_offset) {
+    bool AbstractLeafBlock::hk_build_widget(emfloat x_offset) {
         //ZoneScoped;
         if (m_widget_dirty) {
             if (m_widget_dirty & DIRTY_CHARS) {
@@ -130,7 +130,7 @@ namespace RichText {
             if (m_widget_dirty & DIRTY_WIDTH) {
                 /* Save x offset for later uses (in setWindowWidth) */
                 m_x_offset = x_offset;
-                float internal_size = m_window_width - x_offset - m_style.h_margins.y;
+                emfloat internal_size = m_window_width - x_offset - m_style.h_margins.y;
                 m_wrapper.setWidth(internal_size, false);
                 m_widget_dirty ^= DIRTY_WIDTH;
             }
@@ -142,7 +142,7 @@ namespace RichText {
     /* ===========
      * HiddenSpace
      * =========== */
-    bool HiddenSpace::hk_build_widget(float x_offset) {
+    bool HiddenSpace::hk_build_widget(emfloat x_offset) {
         //ZoneScoped;
         if (m_widget_dirty) {
             m_wrap_chars.clear();
@@ -153,7 +153,7 @@ namespace RichText {
             success = add_chars(m_wrap_chars);
 
             m_wrapper.clear();
-            float internal_size = m_window_width - x_offset - m_style.h_margins.y;
+            emfloat internal_size = m_window_width - x_offset - m_style.h_margins.y;
             m_wrapper.setWidth(internal_size);
             m_wrapper.setLineSpace(m_style.line_space);
             m_wrapper.setString(m_wrap_chars);

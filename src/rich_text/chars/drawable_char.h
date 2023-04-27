@@ -1,8 +1,8 @@
 #pragma once 
 #include "rich_text/wrapper.h"
+#include "geometry/basic.h"
 #include "ui/draw_commands.h"
 #include "ui/state.h"
-#include "types.h"
 
 namespace RichText {
     struct DrawableChar: public WrapCharacter {

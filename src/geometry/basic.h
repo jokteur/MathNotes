@@ -3,11 +3,30 @@
 #include <tempo.h>
 #include <string>
 
+typedef float emfloat;
+
 struct EmVec2 {
-    float x;
-    float y;
+    emfloat x;
+    emfloat y;
+
+    EmVec2(emfloat x, emfloat y);
 
     const ImVec2 getImVec() const;
+};
+
+
+struct EmRect {
+    emfloat x = 0.f;
+    emfloat y = 0.f;
+    emfloat w = 0.f;
+    emfloat h = 0.f;
+
+    const EmVec2 getPos() const {
+        return EmVec2(x, y);
+    }
+    const EmVec2 getDim() const {
+        return EmVec2(w, h);
+    }
 };
 
 struct Rect {
@@ -16,11 +35,11 @@ struct Rect {
     float w = 0.f;
     float h = 0.f;
 
-    const EmVec2 getPos() const {
-        return EmVec2(x, y);
+    const ImVec2 getPos() const {
+        return ImVec2(x, y);
     }
-    const EmVec2 getDim() const {
-        return EmVec2(w, h);
+    const ImVec2 getDim() const {
+        return ImVec2(w, h);
     }
 };
 

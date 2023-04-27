@@ -3,6 +3,8 @@
 #include "ui/fonts.h"
 #include "ui/colors.h"
 
+#include "geometry/basic.h"
+
 namespace RichText {
 #define NEW_STYLE_ELEMENT(name_, type_, default_) \
     type_ name_ = (default_); \
@@ -11,7 +13,7 @@ namespace RichText {
 #define COMMA ,
 
     struct Style {
-        NEW_STYLE_ELEMENT(font_size, float, 18.f);
+        NEW_STYLE_ELEMENT(font_size, emfloat, 18.f);
         NEW_STYLE_ELEMENT(font_styling, Fonts::FontStyling, Fonts::FontStyling{ Fonts::F_REGULAR COMMA Fonts::W_REGULAR COMMA Fonts::S_NORMAL });
         NEW_STYLE_ELEMENT(font_underline, bool, false);
         NEW_STYLE_ELEMENT(font_strikethrough, bool, false);
@@ -21,15 +23,15 @@ namespace RichText {
         NEW_STYLE_ELEMENT(font_em, bool, false);
         NEW_STYLE_ELEMENT(font_monospace, bool, false);
 
-        NEW_STYLE_ELEMENT(line_space, float, 1.4f);
-        NEW_STYLE_ELEMENT(h_margins, ImVec2, ImVec2(0.f COMMA 0.f));
-        NEW_STYLE_ELEMENT(v_margins, ImVec2, ImVec2(0.f COMMA 0.f));
-        NEW_STYLE_ELEMENT(h_paddings, ImVec2, ImVec2(0.f COMMA 0.f));
-        NEW_STYLE_ELEMENT(v_paddings, ImVec2, ImVec2(0.f COMMA 0.f));
+        NEW_STYLE_ELEMENT(line_space, emfloat, 1.4f);
+        NEW_STYLE_ELEMENT(h_margins, EmVec2, EmVec2(0.f COMMA 0.f));
+        NEW_STYLE_ELEMENT(v_margins, EmVec2, EmVec2(0.f COMMA 0.f));
+        NEW_STYLE_ELEMENT(h_paddings, EmVec2, EmVec2(0.f COMMA 0.f));
+        NEW_STYLE_ELEMENT(v_paddings, EmVec2, EmVec2(0.f COMMA 0.f));
 
         NEW_STYLE_ELEMENT(bg_color, Colors::color, Colors::transparent);
 
-        NEW_STYLE_ELEMENT(scale, float, 1.f);
+        NEW_STYLE_ELEMENT(scale, emfloat, 1.f);
     };
     struct ABConfig {
         ABConfig();
@@ -41,7 +43,7 @@ namespace RichText {
         // h4 font size
         Style styles[20];
 
-        float x_level_offset = 15.f;
+        emfloat x_level_offset = 15.f;
 
         static void make_bold(Fonts::FontStyling& styling);
         static void make_em(Fonts::FontStyling& styling);

@@ -1,5 +1,6 @@
 #include "ui_utils.h"
 #include "colors.h"
+#include "geometry/basic.h"
 #include "types.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -19,13 +20,13 @@ static const ImGuiResizeGripDef resize_grip_def[4] = {
 };
 
 bool isOnTop(const std::string& window_name) {
-
     ImGuiContext& g = *GImGui;
 
     auto windows = g.Windows;
     auto current_window = ImGui::FindWindowByName(window_name.c_str());
 
-    auto mouse_pos = ImGui::GetMousePos();
+    auto m = ImGui::GetMousePos();
+    auto mouse_pos = EmVec2(m.x, m.y);
 
     /* Check for resize grips (code taken from ImGui::UpdateWindowManualResize) */
     {
