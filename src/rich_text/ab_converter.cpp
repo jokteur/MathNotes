@@ -187,6 +187,7 @@ namespace RichText {
             m_current_ptr = nullptr;
             (*m_root_elements)[m_root_idx_current] = std::make_shared<RootNode>(node);
         }
+        node->m_tree_level = m_level;
         node->m_safe_string = m_safe_text;
         node->m_rt_info = m_rt_info;
         if (m_current_ptr != nullptr)
@@ -238,8 +239,8 @@ namespace RichText {
             INHERIT_PROPERTY(line_space);
             INHERIT_PROPERTY(h_margins);
             INHERIT_PROPERTY(v_margins);
-            INHERIT_PROPERTY(h_paddings);
-            INHERIT_PROPERTY(v_paddings);
+            // INHERIT_PROPERTY(h_paddings);
+            // INHERIT_PROPERTY(v_paddings);
             INHERIT_PROPERTY(bg_color);
         }
 
@@ -269,7 +270,7 @@ namespace RichText {
             }
             ul_list->mark = detail.marker;
             ul_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(ABConfig::P, (AbstractElement*)(ul_list));
+            set_infos(ABConfig::UL, (AbstractElement*)(ul_list));
             auto ptr = (AbstractElement*)(ul_list);
             return ptr;
         }
@@ -293,7 +294,7 @@ namespace RichText {
             }
             // ol_list->start = detail->start;
             ol_list->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(ABConfig::P, (AbstractElement*)(ol_list));
+            set_infos(ABConfig::OL, (AbstractElement*)(ol_list));
             auto ptr = (AbstractElement*)(ol_list);
             return ptr;
         }
@@ -317,8 +318,8 @@ namespace RichText {
                     list_el->list_level = ((OLWidget*)(m_current_ptr))->list_level;
                 }
             }
-            list_el->m_style.h_margins.x = m_config.x_level_offset;
-            set_infos(ABConfig::P, (AbstractElement*)(list_el));
+            // list_el->m_style.h_margins.x = m_config.x_level_offset;
+            set_infos(ABConfig::LI, (AbstractElement*)(list_el));
             auto ptr = (AbstractElement*)(list_el);
             return ptr;
         }

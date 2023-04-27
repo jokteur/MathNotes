@@ -5,7 +5,7 @@ namespace RichText {
     ABConfig::ABConfig() {
         // Paragraph
         styles[P].set_line_space(1.4f);
-        styles[P].set_v_margins(ImVec2(0.f, 0.f));
+        styles[P].set_v_margins(ImVec2(0.f, 10.f));
         styles[P].set_h_margins(ImVec2(0.f, 0.f));
         // styles[P].set_v_paddings(ImVec2(0.f, 0.f));
         // styles[P].set_h_paddings(ImVec2(0.f, 0.f));
@@ -66,6 +66,10 @@ namespace RichText {
         styles[B_LATEX].set_v_margins(ImVec2(0.f, 0.f));
         // styles[B_LATEX].set_v_paddings(ImVec2(0.f, 0.f));
 
+        styles[UL].set_h_margins(ImVec2(15.f, 0.f));
+        styles[OL].set_h_margins(ImVec2(15.f, 0.f));
+        styles[LI].set_v_margins(ImVec2(10.f, 0.f));
+
         // div
         styles[DIV].set_h_margins(ImVec2(15.f, 0.f));
         styles[DIV].set_v_margins(ImVec2(0.f, 0.f));
@@ -93,6 +97,7 @@ namespace RichText {
         // styles[P].set_line_space(1.4f);
 
         // markdown characters (non-visible usually)
+        styles[SPECIAL].set_font_monospace(true);
         styles[SPECIAL].set_font_color(Colors::gray);
     }
     void ABConfig::make_bold(FontStyling& styling) {

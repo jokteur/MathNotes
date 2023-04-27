@@ -20,7 +20,6 @@ namespace RichText {
         bool hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars);
         bool hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars);
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
-        void hk_draw_background(Draw::DrawList& draw_list) override;
         void hk_debug_attributes() override;
     };
 }

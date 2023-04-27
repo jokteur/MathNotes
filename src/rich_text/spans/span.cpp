@@ -47,15 +47,6 @@ namespace RichText {
         hk_add_post_chars(wrap_chars);
         return success;
     }
-    void AbstractSpan::hk_draw_background(Draw::DrawList& draw_list) {
-        if (m_style.bg_color != Colors::transparent) {
-            draw_list.SetCurrentChannel(0);
-            auto cursor_pos = ImGui::GetCursorScreenPos();
-            ImVec2 p_min = cursor_pos + m_position;
-            ImVec2 p_max = cursor_pos + m_position + m_dimensions;
-            draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
-        }
-    }
     void AbstractSpan::hk_debug_attributes() {
         AbstractElement::hk_debug_attributes();
     }

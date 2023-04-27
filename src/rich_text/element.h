@@ -5,11 +5,12 @@
 #include "ab_parser.h"
 
 #include "ab/ab_file.h"
-#include "types.h"
 #include "ui/drawable.h"
 #include "ui/fonts.h"
 #include "ui/draw_commands.h"
 #include "ui/colors.h"
+#include "geometry/rect.h"
+#include "geometry/multi_boundaries.h"
 #include "types.h"
 
 #include "widgets_enum.h"
@@ -17,6 +18,7 @@
 #include "ab_config.h"
 #include "wrapper.h"
 #include "chars/drawable_char.h"
+#include "types.h"
 
 namespace RichText {
     struct AbstractElement;
@@ -50,7 +52,7 @@ namespace RichText {
 
         Type m_type;
         Category m_category;
-        AbstractElement(UIState_ptr ui_state): Drawable(ui_state) { count++; }
+        AbstractElement(UIState_ptr ui_state);
         ~AbstractElement();
 
         // Informations about the tree structure
@@ -74,7 +76,7 @@ namespace RichText {
         void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
         bool virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
         void virtual hk_draw_background(Draw::DrawList& draw_list);
-        void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list, float cursor_y_pos, const Rect& boundaries);
+        void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list, const Rect& boundaries);
         /* Debug prints object info in a special window created by parent */
         void virtual hk_debug(const std::string& prefix = "");
         void virtual hk_debug_attributes();
@@ -89,20 +91,23 @@ namespace RichText {
         // Position of the pointer in m_childrens;
         int m_child_number = -1;
         bool m_is_root = false; /* Is used in ab_converter */
+        int m_tree_level = 0;
 
         std::vector<AB::Boundaries> m_text_boundaries;
         AB::Attributes m_attributes;
 
         // Widget position and size
-        ImVec2 m_position;
-        ImVec2 m_dimensions;
+        // ImVec2 m_position;
+        // ImVec2 m_dimensions;
+        std::vector<Rect> m_ext_dimensions;
+        std::vector<Rect> m_int_dimensions;
 
         bool m_is_dimension_set = false;
         float m_scale = 1.f;
         float m_window_width = 1.f;
 
         // Debug
-        bool m_show_boundaries = false;
+        bool m_show_boundaries = true;
 
         // Internal
         SafeString m_safe_string;

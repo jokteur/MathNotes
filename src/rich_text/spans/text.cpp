@@ -32,15 +32,15 @@ namespace RichText {
             auto end_char = (m_draw_chars.end() - 1)->get();
             float ascent = start_char->ascent;
             float descent = end_char->descent;
-            m_position = ImVec2(
+            auto& dims = m_ext_dimensions.front();
+            dims = Rect{
                 start_char->_calculated_position.x - start_char->offset.x,
-                start_char->_calculated_position.y - start_char->offset.y
-            );
-            m_dimensions = ImVec2(
+                start_char->_calculated_position.y - start_char->offset.y,
                 end_char->_calculated_position.x - end_char->offset.x + end_char->advance,
                 end_char->_calculated_position.y - end_char->offset.y + ascent - descent
-            );
-            m_dimensions -= m_position;
+            };
+            dims.w -= dims.x;
+            dims.h -= dims.y;
         }
         return cursor_y_pos;
     }
