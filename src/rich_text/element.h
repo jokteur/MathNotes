@@ -11,7 +11,6 @@
 #include "ui/colors.h"
 
 #include "geometry/basic.h"
-#include "geometry/rect.h"
 #include "geometry/multi_boundaries.h"
 #include "types.h"
 
@@ -68,14 +67,14 @@ namespace RichText {
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
-        bool virtual draw(Draw::DrawList& draw_list, emfloat& cursor_y_pos, emfloat x_offset, const Rect& boundaries);
+        bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         bool is_in_boundaries(const Rect& boundaries);
 
         // Draw hooks
-        emfloat virtual hk_set_position(emfloat& cursor_y_pos, emfloat& x_offset);
-        void virtual hk_set_dimensions(emfloat last_y_pos, emfloat& cursor_y_pos, emfloat x_offset);
-        bool virtual hk_draw_main(Draw::DrawList& draw_list, emfloat& cursor_y_pos, emfloat x_offset, const Rect& boundaries);
+        float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
+        void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
+        bool virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
         void virtual hk_draw_background(Draw::DrawList& draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list, const Rect& boundaries);
         /* Debug prints object info in a special window created by parent */
@@ -98,15 +97,15 @@ namespace RichText {
         AB::Attributes m_attributes;
 
         // Widget position and size
-        MultiBoundaries m_ext_dimensions;
-        MultiBoundaries m_int_dimensions;
+        Rect m_ext_dimensions;
+        Rect m_int_dimensions;
 
         bool m_is_dimension_set = false;
         float m_scale = 1.f;
-        emfloat m_window_width = 1.f;
+        float m_window_width = 1.f;
 
         // Debug
-        bool m_show_boundaries = true;
+        bool m_show_boundaries = false;
 
         // Internal
         SafeString m_safe_string;

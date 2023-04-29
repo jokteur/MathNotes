@@ -28,19 +28,18 @@ namespace RichText {
     float TextString::hk_set_position(float& cursor_y_pos, float& x_offset) {
         // Dimension is also directly calculated here
         if (!m_draw_chars.empty()) {
-            auto start_char = m_draw_chars.begin()->get();
-            auto end_char = (m_draw_chars.end() - 1)->get();
+            auto start_char = m_draw_chars.front();
+            auto end_char = m_draw_chars.back();
             float ascent = start_char->ascent;
             float descent = end_char->descent;
-            auto& dims = m_ext_dimensions.front();
-            dims = Rect{
+            m_ext_dimensions = Rect{
                 start_char->_calculated_position.x - start_char->offset.x,
                 start_char->_calculated_position.y - start_char->offset.y,
                 end_char->_calculated_position.x - end_char->offset.x + end_char->advance,
                 end_char->_calculated_position.y - end_char->offset.y + ascent - descent
             };
-            dims.w -= dims.x;
-            dims.h -= dims.y;
+            m_ext_dimensions.w -= m_ext_dimensions.x;
+            m_ext_dimensions.h -= m_ext_dimensions.y;
         }
         return cursor_y_pos;
     }

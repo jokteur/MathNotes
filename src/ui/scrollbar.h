@@ -1,5 +1,6 @@
 #pragma once
 
+#include "geometry/basic.h"
 #include "drawable.h"
 #include "draw_commands.h"
 #include "types.h"

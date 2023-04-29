@@ -113,7 +113,7 @@ namespace RichText {
             TimeCounter::getInstance().startCounter("Set widths");
             for (auto pair : m_root_elements) {
                 if (m_current_width != width && pair.second == m_current_block_ptr) {
-                    current_widget_y_size = m_current_block_ptr->get().m_ext_dimensions.front().h;
+                    current_widget_y_size = m_current_block_ptr->get().m_ext_dimensions.h;
                 }
                 if (m_current_width != width || pair.second->get().m_widget_dirty & pair.second->get().DIRTY_WIDTH) {
                     pair.second->get().setWindowWidth(width);
@@ -165,7 +165,7 @@ namespace RichText {
                         m_before_height = y_pos - m_display_height - 1000.f;
                         y_pos = -roundf(m_y_displacement);
                         pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
-                        updated_current_widget_y_size = pair.second->get().m_ext_dimensions.front().h;
+                        updated_current_widget_y_size = pair.second->get().m_ext_dimensions.h;
                         continue;
                     }
                     pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
@@ -294,7 +294,7 @@ namespace RichText {
         pixels = abs(pixels);
 
         /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_current_block_ptr->get().m_ext_dimensions.front().h - m_y_displacement;
+        float remaining_height = m_current_block_ptr->get().m_ext_dimensions.h - m_y_displacement;
         if (pixels < remaining_height) {
             m_y_displacement += pixels;
             return;
@@ -313,7 +313,7 @@ namespace RichText {
             }
             go_to_line(next->second->get().m_text_boundaries.front().line_number);
 
-            float element_height = m_current_block_ptr->get().m_ext_dimensions.front().h;
+            float element_height = m_current_block_ptr->get().m_ext_dimensions.h;
             total_height += element_height;
             if (pixels < total_height) {
                 m_y_displacement = element_height - (total_height - pixels);
@@ -328,7 +328,7 @@ namespace RichText {
             std::cout << "Change line " << m_current_line << std::endl;
         }
         if (!arrived_at_end) {
-            m_y_displacement = m_current_block_ptr->get().m_ext_dimensions.front().h;
+            m_y_displacement = m_current_block_ptr->get().m_ext_dimensions.h;
         }
     }
     void Page::scroll_up(float pixels) {
@@ -337,7 +337,7 @@ namespace RichText {
             return;
 
         /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_current_block_ptr->get().m_ext_dimensions.front().h - m_y_displacement;
+        float remaining_height = m_current_block_ptr->get().m_ext_dimensions.h - m_y_displacement;
         if (pixels <= m_y_displacement || m_current_block_idx == 0) {
             m_y_displacement -= pixels;
             if (m_y_displacement < 0.f)
@@ -357,10 +357,10 @@ namespace RichText {
                 break;
             }
             go_to_line(prev->second->get().m_text_boundaries.front().line_number);
-            if (prev->second->get().m_ext_dimensions.front().h == 0.f && prev->first > 0) {
+            if (prev->second->get().m_ext_dimensions.h == 0.f && prev->first > 0) {
                 continue;
             }
-            float element_height = m_current_block_ptr->get().m_ext_dimensions.front().h;
+            float element_height = m_current_block_ptr->get().m_ext_dimensions.h;
             total_height += element_height;
             if (pixels <= total_height || prev == m_root_elements.begin()) {
                 m_y_displacement = total_height - pixels;

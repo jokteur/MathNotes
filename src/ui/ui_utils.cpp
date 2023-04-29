@@ -25,8 +25,7 @@ bool isOnTop(const std::string& window_name) {
     auto windows = g.Windows;
     auto current_window = ImGui::FindWindowByName(window_name.c_str());
 
-    auto m = ImGui::GetMousePos();
-    auto mouse_pos = EmVec2(m.x, m.y);
+    auto mouse_pos = ImGui::GetMousePos();
 
     /* Check for resize grips (code taken from ImGui::UpdateWindowManualResize) */
     {

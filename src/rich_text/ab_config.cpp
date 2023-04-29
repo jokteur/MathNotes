@@ -5,7 +5,7 @@ namespace RichText {
     ABConfig::ABConfig() {
         // Paragraph
         styles[P].set_line_space(1.4f);
-        styles[P].set_v_margins(EmVec2(0.f, 10.f));
+        styles[P].set_v_margins(EmVec2(0.f, 1.f));
         styles[P].set_h_margins(EmVec2(0.f, 0.f));
         // styles[P].set_v_paddings(EmVec2(0.f, 0.f));
         // styles[P].set_h_paddings(EmVec2(0.f, 0.f));
@@ -58,7 +58,7 @@ namespace RichText {
         // Quote
         styles[QUOTE].set_line_space(1.4f);
         styles[QUOTE].set_h_margins(EmVec2(15.f, 0.f));
-        styles[QUOTE].set_v_margins(EmVec2(150.f, 0.f));
+        styles[QUOTE].set_v_margins(EmVec2(5.f, 0.f));
         // styles[QUOTE].set_v_paddings(EmVec2(0.f, 0.f));
 
         // Display latex

@@ -1,5 +1,4 @@
 #pragma once
-#include "rect.h"
 #include "basic.h"
 
 #include <vector>
@@ -10,12 +9,12 @@ private:
 public:
     void addBoundary(const Rect& rect);
 
-    void setGlobalPosition(const EmVec2& pos);
-    void setGlobalPosition(emfloat x, emfloat y);
-    void setGlobalDimensions(const EmVec2& pos);
-    void setGlobalPosition(emfloat w, emfloat h);
+    const std::vector<Rect>& getBounds();
+
+    void merge(const MultiBoundaries& bounds);
+    void exclude(const MultiBoundaries& bounds);
 
     Rect getGlobalRect() const;
-    EmVec2 getGlobalPosition() const;
-    EmVec2 getGlobalDimensions() const;
+    ImVec2 getGlobalPosition() const;
+    ImVec2 getGlobalDimensions() const;
 };
