@@ -113,7 +113,7 @@ void MainApp::FrameUpdate() {
         t1 = std::chrono::high_resolution_clock::now();
         m_widget_manager = new PageManager(*m_ab_file, m_ui_state);
         m_widget_id = m_widget_manager->createPage(PageConfig{ 0.f, true });
-        m_widget_id2 = m_widget_manager->createPage(PageConfig{ 0.f, true });
+        // m_widget_id2 = m_widget_manager->createPage(PageConfig{ 0.f, true });
 
         text_set = true;
     }
@@ -122,9 +122,9 @@ void MainApp::FrameUpdate() {
 
     if (m_widget_manager != nullptr) {
         auto widget = m_widget_manager->getWidget(m_widget_id);
-        auto widget2 = m_widget_manager->getWidget(m_widget_id2);
+        // auto widget2 = m_widget_manager->getWidget(m_widget_id2);
         widget->FrameUpdate();
-        widget2->FrameUpdate();
+        // widget2->FrameUpdate();
     }
 
     if (m_in_text != m_prev_text) {

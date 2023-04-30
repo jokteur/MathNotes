@@ -169,8 +169,8 @@ namespace RichText {
         }
         if (ptr != nullptr) {
             if (enter) {
-                ptr->m_style.h_margins = ImVec2(0.f, 0.f);
-                ptr->m_style.v_margins = ImVec2(0.f, 0.f);
+                ptr->m_style.h_margins = EmVec2(emfloat{ 0.f }, emfloat{ 0.f });
+                ptr->m_style.v_margins = EmVec2(emfloat{ 0.f }, emfloat{ 0.f });
                 push_to_tree(ptr);
             }
             else {
