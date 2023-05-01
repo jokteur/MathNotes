@@ -6,7 +6,7 @@ namespace RichText {
         // Paragraph
         styles[P].set_line_space(1.4f);
         styles[P].set_v_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
-        styles[P].set_h_margins(EmVec2(emfloat{ 5.f }, emfloat{ 0.f }));
+        styles[P].set_h_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
         // styles[P].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
         // styles[P].set_h_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 

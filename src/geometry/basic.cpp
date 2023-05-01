@@ -34,7 +34,7 @@ bool emfloat::operator!=(const emfloat& rhs) const {
     return f != rhs.f;
 }
 
-const float emfloat::getFloat() {
+float emfloat::getFloat() {
     return f * Tempo::GetScaling();
 }
 

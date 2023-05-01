@@ -4,7 +4,7 @@
 #include <string>
 
 struct emfloat {
-    float f;
+    float f = 0.f;
 
     const emfloat operator*(int rhs) const;
 
@@ -19,7 +19,7 @@ struct emfloat {
     bool operator==(const emfloat& rhs) const;
     bool operator!=(const emfloat& rhs) const;
 
-    const float getFloat();
+    float getFloat();
 };
 
 

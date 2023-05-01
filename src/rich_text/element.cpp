@@ -71,7 +71,7 @@ namespace RichText {
                 FontRequestInfo font_request;
                 font_request.font_styling.family = F_MONOSPACE;
                 FontInfoOut font_out;
-                m_ui_state->font_manager.requestFont(font_request, font_out);
+                m_ui_state.font_manager.requestFont(font_request, font_out);
                 Tempo::PushFont(font_out.font_id);
                 ImGui::TextWrapped("%s", str.c_str());
                 Tempo::PopFont();
@@ -96,7 +96,7 @@ namespace RichText {
         return true;
     }
 
-    AbstractElement::AbstractElement(UIState_ptr ui_state): Drawable(ui_state) {
+    AbstractElement::AbstractElement() {
         count++;
     }
     AbstractElement::~AbstractElement() {

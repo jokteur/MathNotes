@@ -6,7 +6,7 @@
 
 namespace RichText {
     struct TextString: public AbstractSpan {
-        TextString(UIState_ptr ui_state);
+        TextString();
 
         bool add_chars(std::vector<WrapCharPtr>& wrap_string) override;
 

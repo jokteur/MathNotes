@@ -13,7 +13,6 @@ int TextInputCallback(ImGuiInputTextCallbackData* data);
 
 class MainApp: public Tempo::App {
 private:
-    std::shared_ptr<UIState> m_ui_state = std::make_shared<UIState>();
 
     RichText::PageManager* m_widget_manager = nullptr;
     AB::File* m_ab_file = nullptr;

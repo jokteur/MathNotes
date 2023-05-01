@@ -44,7 +44,7 @@ namespace RichText {
         }
         else {
             using namespace Fonts;
-            auto text = new TextString(m_ui_state);
+            auto text = new TextString();
             text->m_text_boundaries = bounds;
 
             set_infos(ABConfig::P, (AbstractElement*)(text));
@@ -257,7 +257,7 @@ namespace RichText {
 
     AbstractElementPtr ABToWidgets::BLOCK_UL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockUlDetail& detail) {
         if (enter) {
-            auto ul_list = new ULWidget(m_ui_state);
+            auto ul_list = new ULWidget();
             ul_list->m_text_boundaries = bounds;
             ul_list->m_attributes = attributes;
             if (m_current_ptr != nullptr) {
@@ -281,7 +281,7 @@ namespace RichText {
 
     AbstractElementPtr ABToWidgets::BLOCK_OL(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockOlDetail& detail) {
         if (enter) {
-            auto ol_list = new OLWidget(m_ui_state);
+            auto ol_list = new OLWidget();
             ol_list->m_text_boundaries = bounds;
             ol_list->m_attributes = attributes;
             if (m_current_ptr != nullptr) {
@@ -305,7 +305,7 @@ namespace RichText {
 
     AbstractElementPtr ABToWidgets::BLOCK_LI(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockLiDetail& detail) {
         if (enter) {
-            auto list_el = new LIWidget(m_ui_state);
+            auto list_el = new LIWidget();
             list_el->m_text_boundaries = bounds;
             list_el->m_attributes = attributes;
             list_el->is_task = detail.is_task;
@@ -330,7 +330,7 @@ namespace RichText {
 
     AbstractElementPtr ABToWidgets::BLOCK_HR(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto header = new HrBlock(m_ui_state);
+            auto header = new HrBlock();
             header->m_text_boundaries = bounds;
             header->m_attributes = attributes;
             set_infos(ABConfig::P, (AbstractElement*)(header));
@@ -344,7 +344,7 @@ namespace RichText {
 
     AbstractElementPtr ABToWidgets::BLOCK_H(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockHDetail& detail) {
         if (enter) {
-            auto header = new HeaderWidget(m_ui_state);
+            auto header = new HeaderWidget();
             header->m_text_boundaries = bounds;
             header->m_attributes = attributes;
             header->hlevel = detail.level;
@@ -359,7 +359,7 @@ namespace RichText {
 
     AbstractElementPtr ABToWidgets::BLOCK_QUOTE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto quote = new QuoteWidget(m_ui_state);
+            auto quote = new QuoteWidget();
             quote->m_text_boundaries = bounds;
             quote->m_attributes = attributes;
             if (m_current_ptr != nullptr && m_current_ptr->m_type == T_BLOCK_QUOTE) {
@@ -376,7 +376,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_CODE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::BlockCodeDetail& detail) {
         if (enter) {
-            auto code = new CodeWidget(m_ui_state);
+            auto code = new CodeWidget();
             code->m_text_boundaries = bounds;
             code->m_attributes = attributes;
             auto ptr = (AbstractElement*)(code);
@@ -389,7 +389,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_P(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new ParagraphWidget(m_ui_state);
+            auto p = new ParagraphWidget();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -402,7 +402,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_DEF(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new DefinitionWidget(m_ui_state);
+            auto p = new DefinitionWidget();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -415,7 +415,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_DIV(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new DivWidget(m_ui_state);
+            auto p = new DivWidget();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -428,7 +428,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_LATEX(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new DisplayLatexWidget(m_ui_state);
+            auto p = new DisplayLatexWidget();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -441,7 +441,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_HIDDENSPACE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new HiddenSpace(m_ui_state);
+            auto p = new HiddenSpace();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -454,7 +454,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::BLOCK_NOT_IMPLEMENTED(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new ParagraphWidget(m_ui_state);
+            auto p = new ParagraphWidget();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -469,7 +469,7 @@ namespace RichText {
     AbstractElementPtr ABToWidgets::SPAN_A(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, const AB::SpanADetail& detail) {
         set_href(enter, detail.href);
         if (enter) {
-            auto p = new LinkSpan(m_ui_state);
+            auto p = new LinkSpan();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -482,7 +482,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::SPAN_EM(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new EmSpan(m_ui_state);
+            auto p = new EmSpan();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -495,7 +495,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::SPAN_STRONG(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new StrongSpan(m_ui_state);
+            auto p = new StrongSpan();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -511,7 +511,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::SPAN_CODE(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new StrongSpan(m_ui_state);
+            auto p = new StrongSpan();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -527,7 +527,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::SPAN_LATEXMATH(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new LatexWidget(m_ui_state);
+            auto p = new LatexWidget();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -550,7 +550,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::SPAN_HIGHLIGHT(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new HighlightSpan(m_ui_state);
+            auto p = new HighlightSpan();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);
@@ -561,7 +561,7 @@ namespace RichText {
             return m_current_ptr;
         }
     }
-    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, RootNodePtr>* root_elements, UIState_ptr ui_state, ABConfig config) {
+    void ABToWidgets::parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, RootNodePtr>* root_elements, ABConfig config) {
         //ZoneScoped;
         if (root_idx_end < 0 || root_idx_start < 0)
             return;
@@ -573,7 +573,6 @@ namespace RichText {
         m_root_elements = root_elements;
         m_current_ptr = nullptr;
         m_config = config;
-        m_ui_state = ui_state;
         m_safe_text = file->m_safe_txt;
 
         int idx_start = m_ab_file->m_blocks[root_idx_start]->idx_start;

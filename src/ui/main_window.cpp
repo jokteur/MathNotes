@@ -14,43 +14,44 @@
 #include "time_counter.h"
 #include "profiling.h"
 
-void setFonts(UIState_ptr state) {
+void setFonts() {
     using namespace Fonts;
     using Fs = FontStyling;
+    auto& state = UIState::getInstance();
     // Regular fonts
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_THIN, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-Th.ttf");
-    state->font_manager.setFallBack(Fs{ F_REGULAR, W_THIN, S_ITALIC }, Fs{ F_REGULAR, W_LIGHT, S_ITALIC });
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_LIGHT, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-L.ttf");
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_LIGHT, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-Li.ttf");
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_REGULAR, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-R.ttf");
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_REGULAR, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-RI.ttf");
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_MEDIUM, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-M.ttf");
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_MEDIUM, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-MI.ttf");
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_BOLD, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-B.ttf");
-    state->font_manager.setFontPath(Fs{ F_REGULAR, W_BOLD, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-BI.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_THIN, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-Th.ttf");
+    state.font_manager.setFallBack(Fs{ F_REGULAR, W_THIN, S_ITALIC }, Fs{ F_REGULAR, W_LIGHT, S_ITALIC });
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_LIGHT, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-L.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_LIGHT, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-Li.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_REGULAR, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-R.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_REGULAR, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-RI.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_MEDIUM, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-M.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_MEDIUM, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-MI.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_BOLD, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-B.ttf");
+    state.font_manager.setFontPath(Fs{ F_REGULAR, W_BOLD, S_ITALIC }, "data/fonts/Ubuntu/Ubuntu-BI.ttf");
 
     // Monospace fonts
-    state->font_manager.setWeightFallBack(F_MONOSPACE, W_THIN, W_REGULAR);
-    state->font_manager.setWeightFallBack(F_MONOSPACE, W_LIGHT, W_REGULAR);
-    state->font_manager.setWeightFallBack(F_MONOSPACE, W_MEDIUM, W_REGULAR);
-    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_REGULAR, S_NORMAL }, "data/fonts/Ubuntu/UbuntuMono-R.ttf");
-    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_REGULAR, S_ITALIC }, "data/fonts/Ubuntu/UbuntuMono-Ri.ttf");
-    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_BOLD, S_NORMAL }, "data/fonts/Ubuntu/UbuntuMono-B.ttf");
-    state->font_manager.setFontPath(Fs{ F_MONOSPACE, W_BOLD, S_ITALIC }, "data/fonts/Ubuntu/UbuntuMono-BI.ttf");
+    state.font_manager.setWeightFallBack(F_MONOSPACE, W_THIN, W_REGULAR);
+    state.font_manager.setWeightFallBack(F_MONOSPACE, W_LIGHT, W_REGULAR);
+    state.font_manager.setWeightFallBack(F_MONOSPACE, W_MEDIUM, W_REGULAR);
+    state.font_manager.setFontPath(Fs{ F_MONOSPACE, W_REGULAR, S_NORMAL }, "data/fonts/Ubuntu/UbuntuMono-R.ttf");
+    state.font_manager.setFontPath(Fs{ F_MONOSPACE, W_REGULAR, S_ITALIC }, "data/fonts/Ubuntu/UbuntuMono-Ri.ttf");
+    state.font_manager.setFontPath(Fs{ F_MONOSPACE, W_BOLD, S_NORMAL }, "data/fonts/Ubuntu/UbuntuMono-B.ttf");
+    state.font_manager.setFontPath(Fs{ F_MONOSPACE, W_BOLD, S_ITALIC }, "data/fonts/Ubuntu/UbuntuMono-BI.ttf");
 
     // Condensed fonts
-    state->font_manager.setStyleFallBack(F_CONDENSED, S_ITALIC, S_NORMAL);
-    state->font_manager.setWeightFallBack(F_CONDENSED, W_THIN, W_REGULAR);
-    state->font_manager.setWeightFallBack(F_MONOSPACE, W_LIGHT, W_REGULAR);
-    state->font_manager.setWeightFallBack(F_MONOSPACE, W_MEDIUM, W_REGULAR);
-    state->font_manager.setWeightFallBack(F_MONOSPACE, W_BOLD, W_REGULAR);
-    state->font_manager.setFontPath(Fs{ F_CONDENSED, W_REGULAR, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-C.ttf");
+    state.font_manager.setStyleFallBack(F_CONDENSED, S_ITALIC, S_NORMAL);
+    state.font_manager.setWeightFallBack(F_CONDENSED, W_THIN, W_REGULAR);
+    state.font_manager.setWeightFallBack(F_MONOSPACE, W_LIGHT, W_REGULAR);
+    state.font_manager.setWeightFallBack(F_MONOSPACE, W_MEDIUM, W_REGULAR);
+    state.font_manager.setWeightFallBack(F_MONOSPACE, W_BOLD, W_REGULAR);
+    state.font_manager.setFontPath(Fs{ F_CONDENSED, W_REGULAR, S_NORMAL }, "data/fonts/Ubuntu/Ubuntu-C.ttf");
 
     FontRequestInfo default_font;
     default_font.size_wish = 18.f;
     default_font.font_styling = Fs{ F_REGULAR, W_REGULAR, S_NORMAL };
     default_font.auto_scaling = true;
-    state->font_manager.setDefaultFont(default_font);
+    state.font_manager.setDefaultFont(default_font);
 
     // merge in icons
     ImVector< ImWchar> icons_ranges;
@@ -62,7 +63,7 @@ void setFonts(UIState_ptr state) {
     icons_config.GlyphOffset = ImVec2(0, 4.f);
     icons_config.MergeMode = true;
 
-    // Tempo::AddIconsToFont(state->font_regular,
+    // Tempo::AddIconsToFont(state.font_regular,
     //     "data/fonts/Icons/material-design-icons/MaterialIcons-Regular.ttf", icons_config, icons_ranges
     // );
 }
@@ -75,7 +76,7 @@ MainApp::MainApp() {
 
 }
 void MainApp::InitializationBeforeLoop() {
-    setFonts(m_ui_state);
+    setFonts();
     defineStyle();
     getFileContents("data/bigfile.md", m_big_text);
     getFileContents("data/ab_test.ab", m_normal_text);
@@ -111,7 +112,7 @@ void MainApp::FrameUpdate() {
             delete m_widget_manager;
         }
         t1 = std::chrono::high_resolution_clock::now();
-        m_widget_manager = new PageManager(*m_ab_file, m_ui_state);
+        m_widget_manager = new PageManager(*m_ab_file);
         m_widget_id = m_widget_manager->createPage(PageConfig{ 0.f, true });
         // m_widget_id2 = m_widget_manager->createPage(PageConfig{ 0.f, true });
 

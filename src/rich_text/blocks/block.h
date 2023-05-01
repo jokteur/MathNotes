@@ -15,7 +15,7 @@
 namespace RichText {
     struct AbstractBlock: public AbstractElement {
     public:
-        AbstractBlock(UIState_ptr ui_state): AbstractElement(ui_state) {
+        AbstractBlock(): AbstractElement() {
             m_category = C_BLOCK;
         }
 
@@ -29,7 +29,7 @@ namespace RichText {
 
     struct AbstractLeafBlock: public AbstractBlock {
     public:
-        AbstractLeafBlock(UIState_ptr ui_state): AbstractBlock(ui_state) {
+        AbstractLeafBlock(): AbstractBlock() {
             m_category = C_BLOCK;
         }
 
@@ -38,7 +38,7 @@ namespace RichText {
     };
 
     struct HiddenSpace: public AbstractLeafBlock {
-        HiddenSpace(UIState_ptr ui_state): AbstractLeafBlock(ui_state) {
+        HiddenSpace(): AbstractLeafBlock() {
             m_category = C_BLOCK;
             m_type = T_BLOCK_HIDDENSPACE;
         }
@@ -46,7 +46,7 @@ namespace RichText {
         bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
     struct HrBlock: public AbstractLeafBlock {
-        HrBlock(UIState_ptr ui_state): AbstractLeafBlock(ui_state) {
+        HrBlock(): AbstractLeafBlock() {
             m_category = C_BLOCK;
             m_type = T_BLOCK_HR;
         }

@@ -61,7 +61,7 @@ namespace RichText {
         return true;
     }
 
-    bool Utf8StrToImCharStr(UIState_ptr ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style, bool replace_spaces_by_points) {
+    bool Utf8StrToImCharStr(UIState& ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style, bool replace_spaces_by_points) {
         //ZoneScoped;
         if (start == end)
             return true;
@@ -72,7 +72,7 @@ namespace RichText {
         font_request.size_wish = style.font_size;
 
         FontInfoOut font_out;
-        ui_state->font_manager.requestFont(font_request, font_out);
+        ui_state.font_manager.requestFont(font_request, font_out);
         float font_size = font_out.size * font_out.ratio * style.scale * Tempo::GetScaling();
 
         auto font = Tempo::GetImFont(font_out.font_id);

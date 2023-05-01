@@ -17,7 +17,7 @@ private:
     bool m_grab_mode = false;
     Mode m_display_mode;
 public:
-    VerticalScrollBar(UIState_ptr ui_state, Mode display_mode);
+    VerticalScrollBar(Mode display_mode);
 
     void FrameUpdate(const Rect& boundaries, Draw::DrawList& m_draw_list, float before, float after, const std::string& window_name);
 

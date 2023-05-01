@@ -6,7 +6,7 @@
 #include "profiling.h"
 
 namespace RichText {
-    TextString::TextString(UIState_ptr ui_state): AbstractSpan(ui_state) {
+    TextString::TextString(): AbstractSpan() {
         m_type = T_TEXT;
     }
 

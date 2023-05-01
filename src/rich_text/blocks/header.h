@@ -7,7 +7,7 @@ namespace RichText {
     protected:
     public:
         unsigned int hlevel;
-        HeaderWidget(UIState_ptr ui_state);
+        HeaderWidget();
     };
 
     using HeaderWidgetPtr = std::shared_ptr<HeaderWidget>;

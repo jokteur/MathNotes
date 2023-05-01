@@ -4,6 +4,6 @@
 
 namespace RichText {
     struct DivWidget: public AbstractBlock {
-        DivWidget(UIState_ptr ui_state);
+        DivWidget();
     };
 }

@@ -6,12 +6,12 @@ namespace RichText {
     struct ULWidget: public AbstractBlock {
         unsigned int list_level = 0;
         char mark;
-        ULWidget(UIState_ptr ui_state);
+        ULWidget();
     };
     struct OLWidget: public AbstractBlock {
         unsigned int list_level = 0;
         char start;
-        OLWidget(UIState_ptr ui_state);
+        OLWidget();
     };
     struct LIWidget: public AbstractBlock {
     protected:
@@ -19,6 +19,6 @@ namespace RichText {
         unsigned int list_level = 0;
         bool is_task;
         char task_mark;
-        LIWidget(UIState_ptr ui_state);
+        LIWidget();
     };
 }

@@ -78,7 +78,7 @@ namespace RichText {
         void scroll_up(float pixels);
         void scroll_down(float pixels);
     public:
-        Page(UIState_ptr ui_state): Drawable(ui_state), m_scrollbar(ui_state, VerticalScrollBar::FIT_UNTIL_LAST_LINE) {}
+        Page(): Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE) {}
         Page(const Page&) = delete;
 
         void setName(const std::string& name) { m_name = name; }

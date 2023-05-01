@@ -1,7 +1,7 @@
 #include "paragraph.h"
 
 namespace RichText {
-    ParagraphWidget::ParagraphWidget(UIState_ptr ui_state): AbstractLeafBlock(ui_state) {
+    ParagraphWidget::ParagraphWidget(): AbstractLeafBlock() {
         m_type = T_BLOCK_P;
     }
 
@@ -12,7 +12,7 @@ namespace RichText {
     //     return true;
     // }
 
-    CodeWidget::CodeWidget(UIState_ptr ui_state): AbstractLeafBlock(ui_state) {
+    CodeWidget::CodeWidget(): AbstractLeafBlock() {
         m_type = T_BLOCK_CODE;
     }
 }

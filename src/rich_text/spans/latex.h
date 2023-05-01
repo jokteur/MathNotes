@@ -6,7 +6,7 @@
 namespace RichText {
     struct LatexWidget: public AbstractSpan {
         std::string m_error;
-        LatexWidget(UIState_ptr ui_state): AbstractSpan(ui_state) {
+        LatexWidget(): AbstractSpan() {
             m_category = C_SPAN;
             m_type = T_SPAN_LATEX;
         }

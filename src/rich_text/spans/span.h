@@ -14,7 +14,7 @@
 
 namespace RichText {
     struct AbstractSpan: public AbstractElement {
-        AbstractSpan(UIState_ptr ui_state): AbstractElement(ui_state) {
+        AbstractSpan(): AbstractElement() {
             m_category = C_SPAN;
         }
         bool hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars);

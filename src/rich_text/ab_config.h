@@ -37,11 +37,11 @@ namespace RichText {
         ABConfig();
 
         // Everything is specified in pixel (which are scaled to zoom level and monitor scaling)
-        enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, B_LATEX, UL, OL, LI, DIV, DEF, HREF, EM, STRONG, HIGHLIGHT, LATEX, SPECIAL };
+        enum type { P, H1, H2, H3, H4, H5, H6, CODE, INLINE_CODE, QUOTE, B_LATEX, UL, OL, LI, DIV, DEF, HREF, EM, STRONG, HIGHLIGHT, LATEX, SPECIAL, NUMBER_OF_TYPES };
         // In order: normal font size, h1, h2, h3, h4, h5, h6
         // Array is compatible with hlevel in md, e.g. font_sizes[4] gives
         // h4 font size
-        Style styles[20];
+        Style styles[NUMBER_OF_TYPES];
 
         emfloat x_level_offset = emfloat{ 15.f };
 

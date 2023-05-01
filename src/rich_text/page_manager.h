@@ -20,9 +20,8 @@ namespace RichText {
         std::unordered_map<WidgetId, WidgetPtr> m_widgets;
         Page m_empty_widget;
         int m_current_widgets = 0;
-        UIState_ptr m_ui_state;
     public:
-        PageManager(const AB::File& file, UIState_ptr ui_state);
+        PageManager(const AB::File& file);
         ~PageManager();
 
         /* Returns a widget id linked to a widget (limited to 32 widgets)*/

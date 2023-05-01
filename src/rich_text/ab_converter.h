@@ -39,7 +39,6 @@ namespace RichText {
         RootNodePtr m_root_ptr = nullptr;
         std::map<int, RootNodePtr>* m_root_elements;
 
-        UIState_ptr m_ui_state = nullptr;
         AB::File* m_ab_file;
 
         std::string m_href;
@@ -83,6 +82,6 @@ namespace RichText {
         ABToWidgets();
         ~ABToWidgets();
 
-        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, RootNodePtr>* root_elements, UIState_ptr ui_state, ABConfig config = ABConfig());
+        void parse(AB::File* file, int root_idx_start, int root_idx_end, std::map<int, RootNodePtr>* root_elements, ABConfig config = ABConfig());
     };
 }

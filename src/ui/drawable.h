@@ -6,11 +6,11 @@
 
 class Drawable {
 protected:
-    std::shared_ptr<UIState> m_ui_state;
+    UIState& m_ui_state;
     long long int m_id = 0;
     static long long int counter;
 public:
-    Drawable(std::shared_ptr<UIState> ui_state): m_ui_state(ui_state) {
+    Drawable(): m_ui_state(UIState::getInstance()) {
         counter++;
         m_id = counter;
     }

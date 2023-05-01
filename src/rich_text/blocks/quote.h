@@ -4,7 +4,7 @@
 
 namespace RichText {
     struct QuoteWidget: public AbstractBlock {
-        QuoteWidget(UIState_ptr ui_state);
+        QuoteWidget();
 
         emfloat m_delimiter_offset = emfloat{ 0.f };
 

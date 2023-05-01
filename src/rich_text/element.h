@@ -52,7 +52,7 @@ namespace RichText {
 
         Type m_type;
         Category m_category;
-        AbstractElement(UIState_ptr ui_state);
+        AbstractElement();
         ~AbstractElement();
 
         // Informations about the tree structure

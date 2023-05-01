@@ -5,7 +5,7 @@
 #include "imgui_internal.h"
 
 namespace RichText {
-    HeaderWidget::HeaderWidget(UIState_ptr ui_state): AbstractLeafBlock(ui_state) {
+    HeaderWidget::HeaderWidget(): AbstractLeafBlock() {
         m_type = T_BLOCK_H;
     }
 }

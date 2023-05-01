@@ -2,8 +2,8 @@
 
 #include "ui/ui_utils.h"
 
-VerticalScrollBar::VerticalScrollBar(UIState_ptr ui_state, Mode mode)
-    : Drawable(ui_state), m_display_mode(mode) {
+VerticalScrollBar::VerticalScrollBar(Mode mode)
+    : m_display_mode(mode) {
 }
 
 void VerticalScrollBar::FrameUpdate(const Rect& b, Draw::DrawList& m_draw_list, float before, float after, const std::string& window_name) {

@@ -243,7 +243,7 @@ namespace RichText {
             FontRequestInfo font_request;
             font_request.size_wish = 18.f;
             FontInfoOut font_out;
-            m_ui_state->font_manager.requestFont(font_request, font_out);
+            m_ui_state.font_manager.requestFont(font_request, font_out);
             auto font = Tempo::GetImFont(font_out.font_id);
             if (font->im_font != nullptr) {
                 m_recalculate_line_height = false;
@@ -414,7 +414,7 @@ namespace RichText {
             m_block_idx_start = start;
             m_block_idx_end = end;
             ABToWidgets parser;
-            parser.parse(m_file, m_block_idx_start, m_block_idx_end, &m_root_elements, m_ui_state);
+            parser.parse(m_file, m_block_idx_start, m_block_idx_end, &m_root_elements);
             /* Move to the correct block_ptr corresponding to the current line */
             auto current_bounds = m_file->getBlocksBoundsContaining(m_current_line, m_current_line);
             auto it = m_root_elements.find(current_bounds.start.block_idx);
@@ -477,7 +477,7 @@ namespace RichText {
         Tempo::jobFct job = [=](float& progress, bool& abort) -> std::shared_ptr<Tempo::JobResult> {
             ABToWidgets parser;
             std::map<int, RootNodePtr> tmp_roots;
-            parser.parse(m_file, start_idx, end_idx, &tmp_roots, m_ui_state);
+            parser.parse(m_file, start_idx, end_idx, &tmp_roots);
             {
                 std::lock_guard<std::mutex> lk(m_root_mutex);
                 for (auto pair : tmp_roots) {

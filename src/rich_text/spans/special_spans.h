@@ -6,12 +6,12 @@
 
 namespace RichText {
     struct LinkSpan: public AbstractSpan {
-        LinkSpan(UIState_ptr ui_state): AbstractSpan(ui_state) {
+        LinkSpan(): AbstractSpan() {
             m_type = T_SPAN_A;
         }
     };
     struct CodeSpan: public AbstractSpan {
-        CodeSpan(UIState_ptr ui_state): AbstractSpan(ui_state) {
+        CodeSpan(): AbstractSpan() {
             m_type = T_SPAN_A;
         }
     };
