@@ -8,7 +8,7 @@
 
 #include <ab_parser.h>
 #include "element.h"
-#include "ui/fonts.h"
+#include "fonts/fonts.h"
 #include "rich_text_context.h"
 #include "ab/ab_file.h"
 #include "ab_config.h"

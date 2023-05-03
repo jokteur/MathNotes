@@ -4,50 +4,28 @@
 #include <list>
 #include <tempo.h>
 
+#include "char.h"
 
-namespace RichText {
-    enum Alignement { LEFT, CENTER, RIGHT };
-
-    /**
-     * @brief A character can be anything that needs to be
-     * displayed to the screen in a text-like widget.
-     *
-     * The different properties of this struct (advance, offset, ...)
-     * determine how the character will be displayed along the other characters.
-     *
-     *     <-------advance------>
-     *
-     *     0 →                  0                   ▴
-     *   origin                next char            |
-     *     ↓     x     *       origin    ▴          |   ascent
-     *       offset  * *                 |          |
-     *             *   *                 | height   ▾
-     *           *  *  *  *              |          ▴
-     *                 *                 |          |   descent
-     *                 *                 ▾          ▾
-     *           <--width->
-     */
+namespace Fonts {
     struct WrapCharacter {
-    public:
-
-        float advance = 0.f;
-        ImVec2 offset = ImVec2(0.f, 0.f);
-        float ascent = 0.f; // Max ascent of char family
-        float descent = 0.f; // Max descent of char family
-        ImVec2 dimensions = ImVec2(0.f, 0.f);
-        bool is_linebreak = false;
-        bool breakable = false; // If true, means that this char can be used to breakup for a new line
-        bool is_whitespace = false; // If true, the char won't be pushed onto the next line 
-        Alignement alignement = LEFT; // Tries to align the character (possible if no_char_before/after are true)
-
-        // This should be only modified by WrapAlgorithm
-        ImVec2 _calculated_position;
-        static int count;
-        WrapCharacter() { count++; }
-        ~WrapCharacter() { count--; }
+        Character* c;
+        ImVec2 calculated_position;
     };
 
-    using WrapCharPtr = std::shared_ptr<WrapCharacter>;
+    typedef WrapCharacter* WrapCharPtr;
+
+    class WrapString {
+    private:
+        std::vector<WrapCharPtr> m_string;
+    public:
+
+        template<class T>
+        void push_back(T c) {
+
+        }
+
+        void clear();
+    };
 
     /**
      * @brief The convention for line positions is as follow:
@@ -76,7 +54,7 @@ namespace RichText {
      */
     class WrapAlgorithm {
     private:
-        std::vector<WrapCharPtr> m_string;
+        std::vector<WrapCharacter> m_string;
 
         // Calculated quantities
         std::list<Line> m_lines;
@@ -94,7 +72,7 @@ namespace RichText {
         inline int find_line_idx(int cursor_pos);
         inline int find_next_line_break(int cursor_pos);
 
-        inline void push_char_on_line(WrapCharPtr& c, float* cursor_x_coord);
+        inline void push_char_on_line(WrapCharPtr c, float* cursor_x_coord);
         inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
     public:

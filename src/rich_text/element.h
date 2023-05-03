@@ -6,18 +6,18 @@
 
 #include "ab/ab_file.h"
 #include "ui/drawable.h"
-#include "ui/fonts.h"
+#include "fonts/fonts.h"
 #include "ui/draw_commands.h"
 #include "ui/colors.h"
 
 #include "geometry/basic.h"
 #include "geometry/multi_boundaries.h"
+#include "fonts/wrapper.h"
 #include "types.h"
 
 #include "widgets_enum.h"
 #include "rich_text_context.h"
 #include "ab_config.h"
-#include "wrapper.h"
 #include "chars/drawable_char.h"
 
 namespace RichText {
@@ -39,7 +39,7 @@ namespace RichText {
     // using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
     // using AbstractElementWeakPtr = AbstractElement*;
 
-    struct AbstractElement: public Drawable {
+    struct AbstractElement : public Drawable {
     protected:
         std::vector<DrawableCharPtr> m_draw_chars;
         std::vector<DrawableCharPtr> m_draw_delimiter_chars;
@@ -122,7 +122,7 @@ namespace RichText {
     private:
         AbstractElementPtr m_ptr = nullptr;
     public:
-        RootNode(AbstractElementPtr ptr): m_ptr(ptr) {}
+        RootNode(AbstractElementPtr ptr) : m_ptr(ptr) {}
 
         /* We don't want copy constructor to avoid accidentally deleting memory twice */
         RootNode(const RootNode&) = delete;

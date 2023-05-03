@@ -6,7 +6,7 @@
 
 #include "types.h"
 #include "ui/drawable.h"
-#include "ui/fonts.h"
+#include "fonts/fonts.h"
 #include "ui/draw_commands.h"
 #include "ui/colors.h"
 

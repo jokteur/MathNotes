@@ -1,13 +1,10 @@
 #include "wrapper.h"
 #include <iomanip>
 
-#include "profiling.h"
-
 #define min(X, Y)  ((X) < (Y) ? (X) : (Y))
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
 namespace RichText {
-    int WrapCharacter::count = 0;
     WrapAlgorithm::WrapAlgorithm(float width, float line_space) {
         m_width = width;
         m_line_space = line_space;

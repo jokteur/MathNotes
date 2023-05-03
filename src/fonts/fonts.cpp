@@ -99,7 +99,7 @@ namespace Fonts {
         return E_OK;
     }
 
-    bool FontManager::requestCharString(std::vector<Character*>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points = false) {
+    bool FontManager::requestCharString(std::vector<Character*>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points) {
         /* Request the dynamic DPI font */
         FontRequestInfo font_request;
         font_request.font_styling = style;

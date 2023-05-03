@@ -3,7 +3,7 @@
 
 #include "main_window.h"
 #include "style.h"
-#include "fonts.h"
+#include "fonts/fonts.h"
 #include "utils.h"
 
 #include "ab/ab_file.h"

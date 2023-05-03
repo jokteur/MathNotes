@@ -1,7 +1,7 @@
 #pragma once
 
 #include "span.h"
-#include "ui/fonts.h"
+#include "fonts/fonts.h"
 #include "ui/colors.h"
 
 namespace RichText {

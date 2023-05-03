@@ -41,13 +41,32 @@ namespace Fonts {
         // ~WrapCharacter() { count--; }
     };
 
+    typedef Character* CharPtr;
+
     struct CharId {
         Tempo::FontID m_font_id;
-        ImWchar m_char;
+        unsigned int m_char;
+        bool operator==(const CharId& other) const;
+
     };
-    bool operator<(const CharId& c1, const CharId& c2) {
-        return c1.m_font_id < c2.m_font_id && c1.m_char < c2.m_char;
-    }
+    bool operator<(const CharId& c1, const CharId& c2);
+
 
     void fillCharInfos(Character* char_ptr, ImWchar c, float font_size, Tempo::SafeImFontPtr font, bool force_breakable);
+}
+
+/* Creating the hash function for CharId such that they can be inserted
+ * into maps / unordered_map */
+namespace std {
+    template <>
+    struct hash<Fonts::CharId> {
+        size_t operator()(const Fonts::CharId& k) const {
+            // Compute individual hash values for first, second
+            // http://stackoverflow.com/a/1646913/126995
+            size_t res = 17;
+            res = res * 31 + hash<int>()(k.m_font_id);
+            res = res * 31 + hash<unsigned int>()(k.m_char);
+            return res;
+        }
+    };
 }

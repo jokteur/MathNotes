@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui/fonts.h"
+#include "fonts/fonts.h"
 #include "ui/colors.h"
 
 #include "geometry/basic.h"
