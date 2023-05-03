@@ -113,8 +113,6 @@ namespace RichText {
     float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
         m_ext_dimensions.x = x_offset;
         m_int_dimensions.y = cursor_y_pos;
-        // m_position.x = x_offset;
-        // m_position.y = cursor_y_pos;
 
         x_offset += m_style.h_margins.x.getFloat();
         cursor_y_pos += m_style.v_margins.x.getFloat();

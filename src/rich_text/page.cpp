@@ -125,7 +125,6 @@ namespace RichText {
             }
             TimeCounter::getInstance().stopCounter("Set widths");
 
-
             if (!m_root_elements.empty()) {
                 if (!m_scrollbar_grab)
                     manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });

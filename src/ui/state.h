@@ -2,7 +2,8 @@
 
 #include <memory>
 #include <tempo.h>
-#include "fonts.h"
+#include "fonts/fonts.h"
+#include "fonts/char_manager.h"
 
 #include "translations/translate.h"
 
@@ -26,6 +27,7 @@ public:
 
     // Fonts
     Fonts::FontManager font_manager;
+    Fonts::CharManager char_manager;
 
     // Languages
     Language language = LANG_EN;

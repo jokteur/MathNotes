@@ -1,6 +1,15 @@
 #include "fonts.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui_internal.h"
+
 namespace Fonts {
+    void FontManager::delete_chars() {
+        for (auto pair : m_chars) {
+            delete pair.second;
+        }
+    }
+
     int FontManager::get_font_uuid(const FontStyling& font_styling) {
         return (font_styling.family + 1) + 10 * (font_styling.weight + 1) + 100 * (font_styling.style + 1);
     }
@@ -86,7 +95,59 @@ namespace Fonts {
         font_info_out.font_id = font.font_sizes[font_size];
         font_info_out.size = font_size;
         font_info_out.ratio = font_info.size_wish / font_size;
-        
+
         return E_OK;
+    }
+
+    bool FontManager::requestCharString(std::vector<Character*>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points = false) {
+        /* Request the dynamic DPI font */
+        FontRequestInfo font_request;
+        font_request.font_styling = style;
+        font_request.size_wish = font_size.f;
+
+        FontInfoOut font_out;
+        requestFont(font_request, font_out);
+        float actual_font_size = font_out.size * font_out.ratio * Tempo::GetScaling();
+
+        auto font = Tempo::GetImFont(font_out.font_id);
+        if (font->im_font == nullptr) {
+            return false;
+        }
+
+        char* s = (char*)(str.c_str() + start);
+        const char* text_end = (char*)(str.c_str() + end);
+        while (s < text_end) {
+            unsigned int c = (unsigned int)*s;
+            if (c >= 0x80) {
+                s += ImTextCharFromUtf8(&c, s, text_end);
+                if (c == 0) // Malformed UTF-8?
+                    break;
+            }
+            else {
+                if (replace_spaces_by_points && c == ' ') {
+                    c = 183;
+                }
+                s += 1;
+            }
+            if (c == '\r')
+                continue;
+            bool force_breakable = false;
+            if (c == ',' || c == '|' || c == '-' || c == '.' || c == '!' || c == '?')
+                force_breakable = true;
+
+            /* Once the char has been defined, we can request information on it */
+            CharId key{ font_out.font_id, c };
+            auto it = m_chars.find(key);
+
+            if (it != m_chars.end()) {
+                chars.push_back(it->second);
+            }
+            else {
+                auto char_ptr = new Character;
+                fillCharInfos(char_ptr, c, actual_font_size, font, force_breakable);
+                chars.push_back(char_ptr);
+            }
+        }
+        return true;
     }
 }

@@ -64,6 +64,7 @@ add_subdirectory(external/tracy)
 include_directories(src)
 file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/time_counter.cpp
+    src/fonts/*.cpp
     src/geometry/*.cpp
     src/system/*.cpp
     src/core/*.cpp

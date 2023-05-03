@@ -2,6 +2,9 @@
 
 #include <tempo.h>
 
+#include "geometry/basic.h"
+#include "char.h"
+
 #ifndef FONT_ICON_FILE_NAME_MD
 #include "IconsMaterialDesign.h"
 #endif
@@ -60,12 +63,17 @@ namespace Fonts {
     class FontManager {
     private:
         std::unordered_map<int, Font> m_fonts;
+        std::unordered_map<CharId, Character*> m_chars;
 
         int get_font_uuid(const FontStyling& font_styling);
         void get_font_info_from_uuid(int uuid, Family& family, Weight& weight, Style& style);
 
         void construct_font(int uuid, float size, bool auto_scaling);
+
+        void delete_chars();
     public:
+        ~FontManager() { delete_chars(); }
+
         Error addIconsToFont(const FontStyling& font_styling, const std::string& path, const ImVector<ImWchar>& range);
         void setFontPath(const FontStyling& font_styling, const std::string& path, Range range = R_LATIN);
         void setFontPath(const FontStyling& font_styling, const std::string& path, const ImVector<ImWchar>& range);
@@ -78,5 +86,7 @@ namespace Fonts {
         void addToFontRangeFromStr(const FontRequestInfo& font_info, const char* str, int size);
 
         Error requestFont(const FontRequestInfo& font_info, FontInfoOut& font_info_out);
+
+        bool requestCharString(std::vector<Character*>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points = false);
     };
 }
