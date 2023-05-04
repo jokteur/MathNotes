@@ -14,6 +14,8 @@
 namespace RichText {
     // AbstractElement
     int AbstractElement::count = 0;
+    int AbstractElement::visible_count = 0;
+
     void AbstractElement::hk_debug_attributes() {
         /* State */
         ImGui::Text("Dirty state %u", m_widget_dirty);
@@ -116,7 +118,7 @@ namespace RichText {
     }
     float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
         m_ext_dimensions.x = x_offset;
-        m_int_dimensions.y = cursor_y_pos;
+        m_ext_dimensions.y = cursor_y_pos;
 
         x_offset += m_style.h_margins.x.getFloat();
         cursor_y_pos += m_style.v_margins.x.getFloat();
@@ -185,7 +187,9 @@ namespace RichText {
         hk_set_position(cursor_y_pos, x_offset);
         m_is_visible = is_in_boundaries(boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
-            auto& timers = TimeCounter::getInstance();
+            visible_count++;
+            // std::cout << cursor_y_pos << " " << boundaries.y << " " << boundaries.h << " " << m_ext_dimensions.y << " " << m_ext_dimensions.h << std::endl;
+            //     auto& timers = TimeCounter::getInstance();
             if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;

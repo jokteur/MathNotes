@@ -16,6 +16,7 @@ namespace RichText {
         ImGui::Text("Element count: %d", AbstractElement::count);
         ImGui::Text("String count: %d", WrapString::count);
         ImGui::Text("Font char count: %d", (int)m_ui_state.font_manager.debugGetChars().size());
+        ImGui::Text("Visible count: %d", AbstractElement::visible_count);
 
         ImGui::Separator();
         ImGui::End();
@@ -100,6 +101,8 @@ namespace RichText {
         m_display_height = vMax.y - vMin.y;
         calculate_heights();
         manage_elements();
+
+        AbstractElement::visible_count = 0;
 
         {
             // std::lock_guard lk(m_root_mutex);

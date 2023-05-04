@@ -38,12 +38,14 @@ namespace RichText {
     // using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
     // using AbstractElementWeakPtr = AbstractElement*;
 
-    struct AbstractElement: public Drawable {
+    struct AbstractElement : public Drawable {
     protected:
         WrapString* m_chars;
         WrapString* m_delimiter_chars;
     public:
         static int count;
+        static int visible_count;
+
         const unsigned int DIRTY_WIDTH = 0x1;
         const unsigned int DIRTY_CHARS = 0x2;
         const unsigned int ALL_DIRTY = DIRTY_WIDTH | DIRTY_CHARS;
@@ -120,7 +122,7 @@ namespace RichText {
     private:
         AbstractElementPtr m_ptr = nullptr;
     public:
-        RootNode(AbstractElementPtr ptr): m_ptr(ptr) {}
+        RootNode(AbstractElementPtr ptr) : m_ptr(ptr) {}
 
         /* We don't want copy constructor to avoid accidentally deleting memory twice */
         RootNode(const RootNode&) = delete;
