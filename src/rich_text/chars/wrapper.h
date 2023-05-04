@@ -19,6 +19,28 @@ namespace RichText {
 
     typedef std::vector<WrapCharPtr> WrapString;
 
+    struct WrapLine {
+        WrapString m_chars;
+        float line_height = 0.f;
+    };
+
+    class WrapParagraph {
+    private:
+        std::map<int, WrapLine> m_lines;
+    public:
+        void push_back(const WrapCharPtr& ptr, int line) {
+            if (m_lines.find(line) == m_lines.end()) {
+                m_lines[line] = WrapLine();
+            }
+            m_lines[line].m_chars.push_back(ptr);
+        }
+        void clear() { m_lines.clear(); }
+
+        bool empty() const { return m_lines.empty(); }
+
+        std::map<int, WrapLine>& getLines() { return m_lines; }
+    };
+
     /**
      * @brief The convention for line positions is as follow:
      *
@@ -46,7 +68,8 @@ namespace RichText {
      */
     class WrapAlgorithm {
     private:
-        WrapString* m_string;
+        WrapParagraph* m_paragraph;
+        WrapString* m_current_string;
 
         // Calculated quantities
         std::list<Line> m_lines;
@@ -67,6 +90,7 @@ namespace RichText {
         inline void push_char_on_line(WrapCharPtr c, float* cursor_x_coord);
         inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
+        void algorithm();
     public:
         /**
          * @brief Construct a new Text Wrapper object
@@ -78,7 +102,8 @@ namespace RichText {
         WrapAlgorithm();
         ~WrapAlgorithm();
 
-        void setString(WrapString* string, bool redo = true);
+        // void setString(WrapString* string, bool redo = true);
+        void setParagraph(WrapParagraph* paragraph, bool redo = true);
         void clear();
         void recalculate();
 

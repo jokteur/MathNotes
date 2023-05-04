@@ -8,14 +8,14 @@ namespace RichText {
     /* =====
      * SPANS
      * ===== */
-    bool LatexWidget::add_chars(WrapString* wrap_chars) {
+    bool LatexWidget::add_chars(WrapParagraph* wrap_chars) {
         //ZoneScoped;
         bool is_not_null = m_latex_char != nullptr;
         bool success = is_not_null;
 
         success &= hk_add_pre_chars(wrap_chars);
         if (is_not_null)
-            wrap_chars->push_back(m_latex_char);
+            wrap_chars->push_back(m_latex_char, m_text_boundaries.front().line_number);
         success &= hk_add_post_chars(wrap_chars);
         return success;
     }
@@ -27,7 +27,7 @@ namespace RichText {
         /* Build widget must be called after drawing the children, because we need to know
          * the positions of the first chars in line in childrens before displaying
          * the delimiters */
-         // hk_build_widget(x_offset);
+        hk_build_widget(x_offset);
 
         return ret;
     }

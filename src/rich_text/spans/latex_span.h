@@ -14,7 +14,7 @@ namespace RichText {
             m_type = T_SPAN_LATEX;
         }
 
-        bool add_chars(WrapString* wrap_string) override;
+        bool add_chars(WrapParagraph* wrap_string) override;
         bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
         bool hk_build_widget(float x_offset);
 

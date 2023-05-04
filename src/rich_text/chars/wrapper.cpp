@@ -31,11 +31,12 @@ namespace RichText {
         line_it++;
         *cursor_pos_x = 0.f;
     }
-    void WrapAlgorithm::recalculate() {
+
+    void WrapAlgorithm::algorithm() {
         if (m_width < 1.f) {
             return;
         }
-        if (m_string->empty()) {
+        if (m_current_string->empty()) {
             return;
         }
         // Initial conditions
@@ -43,10 +44,10 @@ namespace RichText {
         m_line_positions.clear();
         m_lines.push_back(Line{ 0, 0.f });
         m_line_positions.insert(0);
-        m_height = 0.f;
+        // m_height = 0.f;
 
         int start = 0;
-        int end = m_string->size() - 1;
+        int end = m_current_string->size() - 1;
         // ==== SECTION 1 ====
         // Calculation of char and horizontal positions
 
@@ -65,7 +66,7 @@ namespace RichText {
 
             // Determining the line break, char by char
             for (int cursor_idx = 0;cursor_idx <= end;cursor_idx++) {
-                WrapCharPtr c = (*m_string)[cursor_idx];
+                WrapCharPtr c = (*m_current_string)[cursor_idx];
 
                 // If a breakable char follows a white space (break line or breakable)
                 // then it should not considered as a breakable char
@@ -102,7 +103,7 @@ namespace RichText {
                         }
                         float tmp_cursor_idx = 0.f;
                         for (int j = word_idx;j <= cursor_idx;j++) {
-                            WrapCharPtr tmp_c = (*m_string)[j];
+                            WrapCharPtr tmp_c = (*m_current_string)[j];
                             if (!tmp_c->info->is_whitespace)
                                 push_char_on_line(tmp_c, &tmp_cursor_idx);
                         }
@@ -123,13 +124,13 @@ namespace RichText {
         // Calculation of char vertical positions
         {
             //ZoneScoped;
-            float cursor_pos_y = 0.f;
+            float cursor_pos_y = m_height;
             float max_ascent = 0.f;
             float max_descent = 0.f;
             for (auto current_line_it = m_lines.begin();current_line_it != m_lines.end();current_line_it++) {
                 auto next_it = std::next(current_line_it);
                 current_line_it->line_pos_y = cursor_pos_y;
-                int line_end_idx = m_string->size();
+                int line_end_idx = m_current_string->size();
                 if (next_it != m_lines.end()) {
                     line_end_idx = next_it->start;
                 }
@@ -140,13 +141,13 @@ namespace RichText {
                 max_ascent = 0.f;
                 max_descent = 0.f;
                 for (int j = current_line_it->start;j < line_end_idx;j++) {
-                    WrapCharPtr c = (*m_string)[j];
+                    WrapCharPtr c = (*m_current_string)[j];
                     max_ascent = max(max_ascent, c->info->ascent);
                     max_descent = max(max_descent, c->info->descent);
                 }
 
                 for (int j = current_line_it->start;j < line_end_idx;j++) {
-                    WrapCharPtr c = (*m_string)[j];
+                    WrapCharPtr c = (*m_current_string)[j];
                     c->calculated_position.y = cursor_pos_y + max_ascent - c->info->ascent + c->info->offset.y;
                 }
                 current_line_it->height = max_ascent + max_descent;
@@ -155,12 +156,25 @@ namespace RichText {
             m_height = cursor_pos_y;// + max_ascent + max_descent;
         }
     }
-    void WrapAlgorithm::setString(WrapString* string, bool redo) {
-        //ZoneScoped;
-        m_string = string;
+    void WrapAlgorithm::recalculate() {
+        m_height = 0.f;
+        for (auto& pair : m_paragraph->getLines()) {
+            m_current_string = &pair.second.m_chars;
+            algorithm();
+            pair.second.line_height = m_height;
+        }
+    }
+    void WrapAlgorithm::setParagraph(WrapParagraph* paragraph, bool redo) {
+        m_paragraph = paragraph;
         if (redo)
             recalculate();
     }
+    // void WrapAlgorithm::setString(WrapString* string, bool redo) {
+    //     //ZoneScoped;
+    //     m_current_string = string;
+    //     if (redo)
+    //         recalculate();
+    // }
     void WrapAlgorithm::clear() {
         m_lines.clear();
     }

@@ -32,7 +32,7 @@ namespace RichText {
         return true;
     }
 
-    bool Utf8StrToImCharStr(UIState& ui_state, WrapString* wrap_str, SafeString str, int start, int end, const Style& style, bool replace_spaces_by_points) {
+    bool Utf8StrToImCharStr(UIState& ui_state, WrapParagraph* wrap_p, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points) {
         //ZoneScoped;
         if (start == end)
             return true;
@@ -43,7 +43,7 @@ namespace RichText {
             return false;
 
         for (auto& pair : characters) {
-            wrap_str->push_back(std::make_shared<ImChar>(pair.first.m_font_id, pair.first.m_char, pair.first.m_font_size, style.font_color, pair.second));
+            wrap_p->push_back(std::make_shared<ImChar>(pair.first.m_font_id, pair.first.m_char, pair.first.m_font_size, style.font_color, pair.second), line);
         }
 
         return true;

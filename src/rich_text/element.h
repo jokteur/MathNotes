@@ -40,7 +40,7 @@ namespace RichText {
 
     struct AbstractElement : public Drawable {
     protected:
-        WrapString* m_chars;
+        WrapParagraph* m_chars;
         WrapString* m_delimiter_chars;
     public:
         static int count;
@@ -66,7 +66,7 @@ namespace RichText {
         bool m_x_offset = 0.f;
 
         // Returns false if not succesfully build chars
-        bool virtual add_chars(WrapString* wrap_chars);
+        bool virtual add_chars(WrapParagraph* wrap_chars);
         bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         bool is_in_boundaries(const Rect& boundaries);

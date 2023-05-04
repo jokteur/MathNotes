@@ -94,13 +94,13 @@ namespace RichText {
             ImGui::TreePop();
         }
     }
-    bool AbstractElement::add_chars(WrapString*) {
+    bool AbstractElement::add_chars(WrapParagraph*) {
         return true;
     }
 
     AbstractElement::AbstractElement() {
         count++;
-        m_chars = new WrapString();
+        m_chars = new WrapParagraph();
         m_delimiter_chars = new WrapString();
     }
     AbstractElement::~AbstractElement() {
@@ -150,10 +150,12 @@ namespace RichText {
     bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
-        for (auto ptr : *m_chars) {
-            auto p = std::static_pointer_cast<DrawableChar>(ptr);
-            if (!p->draw(draw_list, boundaries, m_int_dimensions.getPos()))
-                ret = false;
+        for (auto& pair : m_chars->getLines()) {
+            for (auto ptr : pair.second.m_chars) {
+                auto p = std::static_pointer_cast<DrawableChar>(ptr);
+                if (!p->draw(draw_list, boundaries, m_int_dimensions.getPos()))
+                    ret = false;
+            }
         }
         for (auto& ptr : m_childrens) {
             if (!ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries))

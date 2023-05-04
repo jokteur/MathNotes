@@ -13,11 +13,13 @@
 #include "rich_text/element.h"
 
 namespace RichText {
-    struct AbstractBlock: public AbstractElement {
+    struct AbstractBlock : public AbstractElement {
     public:
-        AbstractBlock(): AbstractElement() {
+        AbstractBlock() : AbstractElement() {
             m_category = C_BLOCK;
         }
+        std::vector<WrapString> m_pre_delimiters;
+        WrapString m_post_delimiters;
 
         bool hk_build_delimiter_chars();
         bool hk_build_widget(float x_offset);
@@ -25,11 +27,19 @@ namespace RichText {
         bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
         void hk_draw_background(Draw::DrawList& draw_list) override;
         void hk_debug_attributes() override;
+
+        /* Blocks can be defined by vertical marker, like quotes:
+         * > abc    <- hk_add_pre_chars(line=0)
+         * > def    <- hk_add_pre_chars(line=1)
+         *
+         * */
+        bool hk_build_delimiter_chars();
+        bool hk_add_post_chars(WrapParagraph* wrap_chars);
     };
 
-    struct AbstractLeafBlock: public AbstractBlock {
+    struct AbstractLeafBlock : public AbstractBlock {
     public:
-        AbstractLeafBlock(): AbstractBlock() {
+        AbstractLeafBlock() : AbstractBlock() {
             m_category = C_BLOCK;
         }
 
@@ -37,16 +47,16 @@ namespace RichText {
         bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
     };
 
-    struct HiddenSpace: public AbstractLeafBlock {
-        HiddenSpace(): AbstractLeafBlock() {
+    struct HiddenSpace : public AbstractLeafBlock {
+        HiddenSpace() : AbstractLeafBlock() {
             m_category = C_BLOCK;
             m_type = T_BLOCK_HIDDENSPACE;
         }
         bool hk_build_widget(float x_offset);
-        bool add_chars(WrapString* wrap_chars) override;
+        bool add_chars(WrapParagraph* wrap_chars) override;
     };
-    struct HrBlock: public AbstractLeafBlock {
-        HrBlock(): AbstractLeafBlock() {
+    struct HrBlock : public AbstractLeafBlock {
+        HrBlock() : AbstractLeafBlock() {
             m_category = C_BLOCK;
             m_type = T_BLOCK_HR;
         }

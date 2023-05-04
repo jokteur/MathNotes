@@ -8,7 +8,7 @@ namespace RichText {
      * @brief Character for ImFont
      *
      */
-    struct ImChar: public DrawableChar {
+    struct ImChar : public DrawableChar {
         Tempo::FontID m_font_id;
         float m_font_size;
         ImU32 m_color;
@@ -19,5 +19,5 @@ namespace RichText {
         bool draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
     };
 
-    bool Utf8StrToImCharStr(UIState& ui_state, WrapString* wrap_str, SafeString str, int start, int end, const Style& style, bool replace_spaces_by_points = false);
+    bool Utf8StrToImCharStr(UIState& ui_state, WrapParagraph* wrap_p, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points = false);
 }

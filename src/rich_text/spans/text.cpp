@@ -10,15 +10,16 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::add_chars(WrapString* wrap_chars) {
+    bool TextString::add_chars(WrapParagraph* wrap_chars) {
         //ZoneScoped;
         m_chars->clear();
         bool success = true;
 
         success = hk_add_pre_chars(wrap_chars);
 
-        if (!Utf8StrToImCharStr(m_ui_state, wrap_chars, m_safe_string, m_text_boundaries.front().beg, m_text_boundaries.front().end, m_style))
-            success = false;
+        for (auto bounds : m_text_boundaries) {
+            success &= Utf8StrToImCharStr(m_ui_state, wrap_chars, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_style);
+        }
 
 
         if (!hk_add_post_chars(wrap_chars))
@@ -54,21 +55,18 @@ namespace RichText {
         if (m_style.font_bg_color != Colors::transparent) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             int i = 0;
-            for (auto p : *m_chars) {
-                auto ptr = std::static_pointer_cast<DrawableChar>(p);
-                ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
-                p_min.x += x_offset;
-                p_min.y += cursor_y_pos;
-                ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
-                draw_list->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
-                i++;
+            for (auto pair : m_chars->getLines()) {
+                for (auto p : pair.second.m_chars) {
+                    auto ptr = std::static_pointer_cast<DrawableChar>(p);
+                    ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
+                    p_min.x += x_offset;
+                    p_min.y += cursor_y_pos;
+                    ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
+                    draw_list->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
+                    i++;
+                }
             }
         }
-        // Draw all chars
-        // for (auto ptr : m_draw_chars) {
-        //     if (!ptr->draw(draw_list, boundaries, ImVec2(x_offset, cursor_y_pos)))
-        //         ret = false;
-        // }
         return ret;
     }
     void TextString::hk_debug(const std::string&) {
