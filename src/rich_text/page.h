@@ -16,7 +16,7 @@ namespace RichText {
 
     class PageManager;
 
-    class Page: public Drawable {
+    class Page : public Drawable {
     private:
         bool m_redo_positions = false;
         bool m_recalculate_line_height = true;
@@ -68,7 +68,6 @@ namespace RichText {
         void manage_elements();
         void debug_window();
 
-        void manage_jobs();
         void parse_job(int start_idx, int end_idx);
 
         void find_current_ptr();
@@ -78,7 +77,7 @@ namespace RichText {
         void scroll_up(float pixels);
         void scroll_down(float pixels);
     public:
-        Page(): Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE) {}
+        Page() : Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE) {}
         Page(const Page&) = delete;
 
         void setName(const std::string& name) { m_name = name; }

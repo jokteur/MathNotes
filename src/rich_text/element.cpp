@@ -188,8 +188,6 @@ namespace RichText {
         m_is_visible = is_in_boundaries(boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
             visible_count++;
-            // std::cout << cursor_y_pos << " " << boundaries.y << " " << boundaries.h << " " << m_ext_dimensions.y << " " << m_ext_dimensions.h << std::endl;
-            //     auto& timers = TimeCounter::getInstance();
             if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
@@ -199,7 +197,7 @@ namespace RichText {
         else {
             cursor_y_pos += m_ext_dimensions.h;
         }
-        // hk_draw_background(draw_list);
+        hk_draw_background(draw_list);
         hk_draw_show_boundaries(draw_list, boundaries);
         if (m_no_y_update) {
             m_no_y_update = false;
