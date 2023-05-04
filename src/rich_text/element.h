@@ -105,7 +105,7 @@ namespace RichText {
         float m_window_width = 1.f;
 
         // Debug
-        bool m_show_boundaries = false;
+        bool m_show_boundaries = true;
 
         // Internal
         SafeString m_safe_string;
