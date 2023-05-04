@@ -15,33 +15,8 @@ namespace RichText {
     };
 
     typedef std::shared_ptr<WrapCharacter> WrapCharPtr;
+    typedef std::weak_ptr<WrapCharacter> WrapCharWPtr;
 
-    // class WrapString {
-    // private:
-    //     std::vector<WrapCharPtr> m_string;
-    // public:
-    //     static int count;
-    //     WrapString() { count++; };
-    //     ~WrapString() {
-    //         count--;
-    //         clear();
-    //     }
-
-    //     WrapString(const WrapString& other) = delete;
-    //     WrapString& operator=(const WrapString& other) = delete;
-
-    //     // template<class T>
-    //     void push_back(const WrapCharPtr& c) {
-    //         // T* new_c = new T(c);
-    //         m_string.push_back(c);
-    //     }
-
-    //     WrapCharPtr operator[](size_t idx);
-
-    //     void clear();
-    //     size_t size() const;
-    //     bool empty();
-    // };
     typedef std::vector<WrapCharPtr> WrapString;
 
     /**

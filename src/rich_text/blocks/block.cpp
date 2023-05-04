@@ -13,11 +13,6 @@ namespace RichText {
         //ZoneScoped;
         bool ret = true;
         // At this point, margins have already been taken into account
-        // ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
-
-        // Update cursor from wrapper
-        // cursor_y_pos += m_style.v_paddings.x;
-        // x_offset += m_style.h_paddings.x;
 
         // Draw all childrens (blocks)
         for (auto ptr : m_childrens) {
@@ -36,9 +31,6 @@ namespace RichText {
             if (!p->draw(draw_list, boundaries, m_int_dimensions.getPos()))
                 ret = false;
         }
-
-        // cursor_y_pos += m_style.v_paddings.y;
-
         return ret;
     }
     void AbstractBlock::hk_draw_background(Draw::DrawList& draw_list) {
@@ -70,10 +62,6 @@ namespace RichText {
     bool AbstractLeafBlock::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
         //ZoneScoped;
         bool ret = true;
-        // ImVec2 padding_before(m_style.h_paddings.x, m_style.v_paddings.x);
-
-        // cursor_y_pos += m_style.v_paddings.x;
-        // x_offset += m_style.h_paddings.x;
 
         hk_build_widget(x_offset);
 
@@ -100,7 +88,6 @@ namespace RichText {
                 if (!ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries))
                     ret = false;
         }
-        // cursor_y_pos += m_style.v_paddings.y;
         return ret;
     }
 

@@ -9,9 +9,9 @@
 #include "blocks/quote.h"
 #include "blocks/definition.h"
 #include "blocks/div.h"
-#include "blocks/latex.h"
+#include "blocks/latex_block.h"
 
-#include "spans/latex.h"
+#include "spans/latex_span.h"
 #include "spans/text.h"
 #include "spans/inline_spans.h"
 #include "spans/special_spans.h"

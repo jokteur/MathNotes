@@ -5,24 +5,6 @@
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
 namespace RichText {
-    // int WrapString::count = 0;
-
-    // void WrapString::clear() {
-    //     // for (auto c : m_string) {
-    //     //     delete c;
-    //     // }
-    //     m_string.clear();
-    // }
-    // WrapCharPtr WrapString::operator[](size_t idx) {
-    //     return m_string[idx];
-    // }
-    // size_t WrapString::size() const {
-    //     return m_string.size();
-    // }
-    // bool WrapString::empty() {
-    //     return m_string.empty();
-    // }
-
     WrapAlgorithm::WrapAlgorithm(float width, float line_space) {
         m_width = width;
         m_line_space = line_space;
