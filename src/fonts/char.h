@@ -45,6 +45,7 @@ namespace Fonts {
 
     struct CharId {
         Tempo::FontID m_font_id;
+        float m_font_size;
         unsigned int m_char;
         bool operator==(const CharId& other) const;
 
@@ -66,6 +67,7 @@ namespace std {
             size_t res = 17;
             res = res * 31 + hash<int>()(k.m_font_id);
             res = res * 31 + hash<unsigned int>()(k.m_char);
+            res = res * 31 + hash<float>()(k.m_font_size);
             return res;
         }
     };

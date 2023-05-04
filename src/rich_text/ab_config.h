@@ -13,7 +13,7 @@ namespace RichText {
 #define COMMA ,
 
     struct Style {
-        NEW_STYLE_ELEMENT(font_size, float, 18.f);
+        NEW_STYLE_ELEMENT(font_size, emfloat, emfloat{ 18.f });
         NEW_STYLE_ELEMENT(font_styling, Fonts::FontStyling, Fonts::FontStyling{ Fonts::F_REGULAR COMMA Fonts::W_REGULAR COMMA Fonts::S_NORMAL });
         NEW_STYLE_ELEMENT(font_underline, bool, false);
         NEW_STYLE_ELEMENT(font_strikethrough, bool, false);

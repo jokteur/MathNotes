@@ -92,18 +92,22 @@ namespace RichText {
             ImGui::TreePop();
         }
     }
-    bool AbstractElement::add_chars(std::vector<WrapCharPtr>&) {
+    bool AbstractElement::add_chars(WrapString*) {
         return true;
     }
 
     AbstractElement::AbstractElement() {
         count++;
+        m_chars = new WrapString();
+        m_delimiter_chars = new WrapString();
     }
     AbstractElement::~AbstractElement() {
         for (auto ptr : m_childrens) {
             delete ptr;
         }
         count--;
+        delete m_chars;
+        delete m_delimiter_chars;
     }
     bool AbstractElement::is_in_boundaries(const Rect& b) {
         const auto& dims = m_ext_dimensions;
@@ -148,7 +152,9 @@ namespace RichText {
         cursor_y_pos += m_style.v_paddings.x.getFloat();
         x_offset += m_style.h_paddings.x.getFloat();
 
-        for (auto ptr : m_draw_chars) {
+        for (auto i = 0;i < m_chars->size();i++) {
+            auto p = (*m_chars)[i];
+            auto ptr = static_cast<DrawableCharPtr>(p);
             if (!ptr->draw(draw_list, boundaries, m_int_dimensions.getPos()))
                 ret = false;
         }

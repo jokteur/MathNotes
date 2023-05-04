@@ -14,7 +14,8 @@ namespace RichText {
         ImGui::Text("current block idx: %d", m_current_block_idx);
         ImGui::Text("Heigts (b, a, t): %f %f %f", m_before_height, m_after_height, m_before_height + m_after_height);
         ImGui::Text("Element count: %d", AbstractElement::count);
-        ImGui::Text("Char count: %d", WrapCharacter::count);
+        ImGui::Text("String count: %d", WrapString::count);
+        ImGui::Text("Font char count: %d", (int)m_ui_state.font_manager.debugGetChars().size());
 
         ImGui::Separator();
         ImGui::End();
@@ -101,7 +102,7 @@ namespace RichText {
         manage_elements();
 
         {
-            std::lock_guard lk(m_root_mutex);
+            // std::lock_guard lk(m_root_mutex);
             find_current_ptr();
 
             /* Set the width of the blocks recursively, even the ones that are not shown */
@@ -447,7 +448,7 @@ namespace RichText {
             }
 
             {
-                std::lock_guard<std::mutex> lk(m_root_mutex);
+                // std::lock_guard<std::mutex> lk(m_root_mutex);
                 for (auto idx : to_destroy) {
                     // m_lastly_destroyed_elements.insert(idx);
                     m_root_elements.erase(idx);
@@ -458,39 +459,39 @@ namespace RichText {
         }
     }
     void Page::manage_jobs() {
-        std::vector<Tempo::jobId> to_remove;
-        for (auto job_id : m_current_jobs) {
-            auto& scheduler = Tempo::JobScheduler::getInstance();
-            auto job = scheduler.getJobInfo(job_id);
-            std::cout << "Job " << job_id << " pending" << std::endl;
-            if (job.state == Tempo::Job::JOB_STATE_NOTEXISTING) {
-                to_remove.push_back(job_id);
-            }
-        }
-        for (auto job_id : to_remove) {
-            m_current_jobs.erase(job_id);
-        }
+        // std::vector<Tempo::jobId> to_remove;
+        // for (auto job_id : m_current_jobs) {
+        //     auto& scheduler = Tempo::JobScheduler::getInstance();
+        //     auto job = scheduler.getJobInfo(job_id);
+        //     std::cout << "Job " << job_id << " pending" << std::endl;
+        //     if (job.state == Tempo::Job::JOB_STATE_NOTEXISTING) {
+        //         to_remove.push_back(job_id);
+        //     }
+        // }
+        // for (auto job_id : to_remove) {
+        //     m_current_jobs.erase(job_id);
+        // }
     }
     void Page::parse_job(int start_idx, int end_idx) {
         /* TODO: after job is finished, check if the job is not obsolete */
-        Tempo::jobFct job = [=](float& progress, bool& abort) -> std::shared_ptr<Tempo::JobResult> {
-            ABToWidgets parser;
-            std::map<int, RootNodePtr> tmp_roots;
-            parser.parse(m_file, start_idx, end_idx, &tmp_roots);
-            {
-                std::lock_guard<std::mutex> lk(m_root_mutex);
-                for (auto pair : tmp_roots) {
-                    if (m_root_elements.find(pair.first) == m_root_elements.end())
-                        m_root_elements[pair.first] = pair.second;
-                }
-            }
-            Tempo::JobResult jr;
-            jr.success = true;
-            return std::make_shared<Tempo::JobResult>(jr);
-        };
-        auto& scheduler = Tempo::JobScheduler::getInstance();
-        auto job_id = scheduler.addJob("parse_ab_segment", job);
-        m_current_jobs.insert(job_id->id);
+        // Tempo::jobFct job = [=](float& progress, bool& abort) -> std::shared_ptr<Tempo::JobResult> {
+        ABToWidgets parser;
+        std::map<int, RootNodePtr> tmp_roots;
+        parser.parse(m_file, start_idx, end_idx, &tmp_roots);
+        // {
+            // std::lock_guard<std::mutex> lk(m_root_mutex);
+        for (auto pair : tmp_roots) {
+            if (m_root_elements.find(pair.first) == m_root_elements.end())
+                m_root_elements[pair.first] = pair.second;
+        }
+        // }
+        // Tempo::JobResult jr;
+        // jr.success = true;
+        // return std::make_shared<Tempo::JobResult>(jr);
+    // };
+    // auto& scheduler = Tempo::JobScheduler::getInstance();
+    // auto job_id = scheduler.addJob("parse_ab_segment", job);
+    // m_current_jobs.insert(job_id->id);
     }
     Page::~Page() {
         auto& scheduler = Tempo::JobScheduler::getInstance();

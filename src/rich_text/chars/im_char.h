@@ -14,10 +14,10 @@ namespace RichText {
         ImU32 m_color;
         ImWchar m_char;
     public:
-        ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, bool force_blank = false);
+        ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, Fonts::CharPtr char_ptr);
 
         bool draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
     };
 
-    bool Utf8StrToImCharStr(UIState& ui_state, std::vector<WrapCharPtr>& wrap_chars, std::vector<DrawableCharPtr>& draw_chars, SafeString str, int start, int end, Style style, bool replace_spaces_by_points = false);
+    bool Utf8StrToImCharStr(UIState& ui_state, WrapString* wrap_str, SafeString str, int start, int end, const Style& style, bool replace_spaces_by_points = false);
 }

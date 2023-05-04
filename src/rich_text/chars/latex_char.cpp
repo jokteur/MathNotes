@@ -3,26 +3,26 @@
 #include "imgui_internal.h"
 
 namespace RichText {
-    LatexChar::LatexChar(Latex::LatexImageUPtr latex_image) {
+    LatexChar::LatexChar(Latex::LatexImageUPtr latex_image): DrawableChar(nullptr) {
         m_latex_image = std::move(latex_image);
         if (!m_latex_image->getLatexErrorMsg().empty())
             return;
 
-        dimensions = m_latex_image->getDimensions();
-        advance = dimensions.x;
-        ascent = m_latex_image->getAscent();
-        descent = m_latex_image->getDescent();
+        // info->dimensions = m_latex_image->getDimensions();
+        // info->advance = dimensions.x;
+        // info->ascent = m_latex_image->getAscent();
+        // info->descent = m_latex_image->getDescent();
     }
 
     bool LatexChar::draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset) {
         auto cursor_pos = ImGui::GetCursorScreenPos();
-        auto final_pos = cursor_pos + _calculated_position + draw_offset;
+        auto final_pos = cursor_pos + calculated_position + draw_offset;
         final_pos.x = IM_ROUND(final_pos.x);
         final_pos.y = IM_ROUND(final_pos.y);
         draw_list->AddImage(
             m_latex_image->getImage()->texture(),
             final_pos,
-            final_pos + dimensions
+            final_pos + info->dimensions
         );
         return true;
     }

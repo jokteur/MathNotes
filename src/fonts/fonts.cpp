@@ -99,7 +99,7 @@ namespace Fonts {
         return E_OK;
     }
 
-    bool FontManager::requestCharString(std::vector<Character*>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points) {
+    bool FontManager::requestCharString(std::vector<std::pair<CharId, Character*>>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points) {
         /* Request the dynamic DPI font */
         FontRequestInfo font_request;
         font_request.font_styling = style;
@@ -136,16 +136,17 @@ namespace Fonts {
                 force_breakable = true;
 
             /* Once the char has been defined, we can request information on it */
-            CharId key{ font_out.font_id, c };
+            CharId key{ font_out.font_id, actual_font_size, c };
             auto it = m_chars.find(key);
 
             if (it != m_chars.end()) {
-                chars.push_back(it->second);
+                chars.push_back({ key, it->second });
             }
             else {
                 auto char_ptr = new Character;
                 fillCharInfos(char_ptr, c, actual_font_size, font, force_breakable);
-                chars.push_back(char_ptr);
+                chars.push_back({ key, char_ptr });
+                m_chars[key] = char_ptr;
             }
         }
         return true;

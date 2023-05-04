@@ -11,33 +11,33 @@ namespace RichText {
         // styles[P].set_h_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 
         // H1
-        styles[H1].set_font_size(42.f);
+        styles[H1].set_font_size(emfloat{ 42.f });
         styles[H1].set_font_styling(Fonts::FontStyling{ Fonts::F_REGULAR, Fonts::W_MEDIUM, Fonts::S_NORMAL });
         styles[H1].set_line_space(1.6f);
 
         // H2
-        styles[H2].set_font_size(36.f);
+        styles[H2].set_font_size(emfloat{ 36.f });
         styles[H2].set_font_styling(Fonts::FontStyling{ Fonts::F_REGULAR, Fonts::W_MEDIUM, Fonts::S_NORMAL });
         styles[H2].set_line_space(1.5f);
 
         // H3
-        styles[H3].set_font_size(32.f);
+        styles[H3].set_font_size(emfloat{ 32.f });
         styles[H3].set_font_styling(Fonts::FontStyling{ Fonts::F_REGULAR, Fonts::W_MEDIUM, Fonts::S_NORMAL });
         styles[H3].set_line_space(1.5f);
 
         // H4
-        styles[H4].set_font_size(27.f);
+        styles[H4].set_font_size(emfloat{ 27.f });
         styles[H4].set_font_styling(Fonts::FontStyling{ Fonts::F_REGULAR, Fonts::W_MEDIUM, Fonts::S_NORMAL });
         styles[H4].set_font_underline(false);
         styles[H4].set_line_space(1.5f);
 
         // H5
-        styles[H5].set_font_size(24.f);
+        styles[H5].set_font_size(emfloat{ 24.f });
         styles[H5].set_font_styling(Fonts::FontStyling{ Fonts::F_REGULAR, Fonts::W_MEDIUM, Fonts::S_NORMAL });
         styles[H5].set_line_space(1.4f);
 
         // H6
-        styles[H6].set_font_size(21.f);
+        styles[H6].set_font_size(emfloat{ 21.f });
         styles[H6].set_font_styling(Fonts::FontStyling{ Fonts::F_REGULAR, Fonts::W_MEDIUM, Fonts::S_NORMAL });
         styles[H6].set_line_space(1.4f);
 

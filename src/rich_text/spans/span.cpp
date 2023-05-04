@@ -10,32 +10,32 @@ namespace RichText {
     /* =====
      * SPANS
      * ===== */
-    bool AbstractSpan::hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars) {
+    bool AbstractSpan::hk_add_pre_chars(WrapString* wrap_chars) {
         //ZoneScoped;
         bool success = true;
         if (m_is_selected) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.front().pre, m_text_boundaries.front().beg, m_special_chars_style, true);
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_safe_string, m_text_boundaries.front().pre, m_text_boundaries.front().beg, m_special_chars_style, true);
             if (!res) {
                 success = false;
             }
         }
         return success;
     }
-    bool AbstractSpan::hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars) {
+    bool AbstractSpan::hk_add_post_chars(WrapString* wrap_chars) {
         //ZoneScoped;
         bool success = true;
         if (m_is_selected) {
-            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.back().end, m_text_boundaries.back().post, m_special_chars_style, true);
+            auto res = Utf8StrToImCharStr(m_ui_state, wrap_chars, m_safe_string, m_text_boundaries.back().end, m_text_boundaries.back().post, m_special_chars_style, true);
             if (!res) {
                 success = false;
             }
         }
         return success;
     }
-    bool AbstractSpan::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
+    bool AbstractSpan::add_chars(WrapString* wrap_chars) {
         //ZoneScoped;
         bool success = true;
-        m_draw_chars.clear();
+        // m_chars.clear();
 
         hk_add_pre_chars(wrap_chars);
         for (auto ptr : m_childrens) {

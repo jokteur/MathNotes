@@ -87,6 +87,8 @@ namespace Fonts {
 
         Error requestFont(const FontRequestInfo& font_info, FontInfoOut& font_info_out);
 
-        bool requestCharString(std::vector<Character*>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points = false);
+        bool requestCharString(std::vector<std::pair<CharId, Character*>>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points = false);
+
+        std::unordered_map<CharId, Character*>& debugGetChars() { return m_chars; }
     };
 }

@@ -12,7 +12,6 @@
 
 #include "geometry/basic.h"
 #include "geometry/multi_boundaries.h"
-#include "fonts/wrapper.h"
 #include "types.h"
 
 #include "widgets_enum.h"
@@ -39,11 +38,10 @@ namespace RichText {
     // using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
     // using AbstractElementWeakPtr = AbstractElement*;
 
-    struct AbstractElement : public Drawable {
+    struct AbstractElement: public Drawable {
     protected:
-        std::vector<DrawableCharPtr> m_draw_chars;
-        std::vector<DrawableCharPtr> m_draw_delimiter_chars;
-        std::vector<WrapCharPtr> m_wrap_chars;
+        WrapString* m_chars;
+        WrapString* m_delimiter_chars;
     public:
         static int count;
         const unsigned int DIRTY_WIDTH = 0x1;
@@ -53,7 +51,7 @@ namespace RichText {
         Type m_type;
         Category m_category;
         AbstractElement();
-        ~AbstractElement();
+        virtual ~AbstractElement();
 
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
@@ -66,7 +64,7 @@ namespace RichText {
         bool m_x_offset = 0.f;
 
         // Returns false if not succesfully build chars
-        bool virtual add_chars(std::vector<WrapCharPtr>& wrap_chars);
+        bool virtual add_chars(WrapString* wrap_chars);
         bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
 
         bool is_in_boundaries(const Rect& boundaries);
@@ -122,7 +120,7 @@ namespace RichText {
     private:
         AbstractElementPtr m_ptr = nullptr;
     public:
-        RootNode(AbstractElementPtr ptr) : m_ptr(ptr) {}
+        RootNode(AbstractElementPtr ptr): m_ptr(ptr) {}
 
         /* We don't want copy constructor to avoid accidentally deleting memory twice */
         RootNode(const RootNode&) = delete;

@@ -11,7 +11,7 @@ namespace RichText {
             m_type = T_SPAN_LATEX;
         }
 
-        bool add_chars(std::vector<WrapCharPtr>& wrap_string) override;
+        bool add_chars(WrapString* wrap_string) override;
 
         void  hk_debug_attributes() override;
     };

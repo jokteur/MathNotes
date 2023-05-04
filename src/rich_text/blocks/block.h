@@ -43,7 +43,7 @@ namespace RichText {
             m_type = T_BLOCK_HIDDENSPACE;
         }
         bool hk_build_widget(float x_offset);
-        bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
+        bool add_chars(WrapString* wrap_chars) override;
     };
     struct HrBlock: public AbstractLeafBlock {
         HrBlock(): AbstractLeafBlock() {

@@ -5,6 +5,24 @@
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
 namespace RichText {
+    int WrapString::count = 0;
+
+    void WrapString::clear() {
+        for (auto c : m_string) {
+            delete c;
+        }
+        m_string.clear();
+    }
+    WrapCharPtr WrapString::operator[](size_t idx) {
+        return m_string[idx];
+    }
+    size_t WrapString::size() const {
+        return m_string.size();
+    }
+    bool WrapString::empty() {
+        return m_string.empty();
+    }
+
     WrapAlgorithm::WrapAlgorithm(float width, float line_space) {
         m_width = width;
         m_line_space = line_space;
@@ -20,10 +38,10 @@ namespace RichText {
     inline int WrapAlgorithm::find_next_line_break(int cursor_pos) {
         return 0;
     }
-    inline void WrapAlgorithm::push_char_on_line(WrapCharPtr& c, float* cursor_pos_x) {
+    inline void WrapAlgorithm::push_char_on_line(WrapCharPtr c, float* cursor_pos_x) {
         //ZoneScoped;
-        c->_calculated_position.x = *cursor_pos_x + c->offset.x;
-        *cursor_pos_x += c->advance;
+        c->calculated_position.x = *cursor_pos_x + c->info->offset.x;
+        *cursor_pos_x += c->info->advance;
     }
     inline void WrapAlgorithm::push_new_line(std::list<Line>::iterator& line_it, int cursor_idx, float* cursor_pos_x) {
         //ZoneScoped;
@@ -35,7 +53,7 @@ namespace RichText {
         if (m_width < 1.f) {
             return;
         }
-        if (m_string.empty()) {
+        if (m_string->empty()) {
             return;
         }
         // Initial conditions
@@ -46,7 +64,7 @@ namespace RichText {
         m_height = 0.f;
 
         int start = 0;
-        int end = m_string.size() - 1;
+        int end = m_string->size() - 1;
         // ==== SECTION 1 ====
         // Calculation of char and horizontal positions
 
@@ -65,22 +83,22 @@ namespace RichText {
 
             // Determining the line break, char by char
             for (int cursor_idx = 0;cursor_idx <= end;cursor_idx++) {
-                WrapCharPtr& c = m_string[cursor_idx];
+                WrapCharPtr c = (*m_string)[cursor_idx];
 
                 // If a breakable char follows a white space (break line or breakable)
                 // then it should not considered as a breakable char
-                if (c->breakable) {
+                if (c->info->breakable) {
                     word_idx = cursor_idx + 1;
-                    word_pos_x = cursor_pos_x + c->advance;
+                    word_pos_x = cursor_pos_x + c->info->advance;
                 }
-                if (c->is_linebreak) {
+                if (c->info->is_linebreak) {
                     push_new_line(current_line_it, cursor_idx + 1, &cursor_pos_x);
                     word_idx = cursor_idx + 1;
                     word_pos_x = 0.f;
                     continue;
                 }
 
-                float char_width = c->dimensions.x + c->offset.x;
+                float char_width = c->info->dimensions.x + c->info->offset.x;
 
                 if (char_width + cursor_pos_x > m_width) {
                     // Current word width: a word width is counted from the last breakable character
@@ -102,8 +120,8 @@ namespace RichText {
                         }
                         float tmp_cursor_idx = 0.f;
                         for (int j = word_idx;j <= cursor_idx;j++) {
-                            WrapCharPtr& tmp_c = m_string[j];
-                            if (!tmp_c->is_whitespace)
+                            WrapCharPtr tmp_c = (*m_string)[j];
+                            if (!tmp_c->info->is_whitespace)
                                 push_char_on_line(tmp_c, &tmp_cursor_idx);
                         }
                         current_line_it->start = word_idx;
@@ -129,7 +147,7 @@ namespace RichText {
             for (auto current_line_it = m_lines.begin();current_line_it != m_lines.end();current_line_it++) {
                 auto next_it = std::next(current_line_it);
                 current_line_it->line_pos_y = cursor_pos_y;
-                int line_end_idx = m_string.size();
+                int line_end_idx = m_string->size();
                 if (next_it != m_lines.end()) {
                     line_end_idx = next_it->start;
                 }
@@ -140,14 +158,14 @@ namespace RichText {
                 max_ascent = 0.f;
                 max_descent = 0.f;
                 for (int j = current_line_it->start;j < line_end_idx;j++) {
-                    WrapCharPtr& c = m_string[j];
-                    max_ascent = max(max_ascent, c->ascent);
-                    max_descent = max(max_descent, c->descent);
+                    WrapCharPtr c = (*m_string)[j];
+                    max_ascent = max(max_ascent, c->info->ascent);
+                    max_descent = max(max_descent, c->info->descent);
                 }
 
                 for (int j = current_line_it->start;j < line_end_idx;j++) {
-                    WrapCharPtr& c = m_string[j];
-                    c->_calculated_position.y = cursor_pos_y + max_ascent - c->ascent + c->offset.y;
+                    WrapCharPtr c = (*m_string)[j];
+                    c->calculated_position.y = cursor_pos_y + max_ascent - c->info->ascent + c->info->offset.y;
                 }
                 current_line_it->height = max_ascent + max_descent;
                 cursor_pos_y += current_line_it->height * m_line_space;
@@ -155,14 +173,13 @@ namespace RichText {
             m_height = cursor_pos_y;// + max_ascent + max_descent;
         }
     }
-    void WrapAlgorithm::setString(const std::vector<WrapCharPtr>& string, bool redo) {
+    void WrapAlgorithm::setString(WrapString* string, bool redo) {
         //ZoneScoped;
         m_string = string;
         if (redo)
             recalculate();
     }
     void WrapAlgorithm::clear() {
-        m_string.clear();
         m_lines.clear();
     }
     void WrapAlgorithm::setWidth(float width, bool redo) {

@@ -4,11 +4,13 @@
 #include <list>
 #include <tempo.h>
 
-#include "char.h"
+#include "fonts/char.h"
 
-namespace Fonts {
+namespace RichText {
     struct WrapCharacter {
-        Character* c;
+        virtual ~WrapCharacter() = default;
+
+        Fonts::Character* info;
         ImVec2 calculated_position;
     };
 
@@ -18,13 +20,27 @@ namespace Fonts {
     private:
         std::vector<WrapCharPtr> m_string;
     public:
-
-        template<class T>
-        void push_back(T c) {
-
+        static int count;
+        WrapString() { count++; };
+        ~WrapString() {
+            count--;
+            clear();
         }
 
+        WrapString(const WrapString& other) = delete;
+        WrapString& operator=(const WrapString& other) = delete;
+
+        template<class T>
+        void push_back(const T& c) {
+            T* new_c = new T(c);
+            m_string.push_back(static_cast<WrapCharPtr>(new_c));
+        }
+
+        WrapCharPtr operator[](size_t idx);
+
         void clear();
+        size_t size() const;
+        bool empty();
     };
 
     /**
@@ -54,7 +70,7 @@ namespace Fonts {
      */
     class WrapAlgorithm {
     private:
-        std::vector<WrapCharacter> m_string;
+        WrapString* m_string;
 
         // Calculated quantities
         std::list<Line> m_lines;
@@ -86,7 +102,7 @@ namespace Fonts {
         WrapAlgorithm();
         ~WrapAlgorithm();
 
-        void setString(const std::vector<WrapCharPtr>& string, bool redo = true);
+        void setString(WrapString* string, bool redo = true);
         void clear();
         void recalculate();
 

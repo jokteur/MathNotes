@@ -17,9 +17,9 @@ namespace RichText {
         AbstractSpan(): AbstractElement() {
             m_category = C_SPAN;
         }
-        bool hk_add_pre_chars(std::vector<WrapCharPtr>& wrap_chars);
-        bool hk_add_post_chars(std::vector<WrapCharPtr>& wrap_chars);
-        bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
+        bool hk_add_pre_chars(WrapString* wrap_chars);
+        bool hk_add_post_chars(WrapString* wrap_chars);
+        bool add_chars(WrapString* wrap_chars) override;
         void hk_debug_attributes() override;
     };
 }

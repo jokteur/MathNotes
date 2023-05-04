@@ -10,14 +10,14 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::add_chars(std::vector<WrapCharPtr>& wrap_chars) {
+    bool TextString::add_chars(WrapString* wrap_chars) {
         //ZoneScoped;
-        m_draw_chars.clear();
+        m_chars->clear();
         bool success = true;
 
         success = hk_add_pre_chars(wrap_chars);
 
-        if (!Utf8StrToImCharStr(m_ui_state, wrap_chars, m_draw_chars, m_safe_string, m_text_boundaries.front().beg, m_text_boundaries.front().end, m_style))
+        if (!Utf8StrToImCharStr(m_ui_state, wrap_chars, m_safe_string, m_text_boundaries.front().beg, m_text_boundaries.front().end, m_style))
             success = false;
 
 
@@ -27,19 +27,19 @@ namespace RichText {
     }
     float TextString::hk_set_position(float& cursor_y_pos, float& x_offset) {
         // Dimension is also directly calculated here
-        if (!m_draw_chars.empty()) {
-            auto start_char = m_draw_chars.front();
-            auto end_char = m_draw_chars.back();
-            float ascent = start_char->ascent;
-            float descent = end_char->descent;
-            m_ext_dimensions = Rect{
-                start_char->_calculated_position.x - start_char->offset.x,
-                start_char->_calculated_position.y - start_char->offset.y,
-                end_char->_calculated_position.x - end_char->offset.x + end_char->advance,
-                end_char->_calculated_position.y - end_char->offset.y + ascent - descent
-            };
-            m_ext_dimensions.w -= m_ext_dimensions.x;
-            m_ext_dimensions.h -= m_ext_dimensions.y;
+        if (!m_chars->empty()) {
+            // auto start_char = m_draw_chars.front();
+            // auto end_char = m_draw_chars.back();
+            // float ascent = start_char->ascent;
+            // float descent = end_char->descent;
+            // m_ext_dimensions = Rect{
+            //     start_char->_calculated_position.x - start_char->offset.x,
+            //     start_char->_calculated_position.y - start_char->offset.y,
+            //     end_char->_calculated_position.x - end_char->offset.x + end_char->advance,
+            //     end_char->_calculated_position.y - end_char->offset.y + ascent - descent
+            // };
+            // m_ext_dimensions.w -= m_ext_dimensions.x;
+            // m_ext_dimensions.h -= m_ext_dimensions.y;
         }
         return cursor_y_pos;
     }
@@ -54,20 +54,22 @@ namespace RichText {
         if (m_style.font_bg_color != Colors::transparent) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             int i = 0;
-            for (auto ptr : m_draw_chars) {
-                ImVec2 p_min = cursor_pos + ptr->_calculated_position - ptr->offset;
+            for (auto i = 0;i < m_chars->size();i++) {
+                auto p = (*m_chars)[i];
+                auto ptr = static_cast<DrawableCharPtr>(p);
+                ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
                 p_min.x += x_offset;
                 p_min.y += cursor_y_pos;
-                ImVec2 p_max = p_min + ImVec2(ptr->advance, ptr->ascent - ptr->descent);
+                ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
                 draw_list->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
                 i++;
             }
         }
         // Draw all chars
-        for (auto ptr : m_draw_chars) {
-            if (!ptr->draw(draw_list, boundaries, ImVec2(x_offset, cursor_y_pos)))
-                ret = false;
-        }
+        // for (auto ptr : m_draw_chars) {
+        //     if (!ptr->draw(draw_list, boundaries, ImVec2(x_offset, cursor_y_pos)))
+        //         ret = false;
+        // }
         return ret;
     }
     void TextString::hk_debug(const std::string&) {
