@@ -7,7 +7,7 @@
 #include "profiling.h"
 
 namespace RichText {
-    ImChar::ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, Fonts::CharPtr char_ptr): DrawableChar(char_ptr) {
+    ImChar::ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, Fonts::CharPtr char_ptr) : DrawableChar(char_ptr) {
         m_font_id = font_id;
         m_font_size = font_size;
         m_color = color;
@@ -43,7 +43,7 @@ namespace RichText {
             return false;
 
         for (auto& pair : characters) {
-            wrap_str->push_back(ImChar(pair.first.m_font_id, pair.first.m_char, pair.first.m_font_size, style.font_color, pair.second));
+            wrap_str->push_back(std::make_shared<ImChar>(pair.first.m_font_id, pair.first.m_char, pair.first.m_font_size, style.font_color, pair.second));
         }
 
         return true;

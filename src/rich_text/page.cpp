@@ -14,7 +14,7 @@ namespace RichText {
         ImGui::Text("current block idx: %d", m_current_block_idx);
         ImGui::Text("Heigts (b, a, t): %f %f %f", m_before_height, m_after_height, m_before_height + m_after_height);
         ImGui::Text("Element count: %d", AbstractElement::count);
-        ImGui::Text("String count: %d", WrapString::count);
+        // ImGui::Text("String count: %d", WrapString::count);
         ImGui::Text("Font char count: %d", (int)m_ui_state.font_manager.debugGetChars().size());
         ImGui::Text("Visible count: %d", AbstractElement::visible_count);
 

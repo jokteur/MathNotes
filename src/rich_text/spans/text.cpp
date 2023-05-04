@@ -6,7 +6,7 @@
 #include "profiling.h"
 
 namespace RichText {
-    TextString::TextString(): AbstractSpan() {
+    TextString::TextString() : AbstractSpan() {
         m_type = T_TEXT;
     }
 
@@ -54,9 +54,8 @@ namespace RichText {
         if (m_style.font_bg_color != Colors::transparent) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             int i = 0;
-            for (auto i = 0;i < m_chars->size();i++) {
-                auto p = (*m_chars)[i];
-                auto ptr = static_cast<DrawableCharPtr>(p);
+            for (auto p : *m_chars) {
+                auto ptr = std::static_pointer_cast<DrawableChar>(p);
                 ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
                 p_min.x += x_offset;
                 p_min.y += cursor_y_pos;

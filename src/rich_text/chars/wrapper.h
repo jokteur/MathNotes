@@ -14,34 +14,35 @@ namespace RichText {
         ImVec2 calculated_position;
     };
 
-    typedef WrapCharacter* WrapCharPtr;
+    typedef std::shared_ptr<WrapCharacter> WrapCharPtr;
 
-    class WrapString {
-    private:
-        std::vector<WrapCharPtr> m_string;
-    public:
-        static int count;
-        WrapString() { count++; };
-        ~WrapString() {
-            count--;
-            clear();
-        }
+    // class WrapString {
+    // private:
+    //     std::vector<WrapCharPtr> m_string;
+    // public:
+    //     static int count;
+    //     WrapString() { count++; };
+    //     ~WrapString() {
+    //         count--;
+    //         clear();
+    //     }
 
-        WrapString(const WrapString& other) = delete;
-        WrapString& operator=(const WrapString& other) = delete;
+    //     WrapString(const WrapString& other) = delete;
+    //     WrapString& operator=(const WrapString& other) = delete;
 
-        template<class T>
-        void push_back(const T& c) {
-            T* new_c = new T(c);
-            m_string.push_back(static_cast<WrapCharPtr>(new_c));
-        }
+    //     // template<class T>
+    //     void push_back(const WrapCharPtr& c) {
+    //         // T* new_c = new T(c);
+    //         m_string.push_back(c);
+    //     }
 
-        WrapCharPtr operator[](size_t idx);
+    //     WrapCharPtr operator[](size_t idx);
 
-        void clear();
-        size_t size() const;
-        bool empty();
-    };
+    //     void clear();
+    //     size_t size() const;
+    //     bool empty();
+    // };
+    typedef std::vector<WrapCharPtr> WrapString;
 
     /**
      * @brief The convention for line positions is as follow:

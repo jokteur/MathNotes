@@ -154,10 +154,9 @@ namespace RichText {
         cursor_y_pos += m_style.v_paddings.x.getFloat();
         x_offset += m_style.h_paddings.x.getFloat();
 
-        for (auto i = 0;i < m_chars->size();i++) {
-            auto p = (*m_chars)[i];
-            auto ptr = static_cast<DrawableCharPtr>(p);
-            if (!ptr->draw(draw_list, boundaries, m_int_dimensions.getPos()))
+        for (auto ptr : *m_chars) {
+            auto p = std::static_pointer_cast<DrawableChar>(ptr);
+            if (!p->draw(draw_list, boundaries, m_int_dimensions.getPos()))
                 ret = false;
         }
         for (auto& ptr : m_childrens) {
