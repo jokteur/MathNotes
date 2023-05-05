@@ -106,6 +106,7 @@ namespace RichText {
         void setParagraph(WrapParagraph* paragraph, bool redo = true);
         void clear();
         void recalculate();
+        void recalculate(WrapString* string);
 
         const std::list<Line>& getLines() { return m_lines; }
         float getHeight() { return m_height; }

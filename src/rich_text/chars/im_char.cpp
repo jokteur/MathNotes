@@ -48,4 +48,18 @@ namespace RichText {
 
         return true;
     }
+    bool Utf8StrToImCharStr(UIState& ui_state, WrapString* wrap_str, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points) {
+        if (start == end)
+            return true;
+
+        std::vector<std::pair<Fonts::CharId, Fonts::Character*>> characters;
+        bool ret = ui_state.font_manager.requestCharString(characters, *str, start, end, style.font_styling, style.font_size, replace_spaces_by_points);
+        if (!ret)
+            return false;
+
+        for (auto& pair : characters) {
+            wrap_str->push_back(std::make_shared<ImChar>(pair.first.m_font_id, pair.first.m_char, pair.first.m_font_size, style.font_color, pair.second));
+        }
+        return true;
+    }
 }

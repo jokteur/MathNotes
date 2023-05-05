@@ -164,6 +164,11 @@ namespace RichText {
             pair.second.line_height = m_height;
         }
     }
+    void WrapAlgorithm::recalculate(WrapString* string) {
+        m_height = 0.f;
+        m_current_string = string;
+        algorithm();
+    }
     void WrapAlgorithm::setParagraph(WrapParagraph* paragraph, bool redo) {
         m_paragraph = paragraph;
         if (redo)

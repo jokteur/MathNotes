@@ -13,17 +13,20 @@
 #include "rich_text/element.h"
 
 namespace RichText {
+    struct DelimiterInfo {
+        WrapString str;
+        float width = 0.f;
+        float y_pos = 0.f;
+    };
     struct AbstractBlock : public AbstractElement {
     public:
         AbstractBlock() : AbstractElement() {
             m_category = C_BLOCK;
         }
-        std::vector<WrapString> m_pre_delimiters;
+        std::vector<DelimiterInfo> m_pre_delimiters;
         WrapString m_post_delimiters;
 
-        bool hk_build_delimiter_chars();
         bool hk_build_widget(float x_offset);
-        bool hk_build_widget_post(float x_offset);
         bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
         void hk_draw_background(Draw::DrawList& draw_list) override;
         void hk_debug_attributes() override;
@@ -33,8 +36,8 @@ namespace RichText {
          * > def    <- hk_add_pre_chars(line=1)
          *
          * */
-        bool hk_build_delimiter_chars();
-        bool hk_add_post_chars(WrapParagraph* wrap_chars);
+        bool hk_build_pre_delimiter_chars();
+        bool hk_build_post_chars();
     };
 
     struct AbstractLeafBlock : public AbstractBlock {
