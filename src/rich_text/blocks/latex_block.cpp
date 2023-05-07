@@ -4,27 +4,27 @@ namespace RichText {
     DisplayLatexWidget::DisplayLatexWidget() : AbstractLeafBlock() {
         m_type = T_BLOCK_LATEX;
     }
-    bool DisplayLatexWidget::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool DisplayLatexWidget::hk_draw_main(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
 
         /* Build widget must be called after drawing the children, because we need to know
          * the positions of the first chars in line in childrens before displaying
          * the delimiters */
-        hk_build_widget(x_offset);
+        hk_build_widget(ctx);
 
         if (m_latex_char != nullptr) {
             auto dims = m_latex_char->m_latex_image->getDimensions();
-            float available_space = m_window_width - x_offset - dims.x;
+            float available_space = m_window_width - ctx->x_offset - dims.x;
             if (available_space < 0.f)
                 available_space = 0.f;
 
-            m_latex_char->draw(draw_list, boundaries, ImVec2(x_offset + available_space / 2.f, cursor_y_pos));
-            cursor_y_pos += m_latex_char->m_latex_image->getDimensions().y;
+            m_latex_char->draw(ctx->draw_list, ctx->boundaries, ImVec2(ctx->x_offset + available_space / 2.f, ctx->cursor_y_pos));
+            ctx->cursor_y_pos += m_latex_char->m_latex_image->getDimensions().y;
         }
         return ret;
     }
-    bool DisplayLatexWidget::hk_build_widget(float x_offset) {
+    bool DisplayLatexWidget::hk_build_widget(DrawContext* ctx) {
         bool success = false;
         if (m_widget_dirty & DIRTY_CHARS) {
 

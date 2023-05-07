@@ -11,8 +11,8 @@ namespace RichText {
 
         DisplayLatexWidget();
 
-        bool hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) override;
-        bool hk_build_widget(float x_offset);
+        bool hk_draw_main(DrawContext* context) override;
+        bool hk_build_widget(DrawContext* context) override;
 
         void  hk_debug_attributes() override;
     };

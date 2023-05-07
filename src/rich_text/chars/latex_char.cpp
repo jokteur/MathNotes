@@ -22,12 +22,13 @@ namespace RichText {
         delete info;
     }
 
-    bool LatexChar::draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset) {
+    bool LatexChar::draw(Draw::DrawList* draw_list, const Rect& boundaries, ImVec2 draw_offset) {
         auto cursor_pos = ImGui::GetCursorScreenPos();
         auto final_pos = cursor_pos + calculated_position + draw_offset;
         final_pos.x = IM_ROUND(final_pos.x);
         final_pos.y = IM_ROUND(final_pos.y);
-        draw_list->AddImage(
+
+        (*draw_list)->AddImage(
             m_latex_image->getImage()->texture(),
             final_pos,
             final_pos + info->dimensions

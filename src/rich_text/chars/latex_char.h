@@ -20,7 +20,7 @@ namespace RichText {
         LatexChar(const LatexChar&) = delete;
         LatexChar& operator=(const LatexChar&) = delete;
 
-        bool draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
+        bool draw(Draw::DrawList* draw_list, const Rect& boundaries, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
     };
 
     typedef std::shared_ptr<LatexChar> LatexCharPtr;

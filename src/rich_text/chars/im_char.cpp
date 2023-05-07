@@ -14,7 +14,7 @@ namespace RichText {
         m_char = c;
     }
 
-    bool ImChar::draw(Draw::DrawList& draw_list, const Rect& boundaries, ImVec2 draw_offset) {
+    bool ImChar::draw(Draw::DrawList* draw_list, const Rect& boundaries, ImVec2 draw_offset) {
         auto font = Tempo::GetImFont(m_font_id);
 
         if (font->im_font == nullptr)
@@ -24,7 +24,7 @@ namespace RichText {
         if (!info->is_linebreak) {
             // ImGui RenderChar takes offset into account, this is why it is substracted
             ImVec2 position = calculated_position + cursor_pos - info->offset + draw_offset;
-            font->im_font->RenderChar(*draw_list,
+            font->im_font->RenderChar(**draw_list,
                 m_font_size,
                 position,
                 m_color, m_char);

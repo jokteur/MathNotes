@@ -156,24 +156,29 @@ namespace RichText {
                  *
                  * Once we reach the m_current_line element, then we can set y_pos properly
                  */
+                DrawContext ctx;
                 bool found_current = false;
-                float y_pos = m_display_height + 1000.f;
+                ctx.cursor_y_pos = m_display_height + 1000.f;
+                ctx.draw_list = &m_draw_list;
+                ctx.boundaries = boundaries;
                 /* Designates the height taken by the elements before the current one */
 
                 TimeCounter::getInstance().startCounter("DisplayAll");
                 for (auto pair : m_root_elements) {
+                    ctx.x_offset = 0.f;
+                    ctx.lines = &pair.second->m_lines;
                     if (!found_current && pair.first >= m_current_block_idx) {
                         found_current = true;
-                        m_before_height = y_pos - m_display_height - 1000.f;
-                        y_pos = -roundf(m_y_displacement);
-                        pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
+                        m_before_height = ctx.cursor_y_pos - m_display_height - 1000.f;
+                        ctx.cursor_y_pos = -roundf(m_y_displacement);
+                        pair.second->get().draw(&ctx);
                         updated_current_widget_y_size = pair.second->get().m_ext_dimensions.h;
                         continue;
                     }
-                    pair.second->get().draw(m_draw_list, y_pos, 0.f, boundaries);
+                    pair.second->get().draw(&ctx);
                 }
                 TimeCounter::getInstance().stopCounter("DisplayAll");
-                m_after_height = y_pos + roundf(m_y_displacement);
+                m_after_height = ctx.cursor_y_pos + roundf(m_y_displacement);
                 // m_after_height -= 2 * m_line_height;
                 if (m_after_height < 0.f)
                     m_after_height = 0.f;

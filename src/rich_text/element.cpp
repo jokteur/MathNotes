@@ -147,26 +147,28 @@ namespace RichText {
 
         m_is_dimension_set = true;
     }
-    bool AbstractElement::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractElement::hk_draw_main(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
         for (auto& pair : m_chars->getLines()) {
             for (auto ptr : pair.second.m_chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
-                if (!p->draw(draw_list, boundaries, m_int_dimensions.getPos()))
+                if (!p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos()))
                     ret = false;
             }
         }
+        float x_offset = ctx->x_offset;
         for (auto& ptr : m_childrens) {
-            if (!ptr->draw(draw_list, cursor_y_pos, x_offset, boundaries))
+            if (!ptr->draw(ctx))
                 ret = false;
+            ctx->x_offset = x_offset;
         }
         return ret;
     }
-    void AbstractElement::hk_draw_background(Draw::DrawList& draw_list) {
+    void AbstractElement::hk_draw_background(Draw::DrawList* draw_list) {
 
     }
-    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList& draw_list, const Rect& boundaries) {
+    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries) {
         const auto& ext_dim = m_ext_dimensions;
         if (m_show_boundaries && (isInsideRectY(ext_dim.y, boundaries) || isInsideRectY(ext_dim.y + ext_dim.y, boundaries))) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
@@ -174,31 +176,31 @@ namespace RichText {
             ImVec2 p_max = p_min + ext_dim.getDim();
             float r, g, b;
             ImGui::ColorConvertHSVtoRGB((float)m_tree_level / 6.f, 1, 0.7, r, g, b);
-            draw_list->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
+            (*draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
         }
     }
-    bool AbstractElement::draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool AbstractElement::draw(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
-        float initial_y_pos = cursor_y_pos;
-        hk_set_position(cursor_y_pos, x_offset);
-        m_is_visible = is_in_boundaries(boundaries);
+        float initial_y_pos = ctx->cursor_y_pos;
+        hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
+        m_is_visible = is_in_boundaries(ctx->boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
             visible_count++;
-            if (!hk_draw_main(draw_list, cursor_y_pos, x_offset, boundaries)) {
+            if (!hk_draw_main(ctx)) {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
             }
-            hk_set_dimensions(initial_y_pos, cursor_y_pos, x_offset);
+            hk_set_dimensions(initial_y_pos, ctx->cursor_y_pos, ctx->x_offset);
         }
         else {
-            cursor_y_pos += m_ext_dimensions.h;
+            ctx->cursor_y_pos += m_ext_dimensions.h;
         }
-        hk_draw_background(draw_list);
-        hk_draw_show_boundaries(draw_list, boundaries);
+        hk_draw_background(ctx->draw_list);
+        hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
         if (m_no_y_update) {
             m_no_y_update = false;
-            cursor_y_pos = initial_y_pos;
+            ctx->cursor_y_pos = initial_y_pos;
         }
         return ret;
     }

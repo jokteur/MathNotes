@@ -38,6 +38,22 @@ namespace RichText {
     // using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
     // using AbstractElementWeakPtr = AbstractElement*;
 
+    struct LineInfo {
+        float position;
+        float height;
+    };
+
+
+    typedef std::unordered_map<int, LineInfo> Lines;
+
+    struct DrawContext {
+        Draw::DrawList* draw_list;
+        float cursor_y_pos = 0.f;
+        float x_offset = 0.f;
+        Rect boundaries;
+        Lines* lines;
+    };
+
     struct AbstractElement : public Drawable {
     protected:
         WrapParagraph* m_chars;
@@ -45,6 +61,9 @@ namespace RichText {
     public:
         static int count;
         static int visible_count;
+
+
+        Lines* m_lines;
 
         const unsigned int DIRTY_WIDTH = 0x1;
         const unsigned int DIRTY_CHARS = 0x2;
@@ -67,16 +86,17 @@ namespace RichText {
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(WrapParagraph* wrap_chars);
-        bool virtual draw(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
+        bool virtual draw(DrawContext* context);
 
         bool is_in_boundaries(const Rect& boundaries);
 
         // Draw hooks
+        bool virtual hk_build_widget(DrawContext* context) { return true; }
         float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
         void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
-        bool virtual hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries);
-        void virtual hk_draw_background(Draw::DrawList& draw_list);
-        void virtual hk_draw_show_boundaries(Draw::DrawList& draw_list, const Rect& boundaries);
+        bool virtual hk_draw_main(DrawContext* context);
+        void virtual hk_draw_background(Draw::DrawList* draw_list);
+        void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
         /* Debug prints object info in a special window created by parent */
         void virtual hk_debug(const std::string& prefix = "");
         void virtual hk_debug_attributes();
@@ -86,10 +106,8 @@ namespace RichText {
 
         bool m_is_selected = true;
         WrapAlgorithm m_wrapper;
-        std::unordered_set<int> m_lines;
 
         // Position of the pointer in m_childrens;
-        int m_child_number = -1;
         bool m_is_root = false; /* Is used in ab_converter */
         int m_tree_level = 0;
 
@@ -109,7 +127,7 @@ namespace RichText {
 
         // Internal
         SafeString m_safe_string;
-        RichTextInfo* m_rt_info;
+        // RichTextInfo* m_rt_info;
 
         // Events
         void virtual onClick() {}
@@ -122,6 +140,7 @@ namespace RichText {
     private:
         AbstractElementPtr m_ptr = nullptr;
     public:
+        Lines m_lines;
         RootNode(AbstractElementPtr ptr) : m_ptr(ptr) {}
 
         /* We don't want copy constructor to avoid accidentally deleting memory twice */

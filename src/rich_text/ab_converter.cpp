@@ -189,13 +189,14 @@ namespace RichText {
         }
         node->m_tree_level = m_level;
         node->m_safe_string = m_safe_text;
-        node->m_rt_info = m_rt_info;
+
+        // node->m_rt_info = m_rt_info;
         if (m_current_ptr != nullptr)
             set_infos(ABConfig::SPECIAL, node, true);
         node->m_parent = m_current_ptr;
         if (m_current_ptr != nullptr) {
             m_current_ptr->m_childrens.push_back(node);
-            node->m_child_number = m_current_ptr->m_childrens.size() - 1;
+            // node->m_child_number = m_current_ptr->m_childrens.size() - 1;
         }
         m_current_ptr = node;
     }

@@ -20,18 +20,18 @@ namespace RichText {
         return success;
     }
 
-    bool LatexWidget::hk_draw_main(Draw::DrawList& draw_list, float& cursor_y_pos, float x_offset, const Rect& boundaries) {
+    bool LatexWidget::hk_draw_main(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
 
         /* Build widget must be called after drawing the children, because we need to know
          * the positions of the first chars in line in childrens before displaying
          * the delimiters */
-        hk_build_widget(x_offset);
+        hk_build_widget(ctx);
 
         return ret;
     }
-    bool LatexWidget::hk_build_widget(float x_offset) {
+    bool LatexWidget::hk_build_widget(DrawContext* ctx) {
         bool success = false;
         if (m_widget_dirty & DIRTY_CHARS) {
             std::string source;
