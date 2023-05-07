@@ -21,6 +21,8 @@ namespace RichText {
         std::vector<DelimiterInfo> m_pre_delimiters;
         WrapString m_post_delimiters;
 
+        void set_pre_y_position(DrawContext* context);
+
 
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;

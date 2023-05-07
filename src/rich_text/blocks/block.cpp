@@ -51,6 +51,19 @@ namespace RichText {
         }
         return true;
     }
+    void AbstractBlock::set_pre_y_position(DrawContext* ctx) {
+        int i = 0;
+        for (const auto& bounds : m_text_boundaries) {
+            if (i >= m_pre_delimiters.size())
+                break;
+            auto line_it = ctx->lines->find(bounds.line_number);
+
+            if (line_it != ctx->lines->end()) {
+                m_pre_delimiters[i].y_pos = line_it->second.position;
+            }
+            i++;
+        }
+    }
     bool AbstractBlock::hk_build_pre_delimiter_chars(DrawContext* ctx) {
         //ZoneScoped;
         bool success = true;
@@ -72,7 +85,6 @@ namespace RichText {
                 }
                 wrapper.recalculate(&delimiter.str);
                 auto last_char = delimiter.str.back();
-                auto& lines = *ctx->lines;
                 /* Delimiter y position will be calculated later, after setWidth of wrapper in children
                  * has been called
                  */
@@ -86,12 +98,13 @@ namespace RichText {
     bool AbstractBlock::hk_draw_pre_chars(DrawContext* ctx) {
         bool ret = true;
         int i = 0;
+        set_pre_y_position(ctx);
         for (auto& bounds : m_text_boundaries) {
             /* Draw pre delimiters */
             if (i < m_pre_delimiters.size()) {
                 auto pre_chars = m_pre_delimiters[i];
                 auto pos = m_int_dimensions.getPos();
-                pos.y += pre_chars.y_pos;
+                pos.y = pre_chars.y_pos;
                 for (auto ptr : pre_chars.str) {
                     auto p = std::static_pointer_cast<DrawableChar>(ptr);
                     if (!p->draw(ctx->draw_list, ctx->boundaries, pos))
@@ -114,19 +127,14 @@ namespace RichText {
         hk_build_widget(ctx);
 
         // Draw all the chars generated in the block
-        int i = 0;
         auto int_pos = m_int_dimensions.getPos();
         int_pos.x += m_pre_max_width;
         for (auto& pair : m_chars.getLines()) {
-            if (i < ctx->lines->size()) {
-                ctx->lines->at(i).position = ctx->cursor_y_pos;
-            }
             for (auto ptr : pair.second.m_chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
                     ret = false;
             }
-            i++;
         }
 
         ret &= hk_draw_pre_chars(ctx);
@@ -185,18 +193,14 @@ namespace RichText {
                 float internal_size = m_window_width - ctx->x_offset - m_style.h_margins.y.getFloat();
                 m_wrapper.setWidth(internal_size, false);
 
-                auto delimiter_it = m_pre_delimiters.begin();
-                for (auto& bounds : m_text_boundaries) {
-                    auto& lines = *ctx->lines;
-                    auto it = lines.find(bounds.line_number);
-                    delimiter_it = std::next(delimiter_it);
-                    if (it != lines.end()) {
-                        delimiter_it->y_pos = it->second.position;
-                    }
-                }
                 m_widget_dirty ^= DIRTY_WIDTH;
             }
             m_wrapper.recalculate();
+            float position = ctx->cursor_y_pos;
+            for (auto pair : m_chars.getLines()) {
+                (*ctx->lines)[pair.first] = LineInfo{ position, pair.second.line_height };
+                position += pair.second.line_height;
+            }
         }
         return m_widget_dirty;
     }
@@ -215,9 +219,15 @@ namespace RichText {
 
             m_wrapper.clear();
             float internal_size = m_window_width - ctx->x_offset - m_style.h_margins.y.getFloat();
-            m_wrapper.setWidth(internal_size);
-            m_wrapper.setLineSpace(m_style.line_space);
+            m_wrapper.setWidth(internal_size, false);
+            m_wrapper.setLineSpace(m_style.line_space, false);
             m_wrapper.setParagraph(&m_chars);
+
+            float position = ctx->cursor_y_pos;
+            for (auto pair : m_chars.getLines()) {
+                (*ctx->lines)[pair.first] = LineInfo{ position, pair.second.line_height };
+                position += pair.second.line_height;
+            }
 
             if (success)
                 m_widget_dirty = false;

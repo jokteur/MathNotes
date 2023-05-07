@@ -160,8 +160,9 @@ namespace RichText {
         m_height = 0.f;
         for (auto& pair : m_paragraph->getLines()) {
             m_current_string = &pair.second.m_chars;
+            float prev_height = m_height;
             algorithm();
-            pair.second.line_height = m_height;
+            pair.second.line_height = m_height - prev_height;
         }
     }
     void WrapAlgorithm::recalculate(WrapString* string) {

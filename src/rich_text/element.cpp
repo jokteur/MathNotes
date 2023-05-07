@@ -151,11 +151,14 @@ namespace RichText {
         //ZoneScoped;
         bool ret = true;
         for (auto& pair : m_chars.getLines()) {
+            float pos = ctx->cursor_y_pos;
+            (*ctx->lines)[pair.first] = LineInfo{ pos , 0.f };
             for (auto ptr : pair.second.m_chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 if (!p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos()))
                     ret = false;
             }
+            (*ctx->lines)[pair.first].height = ctx->cursor_y_pos - pos;
         }
         float x_offset = ctx->x_offset;
         for (auto& ptr : m_childrens) {

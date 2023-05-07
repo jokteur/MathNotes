@@ -69,8 +69,6 @@ namespace RichText {
         static int count;
         static int visible_count;
 
-        Lines* m_lines;
-
         const unsigned int DIRTY_WIDTH = 0x1;
         const unsigned int DIRTY_CHARS = 0x2;
         const unsigned int ALL_DIRTY = DIRTY_WIDTH | DIRTY_CHARS;
