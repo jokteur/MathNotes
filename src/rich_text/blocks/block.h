@@ -13,11 +13,6 @@
 #include "rich_text/element.h"
 
 namespace RichText {
-    struct DelimiterInfo {
-        WrapString str;
-        float width = 0.f;
-        float y_pos = 0.f;
-    };
     struct AbstractBlock : public AbstractElement {
     public:
         AbstractBlock() : AbstractElement() {
@@ -26,17 +21,20 @@ namespace RichText {
         std::vector<DelimiterInfo> m_pre_delimiters;
         WrapString m_post_delimiters;
 
+
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
         void hk_draw_background(Draw::DrawList* draw_list) override;
+        bool hk_draw_pre_chars(DrawContext* ctx);
         void hk_debug_attributes() override;
+
 
         /* Blocks can be defined by vertical marker, like quotes:
          * > abc    <- hk_add_pre_chars(line=0)
          * > def    <- hk_add_pre_chars(line=1)
          *
          * */
-        bool hk_build_pre_delimiter_chars();
+        bool hk_build_pre_delimiter_chars(DrawContext* context);
         bool hk_build_post_chars();
     };
 

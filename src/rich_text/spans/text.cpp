@@ -12,7 +12,7 @@ namespace RichText {
 
     bool TextString::add_chars(WrapParagraph* wrap_chars) {
         //ZoneScoped;
-        m_chars->clear();
+        m_chars.clear();
         bool success = true;
 
         success = hk_add_pre_chars(wrap_chars);
@@ -28,7 +28,7 @@ namespace RichText {
     }
     float TextString::hk_set_position(float& cursor_y_pos, float& x_offset) {
         // Dimension is also directly calculated here
-        if (!m_chars->empty()) {
+        if (!m_chars.empty()) {
             // auto start_char = m_draw_chars.front();
             // auto end_char = m_draw_chars.back();
             // float ascent = start_char->ascent;
@@ -55,7 +55,7 @@ namespace RichText {
         if (m_style.font_bg_color != Colors::transparent) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             int i = 0;
-            for (auto pair : m_chars->getLines()) {
+            for (auto pair : m_chars.getLines()) {
                 for (auto p : pair.second.m_chars) {
                     auto ptr = std::static_pointer_cast<DrawableChar>(p);
                     ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;

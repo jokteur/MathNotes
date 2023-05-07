@@ -100,16 +100,16 @@ namespace RichText {
 
     AbstractElement::AbstractElement() {
         count++;
-        m_chars = new WrapParagraph();
-        m_delimiter_chars = new WrapString();
+        // m_chars = new WrapParagraph();
+        // m_delimiter_chars = new WrapString();
     }
     AbstractElement::~AbstractElement() {
         for (auto ptr : m_childrens) {
             delete ptr;
         }
         count--;
-        delete m_chars;
-        delete m_delimiter_chars;
+        // delete m_chars;
+        // delete m_delimiter_chars;
     }
     bool AbstractElement::is_in_boundaries(const Rect& b) {
         const auto& dims = m_ext_dimensions;
@@ -150,7 +150,7 @@ namespace RichText {
     bool AbstractElement::hk_draw_main(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
-        for (auto& pair : m_chars->getLines()) {
+        for (auto& pair : m_chars.getLines()) {
             for (auto ptr : pair.second.m_chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 if (!p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos()))

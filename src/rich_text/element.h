@@ -53,15 +53,21 @@ namespace RichText {
         Rect boundaries;
         Lines* lines;
     };
+    struct DelimiterInfo {
+        WrapString str;
+        float width = 0.f;
+        float y_pos = 0.f;
+    };
 
     struct AbstractElement : public Drawable {
     protected:
-        WrapParagraph* m_chars;
-        WrapString* m_delimiter_chars;
+        WrapParagraph m_chars;
+        float m_pre_max_width = 0.f;
+        std::vector<DelimiterInfo> m_pre_delimiters;
+        WrapString m_post_delimiters;
     public:
         static int count;
         static int visible_count;
-
 
         Lines* m_lines;
 
@@ -123,7 +129,7 @@ namespace RichText {
         float m_window_width = 1.f;
 
         // Debug
-        bool m_show_boundaries = true;
+        bool m_show_boundaries = false;
 
         // Internal
         SafeString m_safe_string;

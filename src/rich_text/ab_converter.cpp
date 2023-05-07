@@ -190,9 +190,14 @@ namespace RichText {
         node->m_tree_level = m_level;
         node->m_safe_string = m_safe_text;
 
-        // node->m_rt_info = m_rt_info;
-        if (m_current_ptr != nullptr)
-            set_infos(ABConfig::SPECIAL, node, true);
+        /* At this point, we consider that the normal style has been applied to node
+         * This means we can "inherit" from this style, instead of the parent for the special
+         * style */
+        auto prev_ptr = m_current_ptr;
+        m_current_ptr = node;
+        set_infos(ABConfig::SPECIAL, node, true);
+        m_current_ptr = prev_ptr;
+
         node->m_parent = m_current_ptr;
         if (m_current_ptr != nullptr) {
             m_current_ptr->m_childrens.push_back(node);

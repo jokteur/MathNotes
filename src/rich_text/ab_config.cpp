@@ -58,7 +58,7 @@ namespace RichText {
         // Quote
         styles[QUOTE].set_line_space(1.4f);
         styles[QUOTE].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 0.f }));
-        styles[QUOTE].set_v_margins(EmVec2(emfloat{ 5.f }, emfloat{ 0.f }));
+        styles[QUOTE].set_v_margins(EmVec2(emfloat{ 0.f }, emfloat{ 5.f }));
         // styles[QUOTE].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 
         // Display latex
@@ -66,9 +66,9 @@ namespace RichText {
         styles[B_LATEX].set_v_margins(EmVec2(emfloat{ 15.f }, emfloat{ 15.f }));
         // styles[B_LATEX].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 
-        styles[UL].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 0.f }));
-        styles[OL].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 0.f }));
-        styles[LI].set_v_margins(EmVec2(emfloat{ 5.f }, emfloat{ 0.f }));
+        styles[UL].set_h_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
+        styles[OL].set_h_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
+        styles[LI].set_v_margins(EmVec2(emfloat{ 0.f }, emfloat{ 5.f }));
 
         // div
         styles[DIV].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 0.f }));
