@@ -145,6 +145,10 @@ namespace RichText {
                     max_ascent = max(max_ascent, c->info->ascent);
                     max_descent = max(max_descent, c->info->descent);
                 }
+                if (current_line_it == m_lines.begin()) {
+                    m_first_max_ascent = max_ascent;
+                    m_first_max_descent = max_descent;
+                }
 
                 for (int j = current_line_it->start;j < line_end_idx;j++) {
                     WrapCharPtr c = (*m_current_string)[j];
@@ -162,6 +166,8 @@ namespace RichText {
             m_current_string = &pair.second.m_chars;
             float prev_height = m_height;
             algorithm();
+            pair.second.first_max_ascent = m_first_max_ascent;
+            pair.second.first_max_descent = m_first_max_descent;
             pair.second.line_height = m_height - prev_height;
         }
     }

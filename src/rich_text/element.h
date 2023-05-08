@@ -41,6 +41,8 @@ namespace RichText {
     struct LineInfo {
         float position;
         float height;
+        float ascent;
+        float descent;
     };
 
     typedef std::unordered_map<int, LineInfo> Lines;

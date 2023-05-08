@@ -22,6 +22,8 @@ namespace RichText {
     struct WrapLine {
         WrapString m_chars;
         float line_height = 0.f;
+        float first_max_ascent = 0.f;
+        float first_max_descent = 0.f;
     };
 
     class WrapParagraph {
@@ -80,6 +82,8 @@ namespace RichText {
         float m_width = 1.f;
         float m_height = 0.f;
         float m_line_space = 1.3f;
+        float m_first_max_ascent = 0.f;
+        float m_first_max_descent = 0.f;
 
         /**
          * @brief Returns the index of the line which contains pos

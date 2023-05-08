@@ -141,6 +141,7 @@ namespace RichText {
 
         hk_build_widget(ctx);
 
+        float position = ctx->cursor_y_pos;
         // Draw all the chars generated in the block
         auto int_pos = m_int_dimensions.getPos();
         int_pos.x += m_pre_max_width;
@@ -149,16 +150,17 @@ namespace RichText {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
                     ret = false;
-            }
-        }
 
-        /* We need to update the line positions such that parents 
-         * can use this information 
-         */
-        float position = ctx->cursor_y_pos;
-        for (auto pair : m_chars.getLines()) {
-            (*ctx->lines)[pair.first] = LineInfo{ position, pair.second.line_height };
-            position += pair.second.line_height;
+                /* Update line info */
+                auto it = ctx->lines->find(pair.first);
+                float height = pair.second.line_height;
+                    (*ctx->lines)[pair.first] = LineInfo{
+                        position,
+                        pair.second.line_height,
+                        pair.second.first_max_ascent,
+                        pair.second.first_max_descent
+                    };
+            }
         }
 
         ret &= hk_draw_pre_chars(ctx);
