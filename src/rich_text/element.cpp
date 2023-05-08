@@ -147,6 +147,8 @@ namespace RichText {
 
         m_is_dimension_set = true;
     }
+    bool AbstractElement::hk_build_widget(DrawContext*) { return true; }
+    void AbstractElement::hk_update_line_info(DrawContext*) {}
     bool AbstractElement::hk_draw_main(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
@@ -198,7 +200,14 @@ namespace RichText {
         }
         else {
             ctx->cursor_y_pos += m_ext_dimensions.h;
+
+            float current_y_pos = ctx->cursor_y_pos;
+            ctx->cursor_y_pos = initial_y_pos;
+            hk_update_line_info(ctx);
+            ctx->cursor_y_pos = current_y_pos;
         }
+
+
         hk_draw_background(ctx->draw_list);
         hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
         if (m_no_y_update) {

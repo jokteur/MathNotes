@@ -96,7 +96,8 @@ namespace RichText {
         bool is_in_boundaries(const Rect& boundaries);
 
         // Draw hooks
-        bool virtual hk_build_widget(DrawContext* context) { return true; }
+        bool virtual hk_build_widget(DrawContext* context);
+        void virtual hk_update_line_info(DrawContext* context);
         float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
         void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
         bool virtual hk_draw_main(DrawContext* context);

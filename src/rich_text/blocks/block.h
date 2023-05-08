@@ -23,7 +23,6 @@ namespace RichText {
 
         void set_pre_y_position(DrawContext* context);
 
-
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
         void hk_draw_background(Draw::DrawList* draw_list) override;
@@ -46,6 +45,7 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
+        void hk_update_line_info(DrawContext* context) override;
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
     };
