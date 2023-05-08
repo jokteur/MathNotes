@@ -138,7 +138,7 @@ namespace RichText {
                 boundaries.w = width;
                 m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
 
-                m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
+                // m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
 
                 // Background, ForeGround
                 m_draw_list.Split(2);

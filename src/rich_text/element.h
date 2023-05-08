@@ -43,7 +43,6 @@ namespace RichText {
         float height;
     };
 
-
     typedef std::unordered_map<int, LineInfo> Lines;
 
     struct DrawContext {
