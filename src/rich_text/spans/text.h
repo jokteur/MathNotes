@@ -11,7 +11,7 @@ namespace RichText {
         bool add_chars(WrapParagraph* wrap_string) override;
 
         inline float hk_set_position(float& cursor_y_pos, MultiOffset& x_offset) override;
-        inline void hk_set_dimensions(float last_y_pos, float& cursor_y_pos, const MultiOffset& x_offset) override;
+        inline void hk_set_dimensions(float last_y_pos, DrawContext* ctx) override;
         inline bool hk_draw_main(DrawContext* context) override;
 
         void hk_debug(const std::string& prefix = "") override;

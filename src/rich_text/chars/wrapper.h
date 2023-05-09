@@ -114,6 +114,8 @@ namespace RichText {
 
         const std::list<Line>& getLines() { return m_lines; }
         float getHeight() { return m_height; }
+        float getFirstMaxAscent() { return m_first_max_ascent; }
+        float getFirstMaxDescent() { return m_first_max_descent; }
 
         void setWidth(float width, bool redo = true);
         void setLineSpace(float line_space, bool redo = true);

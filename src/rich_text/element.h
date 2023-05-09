@@ -50,20 +50,21 @@ namespace RichText {
     class MultiOffset {
     private:
         std::unordered_map<int, float> m_offsets;
-        float m_min = 1e6;
-        float m_max = -1e6;
-        float m_global_offset = 0.f;
+        float m_min = 1e9;
+        float m_max = -1e9;
     public:
         MultiOffset& operator+=(float offset);
         MultiOffset& operator-=(float offset);
         void addOffset(int line_number, float offset);
 
-        std::unordered_map<int, float>& getOffset() { return m_offsets; }
+        float getOffset(int line_number);
 
         void clear();
+        void clear(const std::vector<int>& lines);
+        void clear(int from, int to);
 
-        float getMin() const { return m_min; }
-        float getMax() const { return m_max; }
+        float getMin() const;
+        float getMax() const;
     };
 
     struct DrawContext {
@@ -76,6 +77,7 @@ namespace RichText {
     };
     struct DelimiterInfo {
         WrapString str;
+        float max_ascent = 0.f;
         float width = 0.f;
         float y_pos = 0.f;
     };
@@ -118,7 +120,7 @@ namespace RichText {
         bool virtual hk_build_widget(DrawContext* context);
         void virtual hk_update_line_info(DrawContext* context);
         float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
-        void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, const MultiOffset& x_offset);
+        void virtual hk_set_dimensions(float last_y_pos, DrawContext* context);
         bool virtual hk_draw_main(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
@@ -149,7 +151,7 @@ namespace RichText {
         float m_window_width = 1.f;
 
         // Debug
-        bool m_show_boundaries = false;
+        bool m_show_boundaries = true;
 
         // Internal
         SafeString m_safe_string;

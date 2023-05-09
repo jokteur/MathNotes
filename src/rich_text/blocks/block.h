@@ -22,6 +22,8 @@ namespace RichText {
         WrapString m_post_delimiters;
 
         void set_pre_y_position(DrawContext* context);
+        void set_pre_margins(DrawContext* context);
+        void get_line_height_from_delimiters(DrawContext* context);
 
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;

@@ -22,7 +22,6 @@ namespace RichText {
         }
         m_min += offset;
         m_max += offset;
-        m_global_offset += offset;
         return *this;
     }
     MultiOffset& MultiOffset::operator-=(float offset) {
@@ -31,8 +30,13 @@ namespace RichText {
         }
         m_min -= offset;
         m_max -= offset;
-        m_global_offset -= offset;
         return *this;
+    }
+    float MultiOffset::getOffset(int line_number) {
+        if (m_offsets.find(line_number) == m_offsets.end()) {
+            return 0.f;
+        }
+        return m_offsets[line_number];
     }
     void MultiOffset::addOffset(int line_number, float offset) {
         if (m_offsets.find(line_number) == m_offsets.end()) {
@@ -40,8 +44,8 @@ namespace RichText {
         }
         m_offsets[line_number] += offset;
 
-        m_min = 1e6;
-        m_max = -1e6;
+        m_min = 1e9;
+        m_max = -1e9;
         for (auto& pair : m_offsets) {
             if (pair.second < m_min)
                 m_min = pair.second;
@@ -51,8 +55,35 @@ namespace RichText {
     }
     void MultiOffset::clear() {
         m_offsets.clear();
-        m_min = 1e6;
-        m_max = -1e6;
+        m_min = 1e9;
+        m_max = -1e9;
+    }
+    void MultiOffset::clear(const std::vector<int>& line_numbers) {
+        m_offsets.clear();
+        for (auto line_number : line_numbers) {
+            m_offsets[line_number] = 0.f;
+        }
+        m_min = 0.f;
+        m_max = 0.f;
+    }
+    void MultiOffset::clear(int from, int to) {
+        m_offsets.clear();
+        for (int i = from;i <= to;i++) {
+            m_offsets[i] = 0.f;
+        }
+        m_min = 0.f;
+        m_max = 0.f;
+    }
+
+    float MultiOffset::getMin() const {
+        if (m_offsets.empty())
+            return 0.f;
+        return m_min;
+    }
+    float MultiOffset::getMax() const {
+        if (m_offsets.empty())
+            return 0.f;
+        return m_max;
     }
 
     void AbstractElement::hk_debug_attributes() {
@@ -139,16 +170,12 @@ namespace RichText {
 
     AbstractElement::AbstractElement() {
         count++;
-        // m_chars = new WrapParagraph();
-        // m_delimiter_chars = new WrapString();
     }
     AbstractElement::~AbstractElement() {
         for (auto ptr : m_childrens) {
             delete ptr;
         }
         count--;
-        // delete m_chars;
-        // delete m_delimiter_chars;
     }
     bool AbstractElement::is_in_boundaries(const Rect& b) {
         const auto& dims = m_ext_dimensions;
@@ -160,30 +187,41 @@ namespace RichText {
         m_ext_dimensions.y = cursor_y_pos;
 
         // for (auto offset)
-        x_offset += m_style.h_margins.x.getFloat();
+        if (!m_is_selected)
+            x_offset += m_style.h_margins.x.getFloat();
         cursor_y_pos += m_style.v_margins.x.getFloat();
 
-        m_int_dimensions.x = x_offset.getMin();
+        if (!m_is_selected)
+            m_int_dimensions.x = x_offset.getMin();
         m_int_dimensions.y = cursor_y_pos;
 
         float current_y_pos = cursor_y_pos;
 
-        x_offset += m_style.h_paddings.x.getFloat();
+        if (!m_is_selected)
+            x_offset += m_style.h_paddings.x.getFloat();
         cursor_y_pos += m_style.v_paddings.x.getFloat();
         return current_y_pos;
     }
-    void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, const MultiOffset& x_offset) {
-        cursor_y_pos += m_style.v_paddings.y.getFloat();
-        float w = m_window_width - x_offset.getMin() - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
-        m_int_dimensions.w = w;
-        m_int_dimensions.h = cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.x.getFloat();
+    void AbstractElement::hk_set_dimensions(float last_y_pos, DrawContext* ctx) {
+        if (m_category == C_BLOCK && ctx->cursor_y_pos - last_y_pos == 0.f) {
+            for (const auto& bounds : m_text_boundaries) {
+                ctx->cursor_y_pos += (*ctx->lines)[bounds.line_number].height;
+            }
+        }
+        ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
+        float w = m_window_width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
+        if (m_is_selected)
+            w -= ctx->x_offset.getMin();
 
-        cursor_y_pos += m_style.v_margins.y.getFloat();
+        m_int_dimensions.w = w;
+        m_int_dimensions.h = ctx->cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.x.getFloat();
+
+        ctx->cursor_y_pos += m_style.v_margins.y.getFloat();
         /* h margin x and h padding x got added to x_offset in hk_set_position,
          * which we must re-add to have the correct width */
-        w = m_window_width - x_offset.getMin() + m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat();
+        w += 2 * (m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat());
         m_ext_dimensions.w = w;
-        m_ext_dimensions.h = cursor_y_pos - m_ext_dimensions.y;
+        m_ext_dimensions.h = ctx->cursor_y_pos - m_ext_dimensions.y;
 
         m_is_dimension_set = true;
     }
@@ -237,7 +275,7 @@ namespace RichText {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
             }
-            hk_set_dimensions(initial_y_pos, ctx->cursor_y_pos, ctx->x_offset);
+            hk_set_dimensions(initial_y_pos, ctx);
         }
         else {
             ctx->cursor_y_pos += m_ext_dimensions.h;
