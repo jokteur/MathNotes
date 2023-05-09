@@ -47,10 +47,30 @@ namespace RichText {
 
     typedef std::unordered_map<int, LineInfo> Lines;
 
+    class MultiOffset {
+    private:
+        std::unordered_map<int, float> m_offsets;
+        float m_min = 1e6;
+        float m_max = -1e6;
+        float m_global_offset = 0.f;
+    public:
+        MultiOffset& operator+=(float offset);
+        MultiOffset& operator-=(float offset);
+        void addOffset(int line_number, float offset);
+
+        std::unordered_map<int, float>& getOffset() { return m_offsets; }
+
+        void clear();
+
+        float getMin() const { return m_min; }
+        float getMax() const { return m_max; }
+    };
+
     struct DrawContext {
         Draw::DrawList* draw_list;
         float cursor_y_pos = 0.f;
-        float x_offset = 0.f;
+        /* For children, there can be multiple x offset on each line */
+        MultiOffset x_offset;
         Rect boundaries;
         Lines* lines;
     };
@@ -87,7 +107,6 @@ namespace RichText {
         unsigned int m_widget_dirty = ALL_DIRTY;
         bool m_is_visible = false;
         bool m_no_y_update = false;
-        bool m_x_offset = 0.f;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(WrapParagraph* wrap_chars);
@@ -98,11 +117,12 @@ namespace RichText {
         // Draw hooks
         bool virtual hk_build_widget(DrawContext* context);
         void virtual hk_update_line_info(DrawContext* context);
-        float virtual hk_set_position(float& cursor_y_pos, float& x_offset);
-        void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset);
+        float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
+        void virtual hk_set_dimensions(float last_y_pos, float& cursor_y_pos, const MultiOffset& x_offset);
         bool virtual hk_draw_main(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
+
         /* Debug prints object info in a special window created by parent */
         void virtual hk_debug(const std::string& prefix = "");
         void virtual hk_debug_attributes();

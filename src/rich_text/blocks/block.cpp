@@ -16,9 +16,18 @@ namespace RichText {
 
         hk_build_widget(ctx);
 
-        // Draw all childrens (blocks)
         // if (m_style.pre_indent)
-        ctx->x_offset += m_pre_max_width;
+        int i = 0;
+        for (const auto& bounds : m_text_boundaries) {
+            if (i < m_pre_delimiters.size()) {
+                for (auto del : m_pre_delimiters) {
+                    ctx->x_offset.addOffset(bounds.line_number, del.width);
+                }
+            }
+            i++;
+        }
+
+        // ctx->x_offset += m_pre_max_width;
 
         if (m_pre_max_width > 0.f) {
             ctx->x_offset -= m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat();
@@ -26,7 +35,7 @@ namespace RichText {
 
         float y_pos = ctx->cursor_y_pos;
 
-        float x_offset = ctx->x_offset;
+        auto x_offset = ctx->x_offset;
 
         for (auto ptr : m_childrens) {
             if (ptr->m_category == C_BLOCK)
@@ -34,7 +43,7 @@ namespace RichText {
             ctx->x_offset = x_offset;
         }
         // if (m_style.pre_indent)
-        ctx->x_offset -= m_pre_max_width;
+        // ctx->x_offset -= m_pre_max_width;
 
         float new_y_pos = ctx->cursor_y_pos;
         ctx->cursor_y_pos = y_pos;
@@ -157,9 +166,9 @@ namespace RichText {
         hk_build_widget(ctx);
 
         // Draw all the chars generated in the block
-        auto int_pos = m_int_dimensions.getPos();
-        int_pos.x += m_pre_max_width;
         for (auto& pair : m_chars.getLines()) {
+            auto int_pos = m_int_dimensions.getPos();
+            int_pos.x += ctx->x_offset.getOffset()[pair.first];
             for (auto ptr : pair.second.m_chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
@@ -172,7 +181,7 @@ namespace RichText {
         ret &= hk_draw_pre_chars(ctx);
 
         ctx->x_offset += m_pre_max_width;
-        float x_offset = ctx->x_offset;
+        auto x_offset = ctx->x_offset;
         // Draw all childrens (spans)
         for (auto ptr : m_childrens) {
             if (ptr->m_category != C_SPAN) {
@@ -220,9 +229,7 @@ namespace RichText {
                 m_wrapper.setParagraph(&m_chars, false);
             }
             if (m_widget_dirty & DIRTY_WIDTH) {
-                /* Save x offset for later uses (in setWindowWidth) */
-                m_x_offset = ctx->x_offset;
-                float internal_size = m_window_width - ctx->x_offset - m_style.h_margins.y.getFloat();
+                float internal_size = m_window_width - ctx->x_offset.getMin() - m_style.h_margins.y.getFloat();
                 m_wrapper.setWidth(internal_size, false);
 
                 m_widget_dirty ^= DIRTY_WIDTH;
@@ -245,7 +252,7 @@ namespace RichText {
             success = add_chars(&m_chars);
 
             m_wrapper.clear();
-            float internal_size = m_window_width - ctx->x_offset - m_style.h_margins.y.getFloat();
+            float internal_size = m_window_width - ctx->x_offset.getMax() - m_style.h_margins.y.getFloat();
             m_wrapper.setWidth(internal_size, false);
             m_wrapper.setLineSpace(m_style.line_space, false);
             m_wrapper.setParagraph(&m_chars);

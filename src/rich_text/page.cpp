@@ -165,7 +165,7 @@ namespace RichText {
 
                 TimeCounter::getInstance().startCounter("DisplayAll");
                 for (auto pair : m_root_elements) {
-                    ctx.x_offset = 0.f;
+                    ctx.x_offset.clear();
                     ctx.lines = &pair.second->m_lines;
                     if (!found_current && pair.first >= m_current_block_idx) {
                         found_current = true;

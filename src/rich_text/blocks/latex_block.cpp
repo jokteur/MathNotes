@@ -15,11 +15,11 @@ namespace RichText {
 
         if (m_latex_char != nullptr) {
             auto dims = m_latex_char->m_latex_image->getDimensions();
-            float available_space = m_window_width - ctx->x_offset - dims.x;
+            float available_space = m_window_width - ctx->x_offset.getMax() - dims.x;
             if (available_space < 0.f)
                 available_space = 0.f;
 
-            m_latex_char->draw(ctx->draw_list, ctx->boundaries, ImVec2(ctx->x_offset + available_space / 2.f, ctx->cursor_y_pos));
+            m_latex_char->draw(ctx->draw_list, ctx->boundaries, ImVec2(ctx->x_offset.getMax() + available_space / 2.f, ctx->cursor_y_pos));
             ctx->cursor_y_pos += m_latex_char->m_latex_image->getDimensions().y;
         }
         return ret;

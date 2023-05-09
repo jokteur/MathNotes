@@ -26,7 +26,7 @@ namespace RichText {
             success = false;
         return success;
     }
-    float TextString::hk_set_position(float& cursor_y_pos, float& x_offset) {
+    float TextString::hk_set_position(float& cursor_y_pos, MultiOffset& x_offset) {
         // Dimension is also directly calculated here
         if (!m_chars.empty()) {
             // auto start_char = m_draw_chars.front();
@@ -44,7 +44,7 @@ namespace RichText {
         }
         return cursor_y_pos;
     }
-    void TextString::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
+    void TextString::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, const MultiOffset& x_offset) {
 
     }
     bool TextString::hk_draw_main(DrawContext* ctx) {
@@ -59,7 +59,7 @@ namespace RichText {
                 for (auto p : pair.second.m_chars) {
                     auto ptr = std::static_pointer_cast<DrawableChar>(p);
                     ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
-                    p_min.x += ctx->x_offset;
+                    p_min.x += ctx->x_offset.getOffset()[pair.first];
                     p_min.y += ctx->cursor_y_pos;
                     ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
                     (*ctx->draw_list)->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);

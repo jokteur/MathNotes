@@ -16,6 +16,45 @@ namespace RichText {
     int AbstractElement::count = 0;
     int AbstractElement::visible_count = 0;
 
+    MultiOffset& MultiOffset::operator+=(float offset) {
+        for (auto& pair : m_offsets) {
+            pair.second += offset;
+        }
+        m_min += offset;
+        m_max += offset;
+        m_global_offset += offset;
+        return *this;
+    }
+    MultiOffset& MultiOffset::operator-=(float offset) {
+        for (auto& pair : m_offsets) {
+            pair.second -= offset;
+        }
+        m_min -= offset;
+        m_max -= offset;
+        m_global_offset -= offset;
+        return *this;
+    }
+    void MultiOffset::addOffset(int line_number, float offset) {
+        if (m_offsets.find(line_number) == m_offsets.end()) {
+            m_offsets[line_number] = 0.f;
+        }
+        m_offsets[line_number] += offset;
+
+        m_min = 1e6;
+        m_max = -1e6;
+        for (auto& pair : m_offsets) {
+            if (pair.second < m_min)
+                m_min = pair.second;
+            if (pair.second > m_max)
+                m_max = pair.second;
+        }
+    }
+    void MultiOffset::clear() {
+        m_offsets.clear();
+        m_min = 1e6;
+        m_max = -1e6;
+    }
+
     void AbstractElement::hk_debug_attributes() {
         /* State */
         ImGui::Text("Dirty state %u", m_widget_dirty);
@@ -116,14 +155,15 @@ namespace RichText {
         return isInsideRectY(dims.y, b) || isInsideRectY(dims.y + dims.h, b)
             || b.y > dims.y && b.y + b.h < dims.y + dims.h;
     }
-    float AbstractElement::hk_set_position(float& cursor_y_pos, float& x_offset) {
-        m_ext_dimensions.x = x_offset;
+    float AbstractElement::hk_set_position(float& cursor_y_pos, MultiOffset& x_offset) {
+        m_ext_dimensions.x = x_offset.getMin();
         m_ext_dimensions.y = cursor_y_pos;
 
+        // for (auto offset)
         x_offset += m_style.h_margins.x.getFloat();
         cursor_y_pos += m_style.v_margins.x.getFloat();
 
-        m_int_dimensions.x = x_offset;
+        m_int_dimensions.x = x_offset.getMin();
         m_int_dimensions.y = cursor_y_pos;
 
         float current_y_pos = cursor_y_pos;
@@ -132,16 +172,16 @@ namespace RichText {
         cursor_y_pos += m_style.v_paddings.x.getFloat();
         return current_y_pos;
     }
-    void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, float x_offset) {
+    void AbstractElement::hk_set_dimensions(float last_y_pos, float& cursor_y_pos, const MultiOffset& x_offset) {
         cursor_y_pos += m_style.v_paddings.y.getFloat();
-        float w = m_window_width - x_offset - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
+        float w = m_window_width - x_offset.getMin() - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
         m_int_dimensions.w = w;
         m_int_dimensions.h = cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.x.getFloat();
 
         cursor_y_pos += m_style.v_margins.y.getFloat();
         /* h margin x and h padding x got added to x_offset in hk_set_position,
          * which we must re-add to have the correct width */
-        w = m_window_width - x_offset + m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat();
+        w = m_window_width - x_offset.getMin() + m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat();
         m_ext_dimensions.w = w;
         m_ext_dimensions.h = cursor_y_pos - m_ext_dimensions.y;
 
@@ -149,6 +189,7 @@ namespace RichText {
     }
     bool AbstractElement::hk_build_widget(DrawContext*) { return true; }
     void AbstractElement::hk_update_line_info(DrawContext*) {}
+
     bool AbstractElement::hk_draw_main(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
@@ -162,7 +203,7 @@ namespace RichText {
             }
             (*ctx->lines)[pair.first].height = ctx->cursor_y_pos - pos;
         }
-        float x_offset = ctx->x_offset;
+        auto x_offset = ctx->x_offset;
         for (auto& ptr : m_childrens) {
             if (!ptr->draw(ctx))
                 ret = false;
