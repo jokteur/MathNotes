@@ -29,7 +29,7 @@ namespace RichText {
 
         float y_pos = ctx->cursor_y_pos;
 
-
+        /* Placing the y cursor is delicate. We may have empty delimiters to show */
         for (auto ptr : m_childrens) {
             if (ptr->m_category == C_BLOCK)
                 ret &= ptr->draw(ctx);
