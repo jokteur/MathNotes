@@ -24,15 +24,33 @@ namespace RichText {
         set_pre_margins(ctx);
 
         // if (m_style.pre_indent)
-
         // ctx->x_offset += m_pre_max_width;
 
         float y_pos = ctx->cursor_y_pos;
 
-        /* Placing the y cursor is delicate. We may have empty delimiters to show */
+        /* Placing the y cursor is delicate. We may have empty delimiters to show
+         * before showing some block children. E.g.:
+         * >        <-- The first delimiter is empty
+         * >> ab    <-- The sub-quote & p is only shown on the second line
+         *    cd        cursor_y_pos must be correct. The height of the p
+         *    ef        determines the position of the next empty delimiter
+         * >
+         *  */
+        auto bounds_it = m_text_boundaries.begin();
+        int i = 0;
         for (auto ptr : m_childrens) {
-            if (ptr->m_category == C_BLOCK)
+            if (ptr->m_category == C_BLOCK) {
+                int line_number = ptr->m_text_boundaries.front().line_number;
+                while (bounds_it->line_number < line_number) {
+                    bounds_it = std::next(bounds_it);
+                    if (bounds_it == m_text_boundaries.end())
+                        break;
+                    i++;
+                    ctx->cursor_y_pos += (*ctx->lines)[line_number].height;
+                    line_number = bounds_it->line_number;
+                }
                 ret &= ptr->draw(ctx);
+            }
             ctx->x_offset = x_offset;
         }
 
