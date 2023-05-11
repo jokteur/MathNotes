@@ -73,13 +73,13 @@ namespace RichText {
         // div
         styles[DIV].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 0.f }));
         styles[DIV].set_v_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
-        styles[DIV].set_pre_indent(false);
+        styles[DIV].set_align_pre_indent(false);
         // styles[DIV].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 
         // definition
         styles[DEF].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 0.f }));
         styles[DEF].set_v_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
-        styles[DEF].set_pre_indent(false);
+        styles[DEF].set_align_pre_indent(false);
         // styles[DEF].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 
         // href

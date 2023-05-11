@@ -57,7 +57,7 @@ namespace RichText {
         MultiOffset& operator-=(float offset);
         void addOffset(int line_number, float offset);
 
-        float getOffset(int line_number);
+        float getOffset(int line_number) const;
 
         void clear();
         void clear(const std::vector<int>& lines);

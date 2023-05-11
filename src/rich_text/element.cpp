@@ -32,11 +32,11 @@ namespace RichText {
         m_max -= offset;
         return *this;
     }
-    float MultiOffset::getOffset(int line_number) {
+    float MultiOffset::getOffset(int line_number) const {
         if (m_offsets.find(line_number) == m_offsets.end()) {
             return 0.f;
         }
-        return m_offsets[line_number];
+        return m_offsets.at(line_number);
     }
     void MultiOffset::addOffset(int line_number, float offset) {
         if (m_offsets.find(line_number) == m_offsets.end()) {

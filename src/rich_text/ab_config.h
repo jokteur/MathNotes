@@ -29,7 +29,7 @@ namespace RichText {
         NEW_STYLE_ELEMENT(h_paddings, EmVec2, EmVec2(0.f COMMA 0.f));
         NEW_STYLE_ELEMENT(v_paddings, EmVec2, EmVec2(0.f COMMA 0.f));
 
-        NEW_STYLE_ELEMENT(pre_indent, bool, true);
+        NEW_STYLE_ELEMENT(align_pre_indent, bool, true);
 
         NEW_STYLE_ELEMENT(bg_color, Colors::color, Colors::transparent);
 

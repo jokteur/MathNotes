@@ -15,62 +15,102 @@ namespace RichText {
         // At this point, margins have already been taken into account
 
         hk_build_widget(ctx);
+        /* This function roughly helps setting width and height from
+         * pre-delimiters */
         get_line_height_from_delimiters(ctx);
 
-        auto x_offset = ctx->x_offset;
+        /* There are two offset used in normal blocks:
+         * - current_offset for delimiter
+         * - child_offset for all block childrens.
+         *   These offsets are determined by the pre-delimiters (in set_pre_margins)
+         *   or the margins of the block
+         */
+        auto current_x_offset = ctx->x_offset;
 
-        /* Set pre-margins must be called before displaying any subsequent child. This
-         * way, we have the correct margins when displaying pre delimiters */
         set_pre_margins(ctx);
 
-        // if (m_style.pre_indent)
-        // ctx->x_offset += m_pre_max_width;
+        /* If true, this helps vertically align all the pre-delimiters */
+        if (m_style.align_pre_indent) {
+            float max_offset = ctx->x_offset.getMax();
+            int first_line = m_text_boundaries.front().line_number;
+            int last_line = m_text_boundaries.back().line_number;
+            ctx->x_offset.clear(first_line, last_line);
+            ctx->x_offset += max_offset;
+        }
 
-        float y_pos = ctx->cursor_y_pos;
+        auto child_x_offset = ctx->x_offset;
 
         /* Placing the y cursor is delicate. We may have empty delimiters to show
          * before showing some block children. E.g.:
          * >        <-- The first delimiter is empty
          * >> ab    <-- The sub-quote & p is only shown on the second line
-         *    cd        cursor_y_pos must be correct. The height of the p
+         *    cd        cursor_y_pos must be correct. The height of the paragraph
          *    ef        determines the position of the next empty delimiter
          * >
          *  */
+        auto child_it = m_childrens.begin();
         auto bounds_it = m_text_boundaries.begin();
         int i = 0;
-        for (auto ptr : m_childrens) {
-            if (ptr->m_category == C_BLOCK) {
-                int line_number = ptr->m_text_boundaries.front().line_number;
-                while (bounds_it->line_number < line_number) {
-                    bounds_it = std::next(bounds_it);
-                    if (bounds_it == m_text_boundaries.end())
-                        break;
-                    i++;
-                    ctx->cursor_y_pos += (*ctx->lines)[line_number].height;
-                    line_number = bounds_it->line_number;
-                }
-                ret &= ptr->draw(ctx);
+        while (bounds_it != m_text_boundaries.end()) {
+            int line_number = bounds_it->line_number;
+            bool child_drawn = false;
+            float pre_y_pos = ctx->cursor_y_pos;
+            /* Draw the child if at this line it exists */
+            if (child_it != m_childrens.end() && (*child_it)->m_text_boundaries.front().line_number == line_number) {
+                ctx->x_offset = child_x_offset;
+                (*child_it)->draw(ctx);
+                child_drawn = true;
             }
-            ctx->x_offset = x_offset;
+
+            /* Display pre-delimiters */
+            if (i < m_pre_delimiters.size()) {
+                if (child_drawn) {
+                    while (bounds_it != m_text_boundaries.end() && bounds_it->line_number <= (*child_it)->m_text_boundaries.back().line_number) {
+                        auto& del_info = m_pre_delimiters[i];
+                        pre_y_pos = (*ctx->lines)[line_number].position;
+                        ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, current_x_offset, pre_y_pos);
+                        bounds_it++;
+                        i++;
+                        if (bounds_it != m_text_boundaries.end())
+                            line_number = bounds_it->line_number;
+                    }
+                }
+                else {
+                    auto& del_info = m_pre_delimiters[i];
+                    ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, current_x_offset, ctx->cursor_y_pos);
+
+                    /* We need to update the y position because no child
+                     * has had influence on it */
+                    if (!del_info.str.empty()) {
+                        auto& info = del_info.str.front()->info;
+                        float height = info->ascent + info->descent;
+                        height *= m_style.line_space;
+                        ctx->cursor_y_pos += height;
+                    }
+                    bounds_it++;
+                    i++;
+                }
+            }
+            if (child_drawn) {
+                child_it = std::next(child_it);
+            }
+            if (bounds_it == m_text_boundaries.end()) {
+                break;
+            }
         }
 
-        /* Draw all the pre-delimiters
-         * These must be displayed after calling the children, which have determined the
-         * y positions of these pre-chars
-         */
-        float new_y_pos = ctx->cursor_y_pos;
-        auto new_x_offset = ctx->x_offset;
-        ctx->cursor_y_pos = y_pos;
-        ctx->x_offset = x_offset;
+        return ret;
+    }
 
-        ret &= hk_draw_pre_chars(ctx);
-
-        ctx->cursor_y_pos = new_y_pos;
-        ctx->x_offset = new_x_offset;
-
-        // if (m_style.pre_indent)
-        // ctx->x_offset -= m_pre_max_width;
-
+    bool AbstractBlock::draw_pre_line(DrawContext* ctx, DelimiterInfo& del_info, int line_number, const MultiOffset& x_offset, float y_pos) {
+        bool ret = true;
+        auto pos = ImVec2(x_offset.getOffset(line_number), y_pos);
+        /* Compensate for line ascent from child (if necessary) */
+        pos.y += (*ctx->lines)[line_number].ascent - del_info.max_ascent;
+        for (auto ptr : del_info.str) {
+            auto p = std::static_pointer_cast<DrawableChar>(ptr);
+            ret &= !p->draw(ctx->draw_list, ctx->boundaries, pos);
+        }
         return ret;
     }
 

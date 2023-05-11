@@ -24,6 +24,7 @@ namespace RichText {
         void set_pre_y_position(DrawContext* context);
         void set_pre_margins(DrawContext* context);
         void get_line_height_from_delimiters(DrawContext* context);
+        bool draw_pre_line(DrawContext* ctx, DelimiterInfo& del_info, int line_number, const MultiOffset& x_offset, float y_pos);
 
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
