@@ -69,7 +69,7 @@ namespace RichText {
     void MultiOffset::clear(int from, int to) {
         m_offsets.clear();
         for (int i = from;i <= to;i++) {
-            m_offsets[i] = 0.f;
+            m_offsets.insert({ i, 0.f });
         }
         m_min = 0.f;
         m_max = 0.f;
@@ -280,9 +280,7 @@ namespace RichText {
         //ZoneScoped;
         bool ret = true;
         float initial_y_pos = ctx->cursor_y_pos;
-        TimeCounter::getInstance().startCounter("Set position");
         hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
-        TimeCounter::getInstance().stopCounter("Set position");
         m_is_visible = is_in_boundaries(ctx->boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
             visible_count++;

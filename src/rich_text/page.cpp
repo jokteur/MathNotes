@@ -113,7 +113,6 @@ namespace RichText {
             bool resize_event = false;
             float current_widget_y_size = 0.f;
             float updated_current_widget_y_size = 0.f;
-            TimeCounter::getInstance().startCounter("Set widths");
             for (auto pair : m_root_elements) {
                 if (m_current_width != width && pair.second == m_current_block_ptr) {
                     current_widget_y_size = m_current_block_ptr->get().m_ext_dimensions.h;
@@ -126,7 +125,6 @@ namespace RichText {
                 resize_event = true;
                 m_current_width = width;
             }
-            TimeCounter::getInstance().stopCounter("Set widths");
 
             if (!m_root_elements.empty()) {
                 if (!m_scrollbar_grab)
@@ -166,7 +164,9 @@ namespace RichText {
                 TimeCounter::getInstance().startCounter("DisplayAll");
                 for (auto pair : m_root_elements) {
                     const auto& bounds = pair.second->get().m_text_boundaries;
+                    TimeCounter::getInstance().startCounter("Clear offsets");
                     ctx.x_offset.clear(bounds.front().line_number, bounds.back().line_number);
+                    TimeCounter::getInstance().stopCounter("Clear offsets");
 
                     ctx.lines = &pair.second->m_lines;
                     if (!found_current && pair.first >= m_current_block_idx) {
