@@ -9,10 +9,15 @@ struct Timer {
     std::chrono::high_resolution_clock::time_point start;
     float total_time = 0.f;
 };
+struct TimerCollection {
+    std::vector<Timer> timers;
+    std::vector<int> num_calls_per_loop;
+    std::vector<float> cumulative_times;
+};
 
 class TimeCounter {
 private:
-    std::unordered_map <std::string, std::vector<Timer>> m_timers;
+    std::unordered_map <std::string, TimerCollection> m_timers;
     int m_num_loops = 0;
     int m_display_after = 240;
 
