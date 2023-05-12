@@ -31,7 +31,6 @@ namespace RichText {
         line_it++;
         *cursor_pos_x = 0.f;
     }
-
     void WrapAlgorithm::algorithm() {
         if (m_width < 1.f) {
             return;
@@ -162,18 +161,24 @@ namespace RichText {
     }
     void WrapAlgorithm::recalculate() {
         m_height = 0.f;
+        auto width_it = m_widths.begin();
         for (auto& pair : m_paragraph->getLines()) {
+            m_width = *width_it;
             m_current_string = &pair.second.m_chars;
             float prev_height = m_height;
             algorithm();
             pair.second.first_max_ascent = m_first_max_ascent;
             pair.second.first_max_descent = m_first_max_descent;
             pair.second.line_height = m_height - prev_height;
+            auto next = std::next(width_it);
+            if (next != m_widths.end())
+                width_it = next;
         }
     }
     void WrapAlgorithm::recalculate(WrapString* string) {
         m_height = 0.f;
         m_current_string = string;
+        m_width = m_widths.front();
         algorithm();
     }
     void WrapAlgorithm::setParagraph(WrapParagraph* paragraph, bool redo) {
@@ -181,18 +186,17 @@ namespace RichText {
         if (redo)
             recalculate();
     }
-    // void WrapAlgorithm::setString(WrapString* string, bool redo) {
-    //     //ZoneScoped;
-    //     m_current_string = string;
-    //     if (redo)
-    //         recalculate();
-    // }
     void WrapAlgorithm::clear() {
         m_lines.clear();
     }
     void WrapAlgorithm::setWidth(float width, bool redo) {
         //ZoneScoped;
-        m_width = width;
+        m_widths = { width };
+        if (redo)
+            recalculate();
+    }
+    void WrapAlgorithm::setWidth(const std::vector<float>& width, bool redo) {
+        m_widths = width;
         if (redo)
             recalculate();
     }

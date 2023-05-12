@@ -79,7 +79,8 @@ namespace RichText {
         float m_total_height;
 
         // User set quantities
-        float m_width = 1.f;
+        std::vector<float> m_widths = { 1.f };
+        float m_width;
         float m_height = 0.f;
         float m_line_space = 1.3f;
         float m_first_max_ascent = 0.f;
@@ -118,6 +119,7 @@ namespace RichText {
         float getFirstMaxDescent() { return m_first_max_descent; }
 
         void setWidth(float width, bool redo = true);
+        void setWidth(const std::vector<float>& width, bool redo = true);
         void setLineSpace(float line_space, bool redo = true);
     };
 }

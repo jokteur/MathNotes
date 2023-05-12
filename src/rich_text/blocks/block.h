@@ -29,7 +29,6 @@ namespace RichText {
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
         void hk_draw_background(Draw::DrawList* draw_list) override;
-        bool hk_draw_pre_chars(DrawContext* ctx);
         void hk_debug_attributes() override;
 
 
@@ -38,8 +37,8 @@ namespace RichText {
          * > def    <- hk_add_pre_chars(line=1)
          *
          * */
-        bool hk_build_pre_delimiter_chars(DrawContext* context);
-        bool hk_build_post_chars();
+        bool virtual hk_build_pre_delimiter_chars(DrawContext* context);
+        bool virtual hk_build_post_delimiter_chars(DrawContext* context) { return true; }
     };
 
     struct AbstractLeafBlock : public AbstractBlock {
@@ -48,6 +47,8 @@ namespace RichText {
             m_category = C_BLOCK;
         }
 
+        bool hk_build_pre_delimiter_chars(DrawContext* context) override;
+        bool hk_build_post_delimiter_chars(DrawContext* context) override;
         void hk_update_line_info(DrawContext* context) override;
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
@@ -59,6 +60,7 @@ namespace RichText {
             m_type = T_BLOCK_HIDDENSPACE;
         }
         bool hk_build_widget(DrawContext* context) override;
+        bool hk_draw_main(DrawContext* context) override;
         bool add_chars(WrapParagraph* wrap_chars) override;
     };
     struct HrBlock : public AbstractLeafBlock {

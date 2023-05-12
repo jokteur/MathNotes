@@ -44,7 +44,7 @@ namespace RichText {
         }
         return cursor_y_pos;
     }
-    void TextString::hk_set_dimensions(float last_y_pos, DrawContext* ctx) {
+    void TextString::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
 
     }
     bool TextString::hk_draw_main(DrawContext* ctx) {

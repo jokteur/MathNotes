@@ -213,30 +213,13 @@ namespace RichText {
         return success;
     }
 
-    bool AbstractBlock::hk_draw_pre_chars(DrawContext* ctx) {
-        bool ret = true;
-        int i = 0;
-        set_pre_y_position(ctx);
-        for (const auto& bounds : m_text_boundaries) {
-            /* Draw pre delimiters */
-            if (i < m_pre_delimiters.size()) {
-                auto pre_chars = m_pre_delimiters[i];
-                auto pos = ImVec2(ctx->x_offset.getOffset(bounds.line_number), pre_chars.y_pos);
-                pos.y += (*ctx->lines)[bounds.line_number].ascent - pre_chars.max_ascent;
-                for (auto ptr : pre_chars.str) {
-                    auto p = std::static_pointer_cast<DrawableChar>(ptr);
-                    if (!p->draw(ctx->draw_list, ctx->boundaries, pos))
-                        ret = false;
-                }
-            }
-            i++;
-        }
-        return ret;
-    }
-
     void AbstractBlock::hk_debug_attributes() {
         AbstractElement::hk_debug_attributes();
     }
+
+    /* =========
+     * LeafBlock
+     * ========= */
 
     void AbstractLeafBlock::hk_update_line_info(DrawContext* ctx) {
         float position = ctx->cursor_y_pos;
@@ -258,11 +241,8 @@ namespace RichText {
         bool ret = true;
 
         hk_build_widget(ctx);
-        get_line_height_from_delimiters(ctx);
 
         auto x_offset = ctx->x_offset;
-
-        set_pre_margins(ctx);
 
         // Draw all the chars generated in the block
         for (auto& pair : m_chars.getLines()) {
@@ -278,10 +258,6 @@ namespace RichText {
         hk_update_line_info(ctx);
 
         ctx->x_offset = x_offset;
-        ret &= hk_draw_pre_chars(ctx);
-
-        // ctx->x_offset += m_pre_max_width;
-        ctx->x_offset = x_offset;
         // Draw all childrens (spans)
         for (auto ptr : m_childrens) {
             if (ptr->m_category != C_SPAN) {
@@ -294,14 +270,27 @@ namespace RichText {
 
         // Update cursor from wrapper
         ctx->cursor_y_pos += m_wrapper.getHeight();
-        // Draw all childrens (blocks)
-        for (auto ptr : m_childrens) {
-            if (ptr->m_category == C_BLOCK)
-                if (!ptr->draw(ctx))
-                    ret = false;
-        }
-        // ctx->x_offset -= m_pre_max_width;
         return ret;
+    }
+
+    bool AbstractLeafBlock::hk_build_pre_delimiter_chars(DrawContext* context) {
+        bool success = true;
+        for (const auto& bounds : m_text_boundaries) {
+            int line_number = bounds.line_number;
+            if (bounds.pre < bounds.beg && m_is_selected) {
+                success &= Utf8StrToImCharStr(m_ui_state, &m_chars, m_safe_string, line_number, bounds.pre, bounds.beg, m_special_chars_style, true);
+            }
+        }
+        return success;
+    }
+    bool AbstractLeafBlock::hk_build_post_delimiter_chars(DrawContext* context) {
+        bool success = true;
+        const auto& bounds = m_text_boundaries.back();
+        int line_number = bounds.line_number;
+        if (bounds.end < bounds.post && m_is_selected) {
+            success &= Utf8StrToImCharStr(m_ui_state, &m_chars, m_safe_string, line_number, bounds.end, bounds.post, m_special_chars_style, true);
+        }
+        return success;
     }
 
     bool AbstractLeafBlock::hk_build_widget(DrawContext* ctx) {
@@ -312,15 +301,14 @@ namespace RichText {
 
                 bool success = true;
                 success &= hk_build_pre_delimiter_chars(ctx);
+
                 for (auto ptr : m_childrens) {
                     if (ptr->m_category != C_SPAN) {
                         break;
                     }
-                    auto res = ptr->add_chars(&m_chars);
-                    if (!res) {
-                        success = false;
-                    }
+                    success &= ptr->add_chars(&m_chars);
                 }
+                success &= hk_build_post_delimiter_chars(ctx);
                 if (success)
                     m_widget_dirty ^= DIRTY_CHARS;
 
@@ -344,7 +332,7 @@ namespace RichText {
      * =========== */
     bool HiddenSpace::hk_build_widget(DrawContext* ctx) {
         //ZoneScoped;
-        ctx->cursor_y_pos += 1.f;
+        // ctx->cursor_y_pos += 1.f;
         if (m_widget_dirty) {
             m_chars.clear();
 
@@ -383,5 +371,31 @@ namespace RichText {
             }
         }
         return success;
+    }
+    bool HiddenSpace::hk_draw_main(DrawContext* ctx) {
+        //ZoneScoped;
+        bool ret = true;
+
+        hk_build_widget(ctx);
+
+        auto x_offset = ctx->x_offset;
+
+        // Draw all the chars generated in the block
+        for (auto& pair : m_chars.getLines()) {
+            auto int_pos = m_int_dimensions.getPos();
+            int_pos.x = ctx->x_offset.getOffset(pair.first);
+            for (auto ptr : pair.second.m_chars) {
+                auto p = std::static_pointer_cast<DrawableChar>(ptr);
+                if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
+                    ret = false;
+            }
+        }
+        if (m_chars.empty()) {
+            ctx->cursor_y_pos += m_style.font_size.getFloat();
+        }
+
+        hk_update_line_info(ctx);
+
+        return ret;
     }
 }

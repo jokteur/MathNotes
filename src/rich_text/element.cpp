@@ -202,7 +202,7 @@ namespace RichText {
         cursor_y_pos += m_style.v_paddings.x.getFloat();
         return current_y_pos;
     }
-    void AbstractElement::hk_set_dimensions(float last_y_pos, DrawContext* ctx) {
+    void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
         if (m_category == C_BLOCK && ctx->cursor_y_pos - last_y_pos == 0.f) {
             for (const auto& bounds : m_text_boundaries) {
                 ctx->cursor_y_pos += (*ctx->lines)[bounds.line_number].height;
@@ -210,8 +210,7 @@ namespace RichText {
         }
         ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
         float w = m_window_width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
-        if (m_is_selected)
-            w -= ctx->x_offset.getMin();
+        w -= m_int_dimensions.x;
 
         m_int_dimensions.w = w;
         m_int_dimensions.h = ctx->cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.x.getFloat();
@@ -219,7 +218,7 @@ namespace RichText {
         ctx->cursor_y_pos += m_style.v_margins.y.getFloat();
         /* h margin x and h padding x got added to x_offset in hk_set_position,
          * which we must re-add to have the correct width */
-        w += 2 * (m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat());
+        w = m_window_width - m_ext_dimensions.x;
         m_ext_dimensions.w = w;
         m_ext_dimensions.h = ctx->cursor_y_pos - m_ext_dimensions.y;
 
@@ -275,7 +274,7 @@ namespace RichText {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
             }
-            hk_set_dimensions(initial_y_pos, ctx);
+            hk_set_dimensions(ctx, initial_y_pos);
         }
         else {
             ctx->cursor_y_pos += m_ext_dimensions.h;

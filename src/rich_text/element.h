@@ -120,7 +120,7 @@ namespace RichText {
         bool virtual hk_build_widget(DrawContext* context);
         void virtual hk_update_line_info(DrawContext* context);
         float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
-        void virtual hk_set_dimensions(float last_y_pos, DrawContext* context);
+        void virtual hk_set_dimensions(DrawContext* context, float last_y_pos);
         bool virtual hk_draw_main(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
