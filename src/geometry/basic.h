@@ -19,7 +19,7 @@ struct emfloat {
     bool operator==(const emfloat& rhs) const;
     bool operator!=(const emfloat& rhs) const;
 
-    float getFloat();
+    float getFloat() const;
 };
 
 

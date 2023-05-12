@@ -101,6 +101,20 @@ namespace RichText {
         else {
             ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Colors::red), "hidden");
         }
+        ImGui::SameLine();
+        if (m_is_dimension_set) {
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Colors::green), " / dim set");
+        }
+        else {
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Colors::red), " / dim not set");
+        }
+        ImGui::SameLine();
+        if (m_widget_dirty) {
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Colors::red), " / dirty");
+        }
+        else {
+            ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(Colors::green), " / clean");
+        }
 
         /* Position and dimensions */
         std::stringstream pos, dimension;
@@ -275,19 +289,13 @@ namespace RichText {
                 ret = false;
             }
             hk_set_dimensions(ctx, initial_y_pos);
+            hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
+            hk_draw_background(ctx->draw_list);
         }
         else {
             ctx->cursor_y_pos += m_ext_dimensions.h;
-
-            float current_y_pos = ctx->cursor_y_pos;
-            ctx->cursor_y_pos = initial_y_pos;
-            hk_update_line_info(ctx);
-            ctx->cursor_y_pos = current_y_pos;
         }
 
-
-        hk_draw_background(ctx->draw_list);
-        hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
         if (m_no_y_update) {
             m_no_y_update = false;
             ctx->cursor_y_pos = initial_y_pos;

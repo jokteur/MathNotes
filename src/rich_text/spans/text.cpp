@@ -21,7 +21,6 @@ namespace RichText {
             success &= Utf8StrToImCharStr(m_ui_state, wrap_chars, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_style);
         }
 
-
         if (!hk_add_post_chars(wrap_chars))
             success = false;
         return success;
