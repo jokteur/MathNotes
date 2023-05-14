@@ -106,6 +106,8 @@ namespace RichText {
             }
         }
 
+        ret &= hk_draw_secondary(ctx);
+
         return ret;
     }
 
@@ -279,6 +281,9 @@ namespace RichText {
 
         // Update cursor from wrapper
         ctx->cursor_y_pos += m_wrapper.getHeight();
+
+        ret &= hk_draw_secondary(ctx);
+
         return ret;
     }
 

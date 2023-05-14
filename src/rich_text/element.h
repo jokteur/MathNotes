@@ -122,6 +122,9 @@ namespace RichText {
         float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
         void virtual hk_set_dimensions(DrawContext* context, float last_y_pos);
         bool virtual hk_draw_main(DrawContext* context);
+        /* Implement this function if you want to draw visual elements
+         * that are not part of fundamental widget construction and char drawing */
+        bool virtual hk_draw_secondary(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
 

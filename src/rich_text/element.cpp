@@ -238,6 +238,7 @@ namespace RichText {
 
         m_is_dimension_set = true;
     }
+    bool AbstractElement::hk_draw_secondary(DrawContext*) { return true; }
     bool AbstractElement::hk_build_widget(DrawContext*) { return true; }
     void AbstractElement::hk_update_line_info(DrawContext*) {}
 

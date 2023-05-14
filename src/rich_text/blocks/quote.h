@@ -3,8 +3,10 @@
 #include "block.h"
 
 namespace RichText {
-    struct QuoteWidget: public AbstractBlock {
+    struct QuoteWidget : public AbstractBlock {
         QuoteWidget();
+
+        bool hk_draw_secondary(DrawContext* context) override;
 
         emfloat m_delimiter_offset = emfloat{ 0.f };
 
