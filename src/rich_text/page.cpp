@@ -30,6 +30,17 @@ namespace RichText {
         }
         ImGui::End();
 
+        ImGui::Begin("Visible blocks");
+        if (ImGui::TreeNode("Show")) {
+            for (auto& pair : m_root_elements) {
+                auto& ptr = pair.second->get();
+                if (ptr.m_is_visible || !ptr.m_is_dimension_set || ptr.m_widget_dirty)
+                    ptr.hk_debug(std::to_string(pair.first));
+            }
+            ImGui::TreePop();
+        }
+        ImGui::End();
+
         ImGui::Begin("Top displayed block");
         if (m_current_block_ptr != nullptr) {
             m_current_block_ptr->get().hk_debug();
@@ -60,7 +71,6 @@ namespace RichText {
                         suffix = suffix.substr(0, 10) + "...";
                     }
                     suffix = "  /" + suffix;
-
                     ImGui::Text("%d %s %s", i, AB::block_to_name(block->type), suffix.c_str());
                 }
             }
@@ -180,6 +190,7 @@ namespace RichText {
                     pair.second->get().draw(&ctx);
                 }
                 TimeCounter::getInstance().stopCounter("DisplayAll");
+
                 m_after_height = ctx.cursor_y_pos + roundf(m_y_displacement);
                 // m_after_height -= 2 * m_line_height;
                 if (m_after_height < 0.f)
