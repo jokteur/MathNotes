@@ -160,6 +160,8 @@ namespace RichText {
         }
     }
     void WrapAlgorithm::recalculate() {
+        if (m_paragraph == nullptr)
+            return;
         m_height = 0.f;
         auto width_it = m_widths.begin();
         for (auto& pair : m_paragraph->getLines()) {

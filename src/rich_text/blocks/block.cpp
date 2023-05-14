@@ -95,6 +95,9 @@ namespace RichText {
                     i++;
                 }
             }
+            else {
+                bounds_it++;
+            }
             if (child_drawn) {
                 child_it = std::next(child_it);
             }
@@ -121,10 +124,12 @@ namespace RichText {
     void AbstractBlock::hk_draw_background(Draw::DrawList* draw_list) {
         if (m_style.bg_color != Colors::transparent) {
             draw_list->SetCurrentChannel(0);
-            // auto cursor_pos = ImGui::GetCursorScreenPos();
-            // ImVec2 p_min = cursor_pos + dims.getPos();
-            // ImVec2 p_max = cursor_pos + p_min + dims.getDim();
-            // draw_list->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
+            auto& dim = m_int_dimensions;
+            auto cursor_pos = ImGui::GetCursorScreenPos();
+            ImVec2 p_min = cursor_pos + dim.getPos();
+            ImVec2 p_max = p_min + dim.getDim();
+            draw_list->get()->AddRectFilled(p_min, p_max, m_style.bg_color, 5.f);
+            draw_list->SetCurrentChannel(1);
         }
     }
     void AbstractBlock::get_line_height_from_delimiters(DrawContext* ctx) {

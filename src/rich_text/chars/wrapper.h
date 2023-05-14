@@ -70,7 +70,7 @@ namespace RichText {
      */
     class WrapAlgorithm {
     private:
-        WrapParagraph* m_paragraph;
+        WrapParagraph* m_paragraph = nullptr;
         WrapString* m_current_string;
 
         // Calculated quantities

@@ -74,11 +74,13 @@ namespace RichText {
             success = true;
         }
         if (m_widget_dirty & DIRTY_WIDTH) {
-            float internal_size = m_window_width - ctx->x_offset.getMin() - m_style.h_margins.y.getFloat();
-            m_wrapper.setWidth(internal_size, false);
+            if (m_is_selected) {
+                float internal_size = m_window_width - ctx->x_offset.getMin() - m_style.h_margins.y.getFloat();
+                m_wrapper.setWidth(internal_size, false);
 
+                m_wrapper.recalculate();
+            }
             m_widget_dirty ^= DIRTY_WIDTH;
-            m_wrapper.recalculate();
         }
         return success;
     }

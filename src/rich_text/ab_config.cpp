@@ -43,7 +43,7 @@ namespace RichText {
 
         // Code
         styles[CODE].set_font_monospace(true);
-        styles[CODE].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 0.f }));
+        styles[CODE].set_h_margins(EmVec2(emfloat{ 15.f }, emfloat{ 15.f }));
         styles[CODE].set_v_margins(EmVec2(emfloat{ 10.f }, emfloat{ 0.f }));
         // styles[CODE].set_h_paddings(EmVec2(emfloat{15.f},emfloat{ 5.f}));
         // styles[CODE].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
@@ -67,8 +67,8 @@ namespace RichText {
         styles[B_LATEX].set_special_replace(false);
         // styles[B_LATEX].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 
-        styles[UL].set_h_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
-        styles[OL].set_h_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
+        styles[UL].set_h_margins(EmVec2(emfloat{ 10.f }, emfloat{ 0.f }));
+        styles[OL].set_h_margins(EmVec2(emfloat{ 10.f }, emfloat{ 0.f }));
         styles[LI].set_v_margins(EmVec2(emfloat{ 0.f }, emfloat{ 5.f }));
 
         // div
