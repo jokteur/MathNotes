@@ -63,7 +63,8 @@ namespace RichText {
 
         // Display latex
         styles[B_LATEX].set_h_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));
-        styles[B_LATEX].set_v_margins(EmVec2(emfloat{ 15.f }, emfloat{ 15.f }));
+        // styles[B_LATEX].set_v_margins(EmVec2(emfloat{ 15.f }, emfloat{ 15.f }));
+        styles[B_LATEX].set_special_replace(false);
         // styles[B_LATEX].set_v_paddings(EmVec2(emfloat{0.f},emfloat{ 0.f}));
 
         styles[UL].set_h_margins(EmVec2(emfloat{ 0.f }, emfloat{ 0.f }));

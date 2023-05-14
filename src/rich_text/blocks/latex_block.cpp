@@ -1,4 +1,5 @@
 #include "latex_block.h"
+#include "rich_text/chars/im_char.h"
 
 namespace RichText {
     DisplayLatexWidget::DisplayLatexWidget() : AbstractLeafBlock() {
@@ -8,10 +9,23 @@ namespace RichText {
         //ZoneScoped;
         bool ret = true;
 
-        /* Build widget must be called after drawing the children, because we need to know
-         * the positions of the first chars in line in childrens before displaying
-         * the delimiters */
         hk_build_widget(ctx);
+
+        // Draw all the chars generated in the block
+        for (auto& pair : m_chars.getLines()) {
+            auto int_pos = m_int_dimensions.getPos();
+            int_pos.x = ctx->x_offset.getOffset(pair.first);
+            for (auto ptr : pair.second.m_chars) {
+                auto p = std::static_pointer_cast<DrawableChar>(ptr);
+                if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
+                    ret = false;
+            }
+        }
+
+        hk_update_line_info(ctx);
+
+        ctx->cursor_y_pos += m_wrapper.getHeight();
+
 
         if (m_latex_char != nullptr) {
             auto dims = m_latex_char->m_latex_image->getDimensions();
@@ -27,6 +41,21 @@ namespace RichText {
     bool DisplayLatexWidget::hk_build_widget(DrawContext* ctx) {
         bool success = false;
         if (m_widget_dirty & DIRTY_CHARS) {
+            m_chars.clear();
+
+            bool success = true;
+
+            if (m_is_selected) {
+                success &= hk_build_pre_delimiter_chars(ctx);
+                for (const auto& bounds : m_text_boundaries) {
+                    success &= Utf8StrToImCharStr(m_ui_state, &m_chars, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_special_chars_style, false);
+                }
+                success &= hk_build_post_delimiter_chars(ctx);
+                m_wrapper.clear();
+                m_wrapper.setLineSpace(m_style.line_space, false);
+                m_wrapper.setParagraph(&m_chars, false);
+                m_wrapper.recalculate();
+            }
 
             std::string source;
             AB::str_from_text_boundaries(*m_safe_string, source, m_text_boundaries);
@@ -40,8 +69,16 @@ namespace RichText {
 
             m_error = m_latex_char->m_latex_image->getLatexErrorMsg();
 
-            m_widget_dirty ^= DIRTY_CHARS;
+            if (success)
+                m_widget_dirty ^= DIRTY_CHARS;
             success = true;
+        }
+        if (m_widget_dirty & DIRTY_WIDTH) {
+            float internal_size = m_window_width - ctx->x_offset.getMin() - m_style.h_margins.y.getFloat();
+            m_wrapper.setWidth(internal_size, false);
+
+            m_widget_dirty ^= DIRTY_WIDTH;
+            m_wrapper.recalculate();
         }
         return success;
     }

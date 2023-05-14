@@ -87,6 +87,10 @@ namespace RichText {
                         height *= m_style.line_space;
                         ctx->cursor_y_pos += height;
                     }
+                    /* We may have empty delimiter (i.e. new line) that still count*/
+                    else {
+                        ctx->cursor_y_pos += m_style.font_size.getFloat();
+                    }
                     bounds_it++;
                     i++;
                 }
@@ -109,7 +113,7 @@ namespace RichText {
         pos.y += (*ctx->lines)[line_number].ascent - del_info.max_ascent;
         for (auto ptr : del_info.str) {
             auto p = std::static_pointer_cast<DrawableChar>(ptr);
-            ret &= !p->draw(ctx->draw_list, ctx->boundaries, pos);
+            ret &= p->draw(ctx->draw_list, ctx->boundaries, pos);
         }
         return ret;
     }
@@ -295,35 +299,36 @@ namespace RichText {
 
     bool AbstractLeafBlock::hk_build_widget(DrawContext* ctx) {
         //ZoneScoped;
-        if (m_widget_dirty) {
-            if (m_widget_dirty & DIRTY_CHARS) {
-                m_chars.clear();
+        if (m_widget_dirty & DIRTY_CHARS) {
+            m_chars.clear();
 
-                bool success = true;
+            bool success = true;
+            if (m_is_selected)
                 success &= hk_build_pre_delimiter_chars(ctx);
 
-                for (auto ptr : m_childrens) {
-                    if (ptr->m_category != C_SPAN) {
-                        break;
-                    }
-                    success &= ptr->add_chars(&m_chars);
+            for (auto ptr : m_childrens) {
+                if (ptr->m_category != C_SPAN) {
+                    break;
                 }
+                success &= ptr->add_chars(&m_chars);
+            }
+            if (m_is_selected)
                 success &= hk_build_post_delimiter_chars(ctx);
-                if (success)
-                    m_widget_dirty ^= DIRTY_CHARS;
 
-                m_wrapper.clear();
-                m_wrapper.setLineSpace(m_style.line_space, false);
-                m_wrapper.setParagraph(&m_chars, false);
-            }
-            if (m_widget_dirty & DIRTY_WIDTH) {
-                float internal_size = m_window_width - ctx->x_offset.getMin() - m_style.h_margins.y.getFloat();
-                m_wrapper.setWidth(internal_size, false);
+            if (success)
+                m_widget_dirty ^= DIRTY_CHARS;
 
-                m_widget_dirty ^= DIRTY_WIDTH;
-            }
-            m_wrapper.recalculate();
+            m_wrapper.clear();
+            m_wrapper.setLineSpace(m_style.line_space, false);
+            m_wrapper.setParagraph(&m_chars, false);
         }
+        if (m_widget_dirty & DIRTY_WIDTH) {
+            float internal_size = m_window_width - ctx->x_offset.getMin() - m_style.h_margins.y.getFloat();
+            m_wrapper.setWidth(internal_size, false);
+
+            m_widget_dirty ^= DIRTY_WIDTH;
+        }
+        m_wrapper.recalculate();
         return m_widget_dirty;
     }
 

@@ -533,7 +533,7 @@ namespace RichText {
     }
     AbstractElementPtr ABToWidgets::SPAN_LATEXMATH(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto p = new LatexWidget();
+            auto p = new LatexSpan();
             p->m_text_boundaries = bounds;
             p->m_attributes = attributes;
             auto ptr = (AbstractElement*)(p);

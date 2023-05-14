@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 /**
  * @brief Time in ns
