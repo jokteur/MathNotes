@@ -297,6 +297,9 @@ namespace RichText {
                 else if (m_current_ptr->m_type == T_BLOCK_OL) {
                     ol_list->list_level = ((OLWidget*)(m_current_ptr))->list_level + 1;
                 }
+                else if (m_current_ptr->m_type == T_BLOCK_LI) {
+                    ol_list->list_level = ((LIWidget*)(m_current_ptr))->list_level + 1;
+                }
             }
             // ol_list->start = detail->start;
             ol_list->m_style.h_margins.x = m_config.x_level_offset;
@@ -315,6 +318,13 @@ namespace RichText {
             list_el->m_text_boundaries = bounds;
             list_el->m_attributes = attributes;
             list_el->is_task = detail.is_task;
+            list_el->number = detail.number;
+            if (detail.number.empty()) {
+                for (int i = bounds.front().pre; i < bounds.front().beg;i++) {
+                    list_el->marker += (*m_safe_text)[i];
+                }
+            }
+            list_el->list_level = detail.level;
             // list_el->task_mark = detail.task_mark;
             if (m_current_ptr != nullptr) {
                 if (m_current_ptr->m_type == T_BLOCK_UL) {
@@ -324,7 +334,6 @@ namespace RichText {
                     list_el->list_level = ((OLWidget*)(m_current_ptr))->list_level;
                 }
             }
-            // list_el->m_style.h_margins.x = m_config.x_level_offset;
             set_infos(ABConfig::LI, (AbstractElement*)(list_el));
             auto ptr = (AbstractElement*)(list_el);
             return ptr;
