@@ -273,6 +273,9 @@ namespace RichText {
                 else if (m_current_ptr->m_type == T_BLOCK_OL) {
                     ul_list->list_level = ((OLWidget*)(m_current_ptr))->list_level + 1;
                 }
+                else if (m_current_ptr->m_type == T_BLOCK_LI) {
+                    ul_list->list_level = ((LIWidget*)(m_current_ptr))->list_level + 1;
+                }
             }
             ul_list->mark = detail.marker;
             ul_list->m_style.h_margins.x = m_config.x_level_offset;

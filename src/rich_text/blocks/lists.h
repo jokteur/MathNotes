@@ -23,6 +23,7 @@ namespace RichText {
         std::string marker;
         LIWidget();
 
+        bool hk_build_pre_delimiter_chars(DrawContext* ctx) override;
         bool hk_draw_secondary(DrawContext* context) override;
     };
 }
