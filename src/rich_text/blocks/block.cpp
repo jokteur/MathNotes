@@ -73,6 +73,8 @@ namespace RichText {
                         i++;
                         if (bounds_it != m_text_boundaries.end())
                             line_number = bounds_it->line_number;
+                        if (i >= m_pre_delimiters.size())
+                            break;
                     }
                 }
                 else {

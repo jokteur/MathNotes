@@ -32,13 +32,18 @@ namespace RichText {
             WrapAlgorithm wrapper;
             wrapper.setWidth(4000.f, false);
             wrapper.recalculate(&delimiter.str);
-            auto last_char = delimiter.str.back();
-            /* Delimiter y position will be calculated later, after setWidth of wrapper in children
-             * has been called
-             */
-            delimiter.width = last_char->calculated_position.x + last_char->info->advance;
-            delimiter.max_ascent = wrapper.getFirstMaxAscent();
-            m_pre_max_width = std::max(m_pre_max_width, delimiter.width);
+            if (!delimiter.str.empty()) {
+                auto last_char = delimiter.str.back();
+                /* Delimiter y position will be calculated later, after setWidth of wrapper in children
+                 * has been called
+                 */
+                delimiter.width = last_char->calculated_position.x + last_char->info->advance;
+                delimiter.max_ascent = wrapper.getFirstMaxAscent();
+                m_pre_max_width = std::max(m_pre_max_width, delimiter.width);
+            }
+
+            /* Remove the margin that has been added */
+            ctx->x_offset -= m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat();
         }
         return success;
     }

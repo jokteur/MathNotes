@@ -2,3 +2,4 @@ build
 .vscode
 traces
 todo.txt
+main.cpp

@@ -136,6 +136,8 @@ namespace RichText {
                 m_current_width = width;
             }
 
+            manage_cursors();
+
             if (!m_root_elements.empty()) {
                 if (!m_scrollbar_grab)
                     manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
@@ -211,6 +213,26 @@ namespace RichText {
             debug_window();
         }
     }
+
+    /* ======================
+     * Text Cursor management
+     * ====================== */
+    void Page::manage_cursors() {
+        if (m_text_cursors.empty()) {
+            m_text_cursors.push_back(TextCursor());
+        }
+        for (auto& cursor : m_text_cursors) {
+            int line_number = cursor.getCurrentLine();
+            const auto& bounds = m_file->getBlocksBoundsContaining(line_number, line_number);
+            if (m_root_elements.find(bounds.start.block_idx) == m_root_elements.end())
+                continue;
+            cursor.draw(&m_root_elements, m_file);
+        }
+    }
+
+    /* ================================
+     * Scrolling and element management
+     * ================================ */
     void Page::display_scrollbar(const Rect& b) {
         /* Find approximate height before the first parsed block
          * and after the last parsed block */
@@ -399,7 +421,6 @@ namespace RichText {
             std::cout << "Change line " << m_current_line << std::endl;
         }
     }
-
     void Page::manage_elements() {
         //ZoneScoped;
 

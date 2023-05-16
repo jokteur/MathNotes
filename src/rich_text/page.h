@@ -1,9 +1,10 @@
 #pragma once
 
+#include "time_counter.h"
 #include "ui/drawable.h"
 #include "ui/scrollbar.h"
 #include "element.h"
-#include "time_counter.h"
+#include "interactive/cursor.h"
 
 namespace RichText {
 
@@ -62,6 +63,8 @@ namespace RichText {
         std::mutex m_root_mutex;
         std::unordered_set<Tempo::jobId> m_current_jobs;
 
+        std::vector<TextCursor> m_text_cursors;
+
         void display_scrollbar(const Rect& boundaries);
         void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void calculate_heights();
@@ -69,6 +72,8 @@ namespace RichText {
         void debug_window();
 
         void parse_job(int start_idx, int end_idx);
+
+        void manage_cursors();
 
         void find_current_ptr();
         std::map<int, RootNodePtr>::iterator find_prev_ptr();
