@@ -8,7 +8,7 @@
 using namespace AB;
 
 namespace RichText {
-    PageManager::PageManager(const File& file): m_file(file) {
+    PageManager::PageManager(const File& file) : m_file(file) {
     }
 
     WidgetId PageManager::createPage(const PageConfig& config) {
@@ -28,10 +28,10 @@ namespace RichText {
 
         m_current_widgets |= widget_id;
 
-        auto widget = std::make_shared<Page>();
+        auto widget = std::make_shared<Page>(&m_file);
         widget->setName(std::to_string(widget_id));
         widget->m_config = config;
-        widget->m_file = &m_file;
+        // widget->m_file = &m_file;
         widget->m_current_line = config.line_start;
         m_widgets[widget_id] = widget;
         return widget_id;

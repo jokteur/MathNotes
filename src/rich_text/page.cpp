@@ -7,6 +7,9 @@
 #include "ui/ui_utils.h"
 
 namespace RichText {
+    Page::Page(AB::File file) : Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE), m_mem(file), m_file(file)
+    {}
+
     void Page::debug_window() {
         ImGui::Begin("Widget info");
         ImGui::Text("y disp: %f", m_y_displacement);
@@ -23,7 +26,7 @@ namespace RichText {
 
         ImGui::Begin("Parsed blocks");
         if (ImGui::TreeNode("Show")) {
-            for (auto& pair : m_root_elements) {
+            for (auto& pair : m_mem.getElements()) {
                 pair.second->get().hk_debug(std::to_string(pair.first));
             }
             ImGui::TreePop();
@@ -32,7 +35,7 @@ namespace RichText {
 
         ImGui::Begin("Visible blocks");
         if (ImGui::TreeNode("Show")) {
-            for (auto& pair : m_root_elements) {
+            for (auto& pair : m_mem.getElements()) {
                 auto& ptr = pair.second->get();
                 if (ptr.m_is_visible || !ptr.m_is_dimension_set || ptr.m_widget_dirty)
                     ptr.hk_debug(std::to_string(pair.first));
@@ -110,6 +113,7 @@ namespace RichText {
         m_display_height = vMax.y - vMin.y;
         calculate_heights();
         manage_elements();
+        m_mem.manage();
 
         AbstractElement::visible_count = 0;
 
@@ -123,7 +127,7 @@ namespace RichText {
             bool resize_event = false;
             float current_widget_y_size = 0.f;
             float updated_current_widget_y_size = 0.f;
-            for (auto pair : m_root_elements) {
+            for (auto pair : m_mem.getElements()) {
                 if (m_current_width != width && pair.second == m_current_block_ptr) {
                     current_widget_y_size = m_current_block_ptr->get().m_ext_dimensions.h;
                 }
@@ -138,7 +142,7 @@ namespace RichText {
 
             manage_cursors();
 
-            if (!m_root_elements.empty()) {
+            if (!m_mem.empty()) {
                 if (!m_scrollbar_grab)
                     manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
 
@@ -174,7 +178,7 @@ namespace RichText {
                 /* Designates the height taken by the elements before the current one */
 
                 TimeCounter::getInstance().startCounter("DisplayAll");
-                for (auto pair : m_root_elements) {
+                for (auto pair : m_mem.getElements()) {
                     const auto& bounds = pair.second->get().m_text_boundaries;
                     TimeCounter::getInstance().startCounter("Clear offsets");
                     ctx.x_offset.clear(bounds.front().line_number, bounds.back().line_number);
@@ -221,13 +225,13 @@ namespace RichText {
         if (m_text_cursors.empty()) {
             m_text_cursors.push_back(TextCursor());
         }
-        for (auto& cursor : m_text_cursors) {
-            int line_number = cursor.getCurrentLine();
-            const auto& bounds = m_file->getBlocksBoundsContaining(line_number, line_number);
-            if (m_root_elements.find(bounds.start.block_idx) == m_root_elements.end())
-                continue;
-            cursor.draw(&m_root_elements, m_file);
-        }
+        // for (auto& cursor : m_text_cursors) {
+        //     int line_number = cursor.getCurrentLine();
+        //     const auto& bounds = m_file->getBlocksBoundsContaining(line_number, line_number);
+        //     if (m_root_elements.find(bounds.start.block_idx) == m_root_elements.end())
+        //         continue;
+        //     cursor.draw(&m_root_elements, m_file);
+        // }
     }
 
     /* ================================
@@ -236,8 +240,8 @@ namespace RichText {
     void Page::display_scrollbar(const Rect& b) {
         /* Find approximate height before the first parsed block
          * and after the last parsed block */
-        int num_lines_before = m_file->m_blocks[m_block_idx_start]->line_start;
-        int num_lines_after = m_file->m_blocks.back()->line_end - m_file->m_blocks[m_block_idx_end]->line_end;
+        int num_lines_before = m_mem.getNumLineBefore(); // m_file->m_blocks[m_block_idx_start]->line_start;
+        int num_lines_after = m_mem.getNumLineAfter(); // m_file->m_blocks.back()->line_end - m_file->m_blocks[m_block_idx_end]->line_end;
 
         float before = m_before_height + m_y_displacement + num_lines_before * m_line_height;
         float after = m_after_height - m_y_displacement + num_lines_after * m_line_height;
@@ -380,7 +384,7 @@ namespace RichText {
 
         /* First check if with the scroll, we stay within the element */
         float remaining_height = m_current_block_ptr->get().m_ext_dimensions.h - m_y_displacement;
-        if (pixels <= m_y_displacement || m_current_block_idx == 0) {
+        if (pixels <= m_y_displacement || m_mem.getCurrentBlockIdx() == 0) {
             m_y_displacement -= pixels;
             if (m_y_displacement < 0.f)
                 m_y_displacement = 0.f;

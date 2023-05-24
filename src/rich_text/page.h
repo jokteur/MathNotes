@@ -5,6 +5,7 @@
 #include "ui/scrollbar.h"
 #include "element.h"
 #include "interactive/cursor.h"
+#include "page_memory.h"
 
 namespace RichText {
 
@@ -24,8 +25,8 @@ namespace RichText {
 
         PageConfig m_config;
         AB::File* m_file;
-        int m_block_idx_start = 1e9;
-        int m_block_idx_end = -1;
+        // int m_block_idx_start = 1e9;
+        // int m_block_idx_end = -1;
         friend class PageManager;
 
         Draw::DrawList m_draw_list;
@@ -37,7 +38,7 @@ namespace RichText {
         /* Here, current_xxx designates the element that should
          * be drawn at the top of the widget */
         RootNodePtr m_current_block_ptr = nullptr;
-        int m_current_block_idx = -1;
+        // int m_current_block_idx = -1;
         /* Current_line is the first line corresponding in the raw text of the current element */
         int m_current_line = 0.f;
         float m_y_displacement = 0.f;
@@ -58,12 +59,14 @@ namespace RichText {
         std::string m_name;
         std::string m_window_name;
 
-        std::map<int, RootNodePtr> m_root_elements;
+        // std::map<int, RootNodePtr> m_root_elements;
         std::unordered_set<int> m_lastly_destroyed_elements;
         std::mutex m_root_mutex;
         std::unordered_set<Tempo::jobId> m_current_jobs;
 
         std::vector<TextCursor> m_text_cursors;
+
+        PageMemory m_mem;
 
         void display_scrollbar(const Rect& boundaries);
         void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
@@ -75,14 +78,14 @@ namespace RichText {
 
         void manage_cursors();
 
-        void find_current_ptr();
-        std::map<int, RootNodePtr>::iterator find_prev_ptr();
-        std::map<int, RootNodePtr>::iterator find_next_ptr();
+        // void find_current_ptr();
+        // std::map<int, RootNodePtr>::iterator find_prev_ptr();
+        // std::map<int, RootNodePtr>::iterator find_next_ptr();
         void go_to_line(int line_number);
         void scroll_up(float pixels);
         void scroll_down(float pixels);
     public:
-        Page() : Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE) {}
+        Page(AB::File file);
         Page(const Page&) = delete;
 
         void setName(const std::string& name) { m_name = name; }
