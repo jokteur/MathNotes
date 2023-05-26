@@ -18,7 +18,6 @@ namespace RichText {
     private:
         AB::File m_file;
         std::unordered_map<WidgetId, WidgetPtr> m_widgets;
-        Page m_empty_widget;
         int m_current_widgets = 0;
     public:
         PageManager(const AB::File& file);

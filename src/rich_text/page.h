@@ -39,8 +39,6 @@ namespace RichText {
          * be drawn at the top of the widget */
         RootNodePtr m_current_block_ptr = nullptr;
         // int m_current_block_idx = -1;
-        /* Current_line is the first line corresponding in the raw text of the current element */
-        int m_current_line = 0.f;
         float m_y_displacement = 0.f;
         bool m_scrollbar_grab = false;
 
@@ -59,11 +57,6 @@ namespace RichText {
         std::string m_name;
         std::string m_window_name;
 
-        // std::map<int, RootNodePtr> m_root_elements;
-        std::unordered_set<int> m_lastly_destroyed_elements;
-        std::mutex m_root_mutex;
-        std::unordered_set<Tempo::jobId> m_current_jobs;
-
         std::vector<TextCursor> m_text_cursors;
 
         PageMemory m_mem;
@@ -71,24 +64,19 @@ namespace RichText {
         void display_scrollbar(const Rect& boundaries);
         void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void calculate_heights();
-        void manage_elements();
         void debug_window();
-
-        void parse_job(int start_idx, int end_idx);
 
         void manage_cursors();
 
-        // void find_current_ptr();
-        // std::map<int, RootNodePtr>::iterator find_prev_ptr();
-        // std::map<int, RootNodePtr>::iterator find_next_ptr();
         void go_to_line(int line_number);
         void scroll_up(float pixels);
         void scroll_down(float pixels);
     public:
-        Page(AB::File file);
+        Page(AB::File* file);
         Page(const Page&) = delete;
 
         void setName(const std::string& name) { m_name = name; }
+        void setLine(int line_number);
 
         ~Page();
         Page& operator= (const Page&) = delete;

@@ -32,7 +32,7 @@ namespace RichText {
         widget->setName(std::to_string(widget_id));
         widget->m_config = config;
         // widget->m_file = &m_file;
-        widget->m_current_line = config.line_start;
+        widget->setLine(config.line_start);
         m_widgets[widget_id] = widget;
         return widget_id;
     }

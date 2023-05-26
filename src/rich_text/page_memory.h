@@ -6,12 +6,18 @@ namespace RichText {
     class PageMemory {
     private:
         RootElements m_elements;
-        AB::File m_file;
+        AB::File* m_file;
 
         int m_block_idx_start = 1e9;
         int m_block_idx_end = -1;
         int m_line_lookahead_window = 2000;
         int m_current_block_idx = -1;
+        /* Current_line is the first line corresponding in the raw text of the current element */
+        int m_current_line = 0;
+        RootNodePtr m_current_block_ptr = nullptr;
+
+        std::mutex m_root_mutex;
+        std::unordered_set<Tempo::jobId> m_current_jobs;
 
         void parse_job(int start_idx, int end_idx);
 
@@ -36,20 +42,33 @@ namespace RichText {
          * We could have that only block 1 and 2 are loading into memory. These define the begin/end
          * of the memory, which are not necessarily the begin/end of the file.
         */
-        PageMemory(AB::File file);
+        PageMemory(AB::File* file);
 
-        RootElements& getElements();
+        RootElements& getElements() { return m_elements; }
         /* Returns true if nothing is present in memory */
-        bool empty();
+        bool empty() { return m_elements.empty(); }
 
         /* Returns the number of lines that are in the file before the beginning of memory */
-        int getNumLineBefore();
+        int getNumLineBefore() const;
         /* Returns the number of lines that are in the file after the end of memory */
-        int getNumLineAfter();
+        int getNumLineAfter() const;
         /* Returns the current block (usually displayed at the top of the page) */
-        RootNodePtr getCurrentBlock();
+        RootNodePtr getCurrentBlock() { return m_current_block_ptr; }
         /* Returns the index of the current block (usually displayed at the top of the page) */
-        int getCurrentBlockIdx();
+        int getCurrentBlockIdx() const { return m_current_block_idx; }
+        /* Returns the last block in memory*/
+        RootNodePtr getLastBlock() { return m_elements.rbegin()->second; }
+        /* Returns the first block in memory */
+        RootNodePtr getFirstBlock() { return m_elements.begin()->second; }
+        /* Returns the line of the top displayed block */
+        int getCurrentLine() const { return m_current_line; }
+
+        bool isBlockInMemory(int block_idx) const;
+        bool isCurrentBlockAtMemBeg() const;
+        bool isCurrentBlockAtMemEnd() const;
+        bool isCurrentBlockAtTrueEnd() const;
+        bool isCurrentBlockAtTrueBeg() const;
+
 
         /**
          * Go to the previous pointer

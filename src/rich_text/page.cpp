@@ -7,14 +7,14 @@
 #include "ui/ui_utils.h"
 
 namespace RichText {
-    Page::Page(AB::File file) : Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE), m_mem(file), m_file(file)
+    Page::Page(AB::File* file) : Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE), m_mem(file), m_file(file)
     {}
 
     void Page::debug_window() {
         ImGui::Begin("Widget info");
         ImGui::Text("y disp: %f", m_y_displacement);
-        ImGui::Text("current_line: %d", m_current_line);
-        ImGui::Text("current block idx: %d", m_current_block_idx);
+        ImGui::Text("current_line: %d", m_mem.getCurrentLine());
+        ImGui::Text("current block idx: %d", m_mem.getCurrentBlockIdx());
         ImGui::Text("Heigts (b, a, t): %f %f %f", m_before_height, m_after_height, m_before_height + m_after_height);
         ImGui::Text("Element count: %d", AbstractElement::count);
         // ImGui::Text("String count: %d", WrapString::count);
@@ -86,6 +86,10 @@ namespace RichText {
         ImGui::End();
     }
 
+    void Page::setLine(int line_number) {
+        m_mem.gotoLine(line_number);
+    }
+
     void Page::FrameUpdate() {
         //ZoneScoped;
 
@@ -112,15 +116,11 @@ namespace RichText {
          * look ahead for block element construction*/
         m_display_height = vMax.y - vMin.y;
         calculate_heights();
-        manage_elements();
         m_mem.manage();
 
         AbstractElement::visible_count = 0;
 
         {
-            // std::lock_guard lk(m_root_mutex);
-            find_current_ptr();
-
             /* Set the width of the blocks recursively, even the ones that are not shown */
             /* After a resize event, we want to make sure that the scroll stays at the same line
              * This is why current_widget_y_size */
@@ -185,7 +185,7 @@ namespace RichText {
                     TimeCounter::getInstance().stopCounter("Clear offsets");
 
                     ctx.lines = &pair.second->m_lines;
-                    if (!found_current && pair.first >= m_current_block_idx) {
+                    if (!found_current && pair.first >= m_mem.getCurrentBlockIdx()) {
                         found_current = true;
                         m_before_height = ctx.cursor_y_pos - m_display_height - 1000.f;
                         ctx.cursor_y_pos = -roundf(m_y_displacement);
@@ -207,8 +207,8 @@ namespace RichText {
             }
             /* Once all the roots have been displayed, if there has been some resize event, we need to correct
              * for the next frame such that the user doesn't lose the line which was currently being drawn */
-            if (resize_event && abs(current_widget_y_size - updated_current_widget_y_size))
-                go_to_line(m_current_block_idx);
+             // if (resize_event && abs(current_widget_y_size - updated_current_widget_y_size))
+             //     m_mem.gotoLine(m_current_block_idx);
 
             ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
             ImGui::End();
@@ -240,8 +240,8 @@ namespace RichText {
     void Page::display_scrollbar(const Rect& b) {
         /* Find approximate height before the first parsed block
          * and after the last parsed block */
-        int num_lines_before = m_mem.getNumLineBefore(); // m_file->m_blocks[m_block_idx_start]->line_start;
-        int num_lines_after = m_mem.getNumLineAfter(); // m_file->m_blocks.back()->line_end - m_file->m_blocks[m_block_idx_end]->line_end;
+        int num_lines_before = m_mem.getNumLineBefore();
+        int num_lines_after = m_mem.getNumLineAfter();
 
         float before = m_before_height + m_y_displacement + num_lines_before * m_line_height;
         float after = m_after_height - m_y_displacement + num_lines_after * m_line_height;
@@ -300,38 +300,6 @@ namespace RichText {
         float num_pages_for_min_scroll = m_display_height / (m_config.min_scroll_height * Tempo::GetScaling());
         m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
     }
-    std::map<int, RootNodePtr>::iterator Page::find_prev_ptr() {
-        //ZoneScoped;
-        auto current_it = m_root_elements.find(m_current_block_idx);
-        if (current_it == m_root_elements.end() || current_it == m_root_elements.begin())
-            return current_it;
-        return std::prev(current_it);
-    }
-    std::map<int, RootNodePtr>::iterator Page::find_next_ptr() {
-        //ZoneScoped;
-        auto current_it = m_root_elements.find(m_current_block_idx);
-        if (current_it == m_root_elements.end()) {
-            return current_it;
-        }
-        auto next = std::next(current_it);
-        return next;
-    }
-    void Page::find_current_ptr() {
-        //ZoneScoped;
-        auto bounds = m_file->getBlocksBoundsContaining(m_current_line, m_current_line + 1);
-        if (m_root_elements.find(bounds.start.block_idx) != m_root_elements.end()) {
-            m_current_block_idx = bounds.start.block_idx;
-            m_current_block_ptr = m_root_elements[m_current_block_idx];
-        }
-    }
-    void Page::go_to_line(int line_number) {
-        //ZoneScoped;
-        m_current_line = line_number;
-        find_current_ptr();
-        if (m_current_block_ptr != nullptr) {
-            m_current_line = m_current_block_ptr->get().m_text_boundaries.front().line_number;
-        }
-    }
     void Page::scroll_down(float pixels) {
         //ZoneScoped;
         if (m_current_block_ptr == nullptr)
@@ -346,18 +314,23 @@ namespace RichText {
             return;
         }
         bool arrived_at_end = false;
-        int previous_line = m_current_line;
         float total_height = remaining_height;
         while (true) {
             /* Go to the next ptr */
-            auto next = find_next_ptr();
-            /* We arrived at the end of file */
-            if (next == m_root_elements.end()) {
-                if (std::prev(next)->first != m_file->m_blocks.size() - 1)
+            bool ret = m_mem.nextPtr();
+            if (ret) {
+                if (m_mem.isCurrentBlockAtTrueEnd())
                     arrived_at_end = true;
                 break;
             }
-            go_to_line(next->second->get().m_text_boundaries.front().line_number);
+            // auto next = find_next_ptr();
+            // /* We arrived at the end of file */
+            // if (next == m_root_elements.end()) {
+            //     if (std::prev(next)->first != m_file->m_blocks.size() - 1)
+            //         arrived_at_end = true;
+            //     break;
+            // }
+            // go_to_line(next->second->get().m_text_boundaries.front().line_number);
 
             float element_height = m_current_block_ptr->get().m_ext_dimensions.h;
             total_height += element_height;
@@ -366,12 +339,13 @@ namespace RichText {
                 return;
             }
         }
-        if (arrived_at_end && !m_root_elements.empty()) {
-            auto last_line = m_root_elements.rbegin()->second->get().m_text_boundaries.back().line_number;
+        if (arrived_at_end && !m_mem.empty()) {
+            auto last_line = m_mem.getLastBlock()->get().m_text_boundaries.back().line_number;
             /* Estimate the average line height with the current informations */
             float estimated_additional_lines = (pixels - total_height) / m_line_height;
-            m_current_line = last_line + (int)estimated_additional_lines;
-            std::cout << "Change line " << m_current_line << std::endl;
+            int next_line = last_line + (int)estimated_additional_lines;
+            m_mem.gotoLine(next_line);
+            std::cout << "Change line " << next_line << std::endl;
         }
         if (!arrived_at_end) {
             m_y_displacement = m_current_block_ptr->get().m_ext_dimensions.h;
@@ -397,115 +371,40 @@ namespace RichText {
         float total_height = 0.f;
 
         while (true) {
-            auto prev = find_prev_ptr();
-            if (prev == m_root_elements.begin() && prev->first > 0 || prev == m_root_elements.end()) {
-                arrived_at_beg = true;
+            bool ret = m_mem.prevPtr();
+            if (ret) {
+                if (m_mem.isCurrentBlockAtTrueBeg())
+                    arrived_at_beg = true;
                 break;
             }
-            go_to_line(prev->second->get().m_text_boundaries.front().line_number);
-            if (prev->second->get().m_ext_dimensions.h == 0.f && prev->first > 0) {
+            // auto prev = find_prev_ptr();
+            // if (prev == m_root_elements.begin() && prev->first > 0 || prev == m_root_elements.end()) {
+            //     arrived_at_beg = true;
+            //     break;
+            // }
+            // go_to_line(prev->second->get().m_text_boundaries.front().line_number);
+            m_current_block_ptr = m_mem.getCurrentBlock();
+            if (m_current_block_ptr->get().m_ext_dimensions.h == 0.f) {
                 continue;
             }
             float element_height = m_current_block_ptr->get().m_ext_dimensions.h;
             total_height += element_height;
-            if (pixels <= total_height || prev == m_root_elements.begin()) {
+            if (pixels <= total_height) { // || prev == m_root_elements.begin()) {
                 m_y_displacement = total_height - pixels;
                 if (m_y_displacement < 0.f)
                     m_y_displacement = 0.f;
                 return;
             }
         }
-        if (arrived_at_beg && !m_root_elements.empty()) {
+        if (arrived_at_beg && !m_mem.empty()) {
             auto first_line = m_current_block_ptr->get().m_text_boundaries.front().line_number;
             float estimated_additional_lines = (pixels - total_height) / m_line_height;
             int estimated_line = first_line - (int)estimated_additional_lines;
             if (estimated_line < 0)
                 estimated_line = 0;
-            m_current_line = estimated_line;
-            std::cout << "Change line " << m_current_line << std::endl;
+            m_mem.gotoLine(estimated_line);
+            std::cout << "Change line " << estimated_line << std::endl;
         }
-    }
-    void Page::manage_elements() {
-        //ZoneScoped;
-
-        int half_window = 0.9 * m_line_lookahead_window / 2;
-        /* We want a minimum half window for super tiny pages */
-        if (half_window < 1500) {
-            half_window = 1500;
-        }
-        int start_line = m_current_line - half_window;
-        int end_line = m_current_line + half_window;
-        if (start_line < 0) {
-            end_line += -start_line;
-            start_line = 0;
-        }
-        auto bounds = m_file->getBlocksBoundsContaining(start_line, end_line);
-
-        if (bounds.start.block_idx == -1)
-            return;
-
-        int start = bounds.start.block_idx;
-        int end = bounds.end.block_idx;
-
-        std::unordered_set<int> to_destroy;
-
-        /* Widget was just created or jumped to another location */
-        if (m_block_idx_end == -1 || (start >= m_block_idx_end && start != 0) || end < m_block_idx_start) {
-            std::lock_guard<std::mutex> lk(m_root_mutex);
-            if (start >= m_block_idx_end || end < m_block_idx_start) {
-                m_root_elements.clear();
-            }
-            m_block_idx_start = start;
-            m_block_idx_end = end;
-            ABToWidgets parser;
-            parser.parse(m_file, m_block_idx_start, m_block_idx_end, &m_root_elements);
-            /* Move to the correct block_ptr corresponding to the current line */
-            auto current_bounds = m_file->getBlocksBoundsContaining(m_current_line, m_current_line);
-            auto it = m_root_elements.find(current_bounds.start.block_idx);
-            if (it != m_root_elements.end()) {
-                m_current_block_idx = it->first;
-                m_current_block_ptr = it->second;
-            }
-        }
-        else {
-            /* Blocks to build before */
-            if (start < m_block_idx_start) {
-                parse_job(start, m_block_idx_start);
-            }
-            /* Blocks to destroy before */
-            else if (start > m_block_idx_start) {
-                std::cout << "Destroy " << m_block_idx_start << " to " << start << " (pre)" << std::endl;
-                for (int i = m_block_idx_start; i < start;i++) {
-                    to_destroy.insert(i);
-                }
-            }
-            /* Blocks to build after */
-            if (end > m_block_idx_end) {
-                parse_job(m_block_idx_end, end);
-            }
-            /* Blocks to destroy after */
-            else if (end < m_block_idx_end) {
-                std::cout << "Destroy " << end << " to " << m_block_idx_end << std::endl;
-                for (int i = end + 1; i <= m_block_idx_end;i++) {
-                    to_destroy.insert(i);
-                }
-            }
-
-            {
-                // std::lock_guard<std::mutex> lk(m_root_mutex);
-                for (auto idx : to_destroy) {
-                    // m_lastly_destroyed_elements.insert(idx);
-                    m_root_elements.erase(idx);
-                }
-            }
-            m_block_idx_start = start;
-            m_block_idx_end = end;
-        }
-    }
-    void Page::parse_job(int start_idx, int end_idx) {
-        ABToWidgets parser;
-        std::map<int, RootNodePtr> tmp_roots;
-        parser.parse(m_file, start_idx, end_idx, &m_root_elements);
     }
     Page::~Page() {
     }
