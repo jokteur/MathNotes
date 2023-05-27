@@ -319,18 +319,10 @@ namespace RichText {
             /* Go to the next ptr */
             bool ret = m_mem.nextPtr();
             if (ret) {
-                if (m_mem.isCurrentBlockAtTrueEnd())
+                if (!m_mem.isCurrentBlockAtTrueEnd())
                     arrived_at_end = true;
                 break;
             }
-            // auto next = find_next_ptr();
-            // /* We arrived at the end of file */
-            // if (next == m_root_elements.end()) {
-            //     if (std::prev(next)->first != m_file->m_blocks.size() - 1)
-            //         arrived_at_end = true;
-            //     break;
-            // }
-            // go_to_line(next->second->get().m_text_boundaries.front().line_number);
 
             float element_height = m_mem.getCurrentBlock()->get().m_ext_dimensions.h;
             total_height += element_height;
@@ -373,16 +365,10 @@ namespace RichText {
         while (true) {
             bool ret = m_mem.prevPtr();
             if (ret) {
-                if (m_mem.isCurrentBlockAtTrueBeg())
+                if (!m_mem.isCurrentBlockAtTrueBeg())
                     arrived_at_beg = true;
                 break;
             }
-            // auto prev = find_prev_ptr();
-            // if (prev == m_root_elements.begin() && prev->first > 0 || prev == m_root_elements.end()) {
-            //     arrived_at_beg = true;
-            //     break;
-            // }
-            // go_to_line(prev->second->get().m_text_boundaries.front().line_number);
             auto current_block_ptr = m_mem.getCurrentBlock();
             if (current_block_ptr->get().m_ext_dimensions.h == 0.f) {
                 continue;

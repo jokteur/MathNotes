@@ -35,10 +35,11 @@ namespace RichText {
     }
     void PageMemory::gotoLine(int line_number) {
         m_current_line = line_number;
-        find_current_ptr();
-        if (m_current_block_ptr != nullptr) {
-            m_current_line = m_current_block_ptr->get().m_text_boundaries.front().line_number;
-        }
+        manage();
+        // find_current_ptr();
+        // if (m_current_block_ptr != nullptr) {
+        //     m_current_line = m_current_block_ptr->get().m_text_boundaries.front().line_number;
+        // }
     }
     int PageMemory::getNumLineBefore() const {
         return m_file->m_blocks[m_block_idx_start]->line_start;
@@ -68,7 +69,7 @@ namespace RichText {
         if (m_current_block_idx == 0)
             return true;
         auto prev_it = find_prev_ptr();
-        if (prev_it == m_elements.end())
+        if (prev_it == m_elements.begin())
             return true;
         m_current_block_idx = prev_it->first;
         m_current_block_ptr = prev_it->second;
