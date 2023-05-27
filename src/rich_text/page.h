@@ -37,8 +37,8 @@ namespace RichText {
 
         /* Here, current_xxx designates the element that should
          * be drawn at the top of the widget */
-        RootNodePtr m_current_block_ptr = nullptr;
-        // int m_current_block_idx = -1;
+         // RootNodePtr m_current_block_ptr = nullptr;
+         // int m_current_block_idx = -1;
         float m_y_displacement = 0.f;
         bool m_scrollbar_grab = false;
 

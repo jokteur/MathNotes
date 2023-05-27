@@ -45,8 +45,8 @@ namespace RichText {
         ImGui::End();
 
         ImGui::Begin("Top displayed block");
-        if (m_current_block_ptr != nullptr) {
-            m_current_block_ptr->get().hk_debug();
+        if (m_mem.getCurrentBlock() != nullptr) {
+            m_mem.getCurrentBlock()->get().hk_debug();
         }
         ImGui::End();
 
@@ -128,8 +128,8 @@ namespace RichText {
             float current_widget_y_size = 0.f;
             float updated_current_widget_y_size = 0.f;
             for (auto pair : m_mem.getElements()) {
-                if (m_current_width != width && pair.second == m_current_block_ptr) {
-                    current_widget_y_size = m_current_block_ptr->get().m_ext_dimensions.h;
+                if (m_current_width != width && pair.second == m_mem.getCurrentBlock()) {
+                    current_widget_y_size = m_mem.getCurrentBlock()->get().m_ext_dimensions.h;
                 }
                 if (m_current_width != width || pair.second->get().m_widget_dirty & pair.second->get().DIRTY_WIDTH) {
                     pair.second->get().setWindowWidth(width);
@@ -302,13 +302,13 @@ namespace RichText {
     }
     void Page::scroll_down(float pixels) {
         //ZoneScoped;
-        if (m_current_block_ptr == nullptr)
+        if (m_mem.getCurrentBlock() == nullptr)
             return;
 
         pixels = abs(pixels);
 
         /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_current_block_ptr->get().m_ext_dimensions.h - m_y_displacement;
+        float remaining_height = m_mem.getCurrentBlock()->get().m_ext_dimensions.h - m_y_displacement;
         if (pixels < remaining_height) {
             m_y_displacement += pixels;
             return;
@@ -332,7 +332,7 @@ namespace RichText {
             // }
             // go_to_line(next->second->get().m_text_boundaries.front().line_number);
 
-            float element_height = m_current_block_ptr->get().m_ext_dimensions.h;
+            float element_height = m_mem.getCurrentBlock()->get().m_ext_dimensions.h;
             total_height += element_height;
             if (pixels < total_height) {
                 m_y_displacement = element_height - (total_height - pixels);
@@ -348,16 +348,16 @@ namespace RichText {
             std::cout << "Change line " << next_line << std::endl;
         }
         if (!arrived_at_end) {
-            m_y_displacement = m_current_block_ptr->get().m_ext_dimensions.h;
+            m_y_displacement = m_mem.getCurrentBlock()->get().m_ext_dimensions.h;
         }
     }
     void Page::scroll_up(float pixels) {
         //ZoneScoped;
-        if (m_current_block_ptr == nullptr)
+        if (m_mem.getCurrentBlock() == nullptr)
             return;
 
         /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_current_block_ptr->get().m_ext_dimensions.h - m_y_displacement;
+        float remaining_height = m_mem.getCurrentBlock()->get().m_ext_dimensions.h - m_y_displacement;
         if (pixels <= m_y_displacement || m_mem.getCurrentBlockIdx() == 0) {
             m_y_displacement -= pixels;
             if (m_y_displacement < 0.f)
@@ -383,11 +383,11 @@ namespace RichText {
             //     break;
             // }
             // go_to_line(prev->second->get().m_text_boundaries.front().line_number);
-            m_current_block_ptr = m_mem.getCurrentBlock();
-            if (m_current_block_ptr->get().m_ext_dimensions.h == 0.f) {
+            auto current_block_ptr = m_mem.getCurrentBlock();
+            if (current_block_ptr->get().m_ext_dimensions.h == 0.f) {
                 continue;
             }
-            float element_height = m_current_block_ptr->get().m_ext_dimensions.h;
+            float element_height = current_block_ptr->get().m_ext_dimensions.h;
             total_height += element_height;
             if (pixels <= total_height) { // || prev == m_root_elements.begin()) {
                 m_y_displacement = total_height - pixels;
@@ -397,7 +397,7 @@ namespace RichText {
             }
         }
         if (arrived_at_beg && !m_mem.empty()) {
-            auto first_line = m_current_block_ptr->get().m_text_boundaries.front().line_number;
+            auto first_line = m_mem.getCurrentBlock()->get().m_text_boundaries.front().line_number;
             float estimated_additional_lines = (pixels - total_height) / m_line_height;
             int estimated_line = first_line - (int)estimated_additional_lines;
             if (estimated_line < 0)
