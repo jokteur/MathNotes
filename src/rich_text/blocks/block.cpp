@@ -26,7 +26,7 @@ namespace RichText {
          *   These offsets are determined by the pre-delimiters (in set_pre_margins)
          *   or the margins of the block
          */
-        auto current_x_offset = ctx->x_offset;
+        m_current_offset = ctx->x_offset;
 
         set_pre_margins(ctx);
 
@@ -69,7 +69,7 @@ namespace RichText {
                     while (bounds_it != m_text_boundaries.end() && bounds_it->line_number <= (*child_it)->m_text_boundaries.back().line_number) {
                         auto& del_info = m_pre_delimiters[i];
                         pre_y_pos = (*ctx->lines)[line_number].position;
-                        ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, current_x_offset, pre_y_pos);
+                        ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, m_current_offset, pre_y_pos);
                         bounds_it++;
                         i++;
                         if (bounds_it != m_text_boundaries.end())
@@ -80,7 +80,7 @@ namespace RichText {
                 }
                 else {
                     auto& del_info = m_pre_delimiters[i];
-                    ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, current_x_offset, ctx->cursor_y_pos);
+                    ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, m_current_offset, ctx->cursor_y_pos);
 
                     /* We need to update the y position because no child
                      * has had influence on it */
@@ -163,6 +163,7 @@ namespace RichText {
     bool AbstractBlock::hk_build_widget(DrawContext* ctx) {
         //ZoneScoped;
         if (m_widget_dirty) {
+            m_pre_delimiters.clear();
             bool result = hk_build_pre_delimiter_chars(ctx);
             if (result)
                 m_widget_dirty ^= DIRTY_CHARS;
@@ -198,8 +199,8 @@ namespace RichText {
     bool AbstractBlock::hk_build_pre_delimiter_chars(DrawContext* ctx) {
         //ZoneScoped;
         bool success = true;
+        m_pre_delimiters.clear();
         if (m_is_selected) {
-            m_pre_delimiters.clear();
 
             WrapAlgorithm wrapper;
             wrapper.setWidth(4000.f, false);
@@ -226,23 +227,47 @@ namespace RichText {
         }
         return success;
     }
+    void AbstractBlock::draw_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars) {
+        auto cursor_pos = ImGui::GetCursorScreenPos();
+
+        /* Linear search, not ideal but as long as the user doesn't have
+         * 1MB of one continuous paragraph, it is fine
+         */
+        float last_x_pos = 0.f;
+        bool found_next_char = false;
+        for (auto ch : chars) {
+            if (ch->text_position > text_pos) {
+                x_pos += ch->calculated_position.x;
+                found_next_char = true;
+                break;
+            }
+            last_x_pos = ch->calculated_position.x + ch->info->advance;
+        }
+        if (!found_next_char) {
+            x_pos += last_x_pos;
+        }
+
+        auto& line_info = (*ctx->lines)[line_number];
+        ImVec2 p_min = ImVec2(x_pos - 2.f, line_info.position) + cursor_pos;
+        ImVec2 p_max = ImVec2(x_pos, line_info.position + line_info.height) + cursor_pos;
+        ctx->draw_list->get()->AddRectFilled(p_min, p_max, Colors::darkgray);
+    }
     void AbstractBlock::hk_draw_text_cursor(DrawContext* ctx) {
         for (const auto& cursor : *ctx->cursors) {
             int text_pos = cursor.getTextPosition();
             int i = 0;
             for (const auto bounds : m_text_boundaries) {
-                if (text_pos >= bounds.pre && text_pos < bounds.post) {
-                    auto& line_info = (*ctx->lines)[bounds.line_number];
-                    float x_pos = ctx->x_offset.getOffset(bounds.line_number);
-
-                    // // chars[text_pos - bounds.pre];
-                    // // m_chars.getLines()[bounds.line_number].m_chars[text_pos - bounds.pre];
-                    // // x_pos += m_chars.getCursorXPos(text_pos - bounds.pre);
-                    auto cursor_pos = ImGui::GetCursorScreenPos();
-                    ImVec2 p_min = ImVec2(x_pos, line_info.position) + cursor_pos;
-                    ImVec2 p_max = ImVec2(x_pos + 2.f, line_info.position + line_info.height) + cursor_pos;
-                    ctx->draw_list->get()->AddRectFilled(p_min, p_max, Colors::blue);
-                    break;
+                if (text_pos >= bounds.pre && text_pos < bounds.beg) {
+                    if (i < m_pre_delimiters.size()) {
+                        float x_pos = m_current_offset.getOffset(bounds.line_number);
+                        draw_text_cursor(ctx, bounds.line_number, text_pos, x_pos, m_pre_delimiters[i].str);
+                        break;
+                    }
+                    else {
+                        float x_pos = ctx->x_offset.getOffset(bounds.line_number);
+                        draw_text_cursor(ctx, bounds.line_number, text_pos, x_pos, WrapString());
+                        break;
+                    }
                 }
                 i++;
             }
@@ -440,6 +465,20 @@ namespace RichText {
         hk_update_line_info(ctx);
 
         return ret;
+    }
+    void AbstractLeafBlock::hk_draw_text_cursor(DrawContext* ctx) {
+        for (const auto& cursor : *ctx->cursors) {
+            int text_pos = cursor.getTextPosition();
+            int i = 0;
+            for (const auto bounds : m_text_boundaries) {
+                if (text_pos >= bounds.pre && text_pos <= bounds.post) {
+                    float x_pos = ctx->x_offset.getOffset(bounds.line_number);
+                    draw_text_cursor(ctx, bounds.line_number, text_pos, x_pos, m_chars.getLines()[bounds.line_number].m_chars);
+                    break;
+                }
+                i++;
+            }
+        }
     }
     void AbstractLeafBlock::hk_set_selected(DrawContext* ctx) {
         set_selected_all(ctx);

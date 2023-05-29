@@ -312,8 +312,7 @@ namespace RichText {
 
             int i = 0;
             for (const auto bounds : m_text_boundaries) {
-                if (start >= bounds.pre && start <= bounds.beg || end >= bounds.pre && end <= bounds.beg
-                    || start >= bounds.end && start < bounds.post || end >= bounds.end && end < bounds.post) {
+                if (start >= bounds.pre && start <= bounds.beg || end >= bounds.pre && end <= bounds.beg) {
                     is_selected = true;
                     break;
                 }

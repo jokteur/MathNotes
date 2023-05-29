@@ -60,6 +60,12 @@ namespace Fonts {
         Tempo::FontID font_id = -1;
     };
 
+    struct FontCharOut {
+        CharId char_id;
+        int text_pos;
+        Character* character;
+    };
+
     class FontManager {
     private:
         std::unordered_map<int, Font> m_fonts;
@@ -87,7 +93,7 @@ namespace Fonts {
 
         Error requestFont(const FontRequestInfo& font_info, FontInfoOut& font_info_out);
 
-        bool requestCharString(std::vector<std::pair<CharId, Character*>>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points = false);
+        bool requestCharString(std::vector<FontCharOut>& chars, const std::string& str, int start, int end, FontStyling style, const emfloat& font_size, bool replace_spaces_by_points = false);
 
         std::unordered_map<CharId, Character*>& debugGetChars() { return m_chars; }
     };

@@ -58,7 +58,7 @@ namespace RichText {
         else {
             m_start--;
         }
-        std::cout << "go left" << std::endl;
+        std::cout << "go left " << m_start << std::endl;
     }
     void TextCursor::go_right(bool ctrl) {
         if (m_end >= 0 && m_start > m_end) {
@@ -67,7 +67,7 @@ namespace RichText {
         else {
             m_start++;
         }
-        std::cout << "go right" << std::endl;
+        std::cout << "go right " << m_start << std::endl;
     }
 
     int TextCursor::getTextPosition() const {

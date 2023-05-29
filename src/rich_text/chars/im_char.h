@@ -14,7 +14,7 @@ namespace RichText {
         ImU32 m_color;
         ImWchar m_char;
     public:
-        ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, Fonts::CharPtr char_ptr);
+        ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, Fonts::CharPtr char_ptr, int text_pos);
 
         bool draw(Draw::DrawList* draw_list, const Rect& boundaries, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
     };

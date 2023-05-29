@@ -12,6 +12,7 @@ namespace RichText {
 
         Fonts::Character* info;
         ImVec2 calculated_position;
+        int text_position = -1;
     };
 
     typedef std::shared_ptr<WrapCharacter> WrapCharPtr;

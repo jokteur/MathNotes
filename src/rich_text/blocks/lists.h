@@ -7,11 +7,15 @@ namespace RichText {
         unsigned int list_level = 0;
         char mark;
         ULWidget();
+
+        void hk_set_selected(DrawContext* context) override;
     };
     struct OLWidget : public AbstractBlock {
         unsigned int list_level = 0;
         char start;
         OLWidget();
+
+        void hk_set_selected(DrawContext* context) override;
     };
     struct LIWidget : public AbstractBlock {
     protected:

@@ -7,11 +7,12 @@
 #include "profiling.h"
 
 namespace RichText {
-    ImChar::ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, Fonts::CharPtr char_ptr) : DrawableChar(char_ptr) {
+    ImChar::ImChar(Tempo::FontID font_id, ImWchar c, float font_size, ImU32 color, Fonts::CharPtr char_ptr, int text_pos) : DrawableChar(char_ptr) {
         m_font_id = font_id;
         m_font_size = font_size;
         m_color = color;
         m_char = c;
+        text_position = text_pos;
     }
 
     bool ImChar::draw(Draw::DrawList* draw_list, const Rect& boundaries, ImVec2 draw_offset) {
@@ -37,13 +38,13 @@ namespace RichText {
         if (start == end)
             return true;
 
-        std::vector<std::pair<Fonts::CharId, Fonts::Character*>> characters;
+        std::vector<Fonts::FontCharOut> characters;
         bool ret = ui_state.font_manager.requestCharString(characters, *str, start, end, style.font_styling, style.font_size, replace_spaces_by_points);
         if (!ret)
             return false;
 
-        for (auto& pair : characters) {
-            wrap_p->push_back(std::make_shared<ImChar>(pair.first.m_font_id, pair.first.m_char, pair.first.m_font_size, style.font_color, pair.second), line);
+        for (auto& ch : characters) {
+            wrap_p->push_back(std::make_shared<ImChar>(ch.char_id.m_font_id, ch.char_id.m_char, ch.char_id.m_font_size, style.font_color, ch.character, ch.text_pos), line);
         }
 
         return true;
@@ -52,13 +53,13 @@ namespace RichText {
         if (start == end)
             return true;
 
-        std::vector<std::pair<Fonts::CharId, Fonts::Character*>> characters;
+        std::vector<Fonts::FontCharOut> characters;
         bool ret = ui_state.font_manager.requestCharString(characters, *str, start, end, style.font_styling, style.font_size, replace_spaces_by_points);
         if (!ret)
             return false;
 
-        for (auto& pair : characters) {
-            wrap_str->push_back(std::make_shared<ImChar>(pair.first.m_font_id, pair.first.m_char, pair.first.m_font_size, style.font_color, pair.second));
+        for (auto& ch : characters) {
+            wrap_str->push_back(std::make_shared<ImChar>(ch.char_id.m_font_id, ch.char_id.m_char, ch.char_id.m_font_size, style.font_color, ch.character, ch.text_pos));
         }
         return true;
     }

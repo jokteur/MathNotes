@@ -106,6 +106,7 @@ namespace RichText {
 
         void set_selected_pre_only(DrawContext* context);
         void set_selected_all(DrawContext* context);
+        void set_selected_never(DrawContext* context) { m_is_selected = false; }
 
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
