@@ -2,6 +2,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 #include "rich_text/chars/im_char.h"
+#include "rich_text/interactive/cursor.h"
 
 #include <algorithm>
 
@@ -225,6 +226,31 @@ namespace RichText {
         }
         return success;
     }
+    void AbstractBlock::hk_draw_text_cursor(DrawContext* ctx) {
+        for (const auto& cursor : *ctx->cursors) {
+            int text_pos = cursor.getTextPosition();
+            int i = 0;
+            for (const auto bounds : m_text_boundaries) {
+                if (text_pos >= bounds.pre && text_pos < bounds.post) {
+                    auto& line_info = (*ctx->lines)[bounds.line_number];
+                    float x_pos = ctx->x_offset.getOffset(bounds.line_number);
+
+                    // // chars[text_pos - bounds.pre];
+                    // // m_chars.getLines()[bounds.line_number].m_chars[text_pos - bounds.pre];
+                    // // x_pos += m_chars.getCursorXPos(text_pos - bounds.pre);
+                    auto cursor_pos = ImGui::GetCursorScreenPos();
+                    ImVec2 p_min = ImVec2(x_pos, line_info.position) + cursor_pos;
+                    ImVec2 p_max = ImVec2(x_pos + 2.f, line_info.position + line_info.height) + cursor_pos;
+                    ctx->draw_list->get()->AddRectFilled(p_min, p_max, Colors::blue);
+                    break;
+                }
+                i++;
+            }
+        }
+    }
+    void AbstractBlock::hk_set_selected(DrawContext* ctx) {
+        set_selected_pre_only(ctx);
+    }
 
     void AbstractBlock::hk_debug_attributes() {
         AbstractElement::hk_debug_attributes();
@@ -414,5 +440,8 @@ namespace RichText {
         hk_update_line_info(ctx);
 
         return ret;
+    }
+    void AbstractLeafBlock::hk_set_selected(DrawContext* ctx) {
+        set_selected_all(ctx);
     }
 }

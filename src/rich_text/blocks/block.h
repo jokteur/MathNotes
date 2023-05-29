@@ -29,7 +29,9 @@ namespace RichText {
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
         void hk_draw_background(Draw::DrawList* draw_list) override;
+        void hk_draw_text_cursor(DrawContext* context) override;
         void hk_debug_attributes() override;
+        void hk_set_selected(DrawContext* context) override;
 
 
         /* Blocks can be defined by vertical marker, like quotes:
@@ -52,6 +54,7 @@ namespace RichText {
         void hk_update_line_info(DrawContext* context) override;
         bool hk_build_widget(DrawContext* context) override;
         bool hk_draw_main(DrawContext* context) override;
+        void hk_set_selected(DrawContext* context) override;
     };
 
     struct HiddenSpace : public AbstractLeafBlock {

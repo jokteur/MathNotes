@@ -6,6 +6,7 @@
 #include "imgui_internal.h"
 
 #include "rich_text/chars/im_char.h"
+#include "interactive/cursor.h"
 #include "ab/ab_file.h"
 
 #include "profiling.h"
@@ -277,6 +278,66 @@ namespace RichText {
             (*draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
         }
     }
+    void AbstractElement::set_selected_all(DrawContext* ctx) {
+        bool is_selected = false;
+        for (const auto& cursor : *ctx->cursors) {
+            int start = cursor.getStartPosition();
+            int end = cursor.getEndPosition();
+
+            int i = 0;
+            for (const auto bounds : m_text_boundaries) {
+                if (start >= bounds.pre && start <= bounds.post || end >= bounds.pre && end <= bounds.post) {
+                    is_selected = true;
+                    break;
+                }
+            }
+            if (is_selected)
+                break;
+        }
+        if (m_is_selected != is_selected) {
+            m_is_selected = is_selected;
+            m_widget_dirty = ALL_DIRTY;
+            auto ptr = m_parent;
+            while (ptr != nullptr) {
+                ptr->m_widget_dirty = ALL_DIRTY;
+                ptr = ptr->m_parent;
+            }
+        }
+    }
+    void AbstractElement::set_selected_pre_only(DrawContext* ctx) {
+        bool is_selected = false;
+        for (const auto& cursor : *ctx->cursors) {
+            int start = cursor.getStartPosition();
+            int end = cursor.getEndPosition();
+
+            int i = 0;
+            for (const auto bounds : m_text_boundaries) {
+                if (start >= bounds.pre && start <= bounds.beg || end >= bounds.pre && end <= bounds.beg
+                    || start >= bounds.end && start < bounds.post || end >= bounds.end && end < bounds.post) {
+                    is_selected = true;
+                    break;
+                }
+            }
+            if (is_selected)
+                break;
+        }
+        if (m_is_selected != is_selected) {
+            m_is_selected = is_selected;
+            m_widget_dirty = ALL_DIRTY;
+            auto ptr = m_parent;
+            while (ptr != nullptr) {
+                ptr->m_widget_dirty = ALL_DIRTY;
+                ptr = ptr->m_parent;
+            }
+        }
+
+    }
+    void AbstractElement::hk_set_selected(DrawContext* ctx) {
+        set_selected_all(ctx);
+    }
+    void AbstractElement::hk_draw_text_cursor(DrawContext* ctx) {
+
+    }
     bool AbstractElement::draw(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
@@ -285,6 +346,7 @@ namespace RichText {
         m_is_visible = is_in_boundaries(ctx->boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
             visible_count++;
+            hk_set_selected(ctx);
             if (!hk_draw_main(ctx)) {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
@@ -292,6 +354,7 @@ namespace RichText {
             hk_set_dimensions(ctx, initial_y_pos);
             hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
             hk_draw_background(ctx->draw_list);
+            hk_draw_text_cursor(ctx);
         }
         else {
             ctx->cursor_y_pos += m_ext_dimensions.h;

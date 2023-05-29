@@ -69,7 +69,6 @@ namespace RichText {
         bool isCurrentBlockAtTrueEnd() const;
         bool isCurrentBlockAtTrueBeg() const;
 
-
         /**
          * Go to the previous pointer
          *

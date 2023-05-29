@@ -38,6 +38,8 @@ namespace RichText {
     // using AbstractElementWeakPtr = std::weak_ptr<AbstractElement>;
     // using AbstractElementWeakPtr = AbstractElement*;
 
+    class TextCursor;
+
     struct LineInfo {
         float position;
         float height;
@@ -74,6 +76,7 @@ namespace RichText {
         MultiOffset x_offset;
         Rect boundaries;
         Lines* lines;
+        std::vector<TextCursor>* cursors;
     };
     struct DelimiterInfo {
         WrapString str;
@@ -101,9 +104,12 @@ namespace RichText {
         AbstractElement();
         virtual ~AbstractElement();
 
+        void set_selected_pre_only(DrawContext* context);
+        void set_selected_all(DrawContext* context);
+
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
-        AbstractElementPtr m_parent;
+        AbstractElementPtr m_parent = nullptr;
         AB::RootBlockWeakPtr m_ref_to_root;
 
         unsigned int m_widget_dirty = ALL_DIRTY;
@@ -127,6 +133,8 @@ namespace RichText {
         bool virtual hk_draw_secondary(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
+        void virtual hk_set_selected(DrawContext* context);
+        void virtual hk_draw_text_cursor(DrawContext* context);
 
         /* Debug prints object info in a special window created by parent */
         void virtual hk_debug(const std::string& prefix = "");

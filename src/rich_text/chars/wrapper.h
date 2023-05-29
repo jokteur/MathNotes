@@ -41,6 +41,13 @@ namespace RichText {
         bool empty() const { return m_lines.empty(); }
 
         std::map<int, WrapLine>& getLines() { return m_lines; }
+        bool isCharInParagraph(int line_number, int char_number) const {
+            return m_lines.find(line_number) != m_lines.end() &&
+                char_number < m_lines.at(line_number).m_chars.size();
+        }
+        WrapCharPtr getChar(int line_number, int char_number) const {
+            return m_lines.at(line_number).m_chars.at(char_number);
+        }
     };
 
     /**

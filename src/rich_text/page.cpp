@@ -7,8 +7,9 @@
 #include "ui/ui_utils.h"
 
 namespace RichText {
-    Page::Page(AB::File* file) : Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE), m_mem(file), m_file(file)
-    {}
+    Page::Page(AB::File* file) : Drawable(), m_scrollbar(VerticalScrollBar::FIT_UNTIL_LAST_LINE), m_mem(file), m_file(file) {
+        m_text_cursors.push_back(TextCursor(&m_mem, m_file));
+    }
 
     void Page::debug_window() {
         ImGui::Begin("Widget info");
@@ -175,6 +176,7 @@ namespace RichText {
                 ctx.cursor_y_pos = m_display_height + 1000.f;
                 ctx.draw_list = &m_draw_list;
                 ctx.boundaries = boundaries;
+                ctx.cursors = &m_text_cursors;
                 /* Designates the height taken by the elements before the current one */
 
                 TimeCounter::getInstance().startCounter("DisplayAll");
@@ -222,16 +224,9 @@ namespace RichText {
      * Text Cursor management
      * ====================== */
     void Page::manage_cursors() {
-        if (m_text_cursors.empty()) {
-            m_text_cursors.push_back(TextCursor());
+        for (auto& cursor : m_text_cursors) {
+            cursor.manage();
         }
-        // for (auto& cursor : m_text_cursors) {
-        //     int line_number = cursor.getCurrentLine();
-        //     const auto& bounds = m_file->getBlocksBoundsContaining(line_number, line_number);
-        //     if (m_root_elements.find(bounds.start.block_idx) == m_root_elements.end())
-        //         continue;
-        //     cursor.draw(&m_root_elements, m_file);
-        // }
     }
 
     /* ================================

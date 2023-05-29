@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ui/drawable.h"
-#include "rich_text/element.h"
+#include "rich_text/page_memory.h"
 
 namespace RichText {
     class TextCursor : public Drawable {
@@ -9,31 +9,38 @@ namespace RichText {
         int m_start = 0;
         int m_end = -1;
         int m_current_line = 0;
-        AbstractElementPtr m_current_ptr;
         ImVec2 position;
         float height;
 
+        const int LEFT = 0x1;
+        const int RIGHT = 0x2;
+        const int UP = 0x4;
+        const int DOWN = 0x8;
+        int m_key_presses = 0;
+
         /* Access to Page data */
-        std::map<int, RootNodePtr>* m_root_elements;
         AB::File* m_file;
+        PageMemory* m_mem;
 
         void go_down();
         void go_up();
         void go_left(bool ctrl);
         void go_right(bool ctrl);
 
+        bool is_cursor_in_memory();
+
         void manage_events();
 
     public:
-        TextCursor() : Drawable() {}
+        TextCursor(PageMemory* page_memory, AB::File* file) : Drawable(), m_mem(page_memory), m_file(file) {}
 
         void setPosition(int start, int end = -1);
 
-        int getCurrentLine() { return m_current_line; }
-        int getTextPosition();
-        int getStartPosition() { return m_start; }
-        int getEndPosition() { return m_end; }
+        int getCurrentLine() const { return m_current_line; }
+        int getTextPosition() const;
+        int getStartPosition() const { return m_start; }
+        int getEndPosition() const { return m_end; }
 
-        void draw(std::map<int, RootNodePtr>* root_elements, AB::File* file);
+        void manage();
     };
 }
