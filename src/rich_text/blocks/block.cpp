@@ -146,14 +146,21 @@ namespace RichText {
                 auto& str = m_pre_delimiters[i].str;
                 if (str.empty())
                     continue;
-                auto& info = str.front()->info;
-                float height = info->ascent + info->descent;
+                float max_ascent = 0.f;
+                float max_descent = 0.f;
+                for (auto ch : str) {
+                    if (max_ascent < ch->info->ascent)
+                        max_ascent = ch->info->ascent;
+                    if (max_descent < ch->info->descent)
+                        max_descent = ch->info->descent;
+                }
+                float height = max_ascent + max_descent;
                 height *= m_style.line_space;
                 (*ctx->lines)[bounds.line_number] = LineInfo{
                     position,
                     height,
-                    info->ascent,
-                    info->descent
+                    max_ascent,
+                    max_descent
                 };
                 position += height;
             }
@@ -227,9 +234,7 @@ namespace RichText {
         }
         return success;
     }
-    void AbstractBlock::draw_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars) {
-        auto cursor_pos = ImGui::GetCursorScreenPos();
-
+    void AbstractBlock::place_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars, TextCursor& cursor) {
         /* Linear search, not ideal but as long as the user doesn't have
          * 1MB of one continuous paragraph, it is fine
          */
@@ -248,24 +253,22 @@ namespace RichText {
         }
 
         auto& line_info = (*ctx->lines)[line_number];
-        ImVec2 p_min = ImVec2(x_pos - 2.f, line_info.position) + cursor_pos;
-        ImVec2 p_max = ImVec2(x_pos, line_info.position + line_info.height) + cursor_pos;
-        ctx->draw_list->get()->AddRectFilled(p_min, p_max, Colors::darkgray);
+        cursor.draw(ctx, ImVec2(x_pos, line_info.position), line_info.height);
     }
     void AbstractBlock::hk_draw_text_cursor(DrawContext* ctx) {
-        for (const auto& cursor : *ctx->cursors) {
+        for (auto& cursor : *ctx->cursors) {
             int text_pos = cursor.getTextPosition();
             int i = 0;
             for (const auto bounds : m_text_boundaries) {
                 if (text_pos >= bounds.pre && text_pos < bounds.beg) {
                     if (i < m_pre_delimiters.size()) {
                         float x_pos = m_current_offset.getOffset(bounds.line_number);
-                        draw_text_cursor(ctx, bounds.line_number, text_pos, x_pos, m_pre_delimiters[i].str);
+                        place_text_cursor(ctx, bounds.line_number, text_pos, x_pos, m_pre_delimiters[i].str, cursor);
                         break;
                     }
                     else {
                         float x_pos = ctx->x_offset.getOffset(bounds.line_number);
-                        draw_text_cursor(ctx, bounds.line_number, text_pos, x_pos, WrapString());
+                        place_text_cursor(ctx, bounds.line_number, text_pos, x_pos, WrapString(), cursor);
                         break;
                     }
                 }
@@ -293,7 +296,7 @@ namespace RichText {
             float height = pair.second.line_height;
             (*ctx->lines)[pair.first] = LineInfo{
                 position,
-                pair.second.line_height,
+                height,
                 pair.second.first_max_ascent,
                 pair.second.first_max_descent
             };
@@ -467,13 +470,13 @@ namespace RichText {
         return ret;
     }
     void AbstractLeafBlock::hk_draw_text_cursor(DrawContext* ctx) {
-        for (const auto& cursor : *ctx->cursors) {
+        for (auto& cursor : *ctx->cursors) {
             int text_pos = cursor.getTextPosition();
             int i = 0;
             for (const auto bounds : m_text_boundaries) {
                 if (text_pos >= bounds.pre && text_pos <= bounds.post) {
                     float x_pos = ctx->x_offset.getOffset(bounds.line_number);
-                    draw_text_cursor(ctx, bounds.line_number, text_pos, x_pos, m_chars.getLines()[bounds.line_number].m_chars);
+                    place_text_cursor(ctx, bounds.line_number, text_pos, x_pos, m_chars.getLines()[bounds.line_number].m_chars, cursor);
                     break;
                 }
                 i++;

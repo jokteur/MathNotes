@@ -1,9 +1,25 @@
 #include "cursor.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui_internal.h"
+#include "rich_text/element.h"
 
 namespace RichText {
     bool TextCursor::is_cursor_in_memory() {
         const auto bound = m_file->getBlocksBoundsContaining(m_current_line, m_current_line + 1);
         return m_mem->isBlockInMemory(bound.start.block_idx);
+    }
+
+    void TextCursor::draw(DrawContext* ctx, ImVec2 pos, float height) {
+        auto cursor_pos = ImGui::GetCursorScreenPos();
+        ImVec2 p_min = pos + cursor_pos;
+        ImVec2 p_max = p_min;
+        p_min.x -= 2.f;
+        p_max.y += height;
+
+        m_position = pos;
+        m_height = height;
+
+        ctx->draw_list->get()->AddRectFilled(p_min, p_max, Colors::darkgray);
     }
 
     void TextCursor::manage() {

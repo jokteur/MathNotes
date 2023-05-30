@@ -4,13 +4,15 @@
 #include "rich_text/page_memory.h"
 
 namespace RichText {
+    struct DrawContext;
+
     class TextCursor : public Drawable {
     private:
         int m_start = 0;
         int m_end = -1;
         int m_current_line = 0;
-        ImVec2 position;
-        float height;
+        ImVec2 m_position;
+        float m_height = 0.f;
 
         const int LEFT = 0x1;
         const int RIGHT = 0x2;
@@ -34,6 +36,7 @@ namespace RichText {
     public:
         TextCursor(PageMemory* page_memory, AB::File* file) : Drawable(), m_mem(page_memory), m_file(file) {}
 
+        void draw(DrawContext* context, ImVec2 pos, float height);
         void setPosition(int start, int end = -1);
 
         int getCurrentLine() const { return m_current_line; }
