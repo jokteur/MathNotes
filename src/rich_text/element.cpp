@@ -219,9 +219,9 @@ namespace RichText {
     }
     void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
         if (m_category == C_BLOCK && ctx->cursor_y_pos - last_y_pos == 0.f) {
-            for (const auto& bounds : m_text_boundaries) {
-                ctx->cursor_y_pos += (*ctx->lines)[bounds.line_number].height;
-            }
+            // for (const auto& bounds : m_text_boundaries) {
+            //     ctx->cursor_y_pos += (*ctx->lines)[bounds.line_number].height;
+            // }
         }
         ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
         float w = m_window_width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
@@ -243,18 +243,24 @@ namespace RichText {
     bool AbstractElement::hk_build_widget(DrawContext*) { return true; }
     void AbstractElement::hk_update_line_info(DrawContext*) {}
 
+    void AbstractElement::init_paragraph(DrawContext* ctx) {
+        if (ctx->doc->find(this) == ctx->doc->end()) {
+            (*ctx->doc)[this];
+        }
+    }
+
     bool AbstractElement::hk_draw_main(DrawContext* ctx) {
         //ZoneScoped;
         bool ret = true;
-        for (auto& pair : m_chars.getLines()) {
+        for (auto& pair : ctx->doc->at(this).getLines()) {
             float pos = ctx->cursor_y_pos;
-            (*ctx->lines)[pair.first] = LineInfo{ pos , 0.f };
-            for (auto ptr : pair.second.m_chars) {
+            // (*ctx->lines)[pair.first] = LineInfo{ pos , 0.f };
+            for (auto& ptr : pair.second.chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 if (!p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos()))
                     ret = false;
             }
-            (*ctx->lines)[pair.first].height = ctx->cursor_y_pos - pos;
+            // (*ctx->lines)[pair.first].height = ctx->cursor_y_pos - pos;
         }
         auto x_offset = ctx->x_offset;
         for (auto& ptr : m_childrens) {
@@ -344,6 +350,7 @@ namespace RichText {
         hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
         m_is_visible = is_in_boundaries(ctx->boundaries);
         if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
+            init_paragraph(ctx);
             visible_count++;
             hk_set_selected(ctx);
             if (!hk_draw_main(ctx)) {

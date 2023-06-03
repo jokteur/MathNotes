@@ -90,6 +90,7 @@ namespace RichText {
             ctx->cursor_y_pos = m_display_height + 1000.f;
             ctx->draw_list = &m_draw_list;
             ctx->boundaries = boundaries;
+            ctx->doc = &m_mem->getWrapDocument();
             /* Designates the height taken by the elements before the current one */
 
             TimeCounter::getInstance().startCounter("DisplayAll");
@@ -99,7 +100,6 @@ namespace RichText {
                 ctx->x_offset.clear(bounds.front().line_number, bounds.back().line_number);
                 TimeCounter::getInstance().stopCounter("Clear offsets");
 
-                ctx->lines = &pair.second->m_lines;
                 if (!found_current && pair.first >= m_mem->getCurrentBlockIdx()) {
                     found_current = true;
                     m_before_height = ctx->cursor_y_pos - m_display_height - 1000.f;

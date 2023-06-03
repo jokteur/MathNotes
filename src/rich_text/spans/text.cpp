@@ -12,7 +12,7 @@ namespace RichText {
 
     bool TextString::add_chars(WrapParagraph* wrap_chars) {
         //ZoneScoped;
-        m_chars.clear();
+        // m_chars.clear();
         bool success = true;
 
         success = hk_add_pre_chars(wrap_chars);
@@ -27,7 +27,7 @@ namespace RichText {
     }
     float TextString::hk_set_position(float& cursor_y_pos, MultiOffset& x_offset) {
         // Dimension is also directly calculated here
-        if (!m_chars.empty()) {
+        // if (!m_chars.empty()) {
             // auto start_char = m_draw_chars.front();
             // auto end_char = m_draw_chars.back();
             // float ascent = start_char->ascent;
@@ -40,7 +40,7 @@ namespace RichText {
             // };
             // m_ext_dimensions.w -= m_ext_dimensions.x;
             // m_ext_dimensions.h -= m_ext_dimensions.y;
-        }
+        // }
         return cursor_y_pos;
     }
     void TextString::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
@@ -54,17 +54,17 @@ namespace RichText {
         if (m_style.font_bg_color != Colors::transparent) {
             auto cursor_pos = ImGui::GetCursorScreenPos();
             int i = 0;
-            for (auto pair : m_chars.getLines()) {
-                for (auto p : pair.second.m_chars) {
-                    auto ptr = std::static_pointer_cast<DrawableChar>(p);
-                    ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
-                    p_min.x += ctx->x_offset.getOffset(pair.first);
-                    p_min.y += ctx->cursor_y_pos;
-                    ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
-                    (*ctx->draw_list)->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
-                    i++;
-                }
-            }
+            // for (auto pair : m_chars.getLines()) {
+            //     for (auto p : pair.second.m_chars) {
+            //         auto ptr = std::static_pointer_cast<DrawableChar>(p);
+            //         ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
+            //         p_min.x += ctx->x_offset.getOffset(pair.first);
+            //         p_min.y += ctx->cursor_y_pos;
+            //         ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
+            //         (*ctx->draw_list)->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
+            //         i++;
+            //     }
+            // }
         }
         return ret;
     }

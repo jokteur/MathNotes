@@ -5,6 +5,8 @@
 #include "ui/drawable.h"
 #include "ui/scrollbar.h"
 
+#include "chars/wrapper.h"
+
 namespace RichText {
     class PageDisplay : public Drawable {
     private:

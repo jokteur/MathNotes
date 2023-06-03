@@ -3,6 +3,8 @@
 #include <vector>
 #include <list>
 #include <tempo.h>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "fonts/char.h"
 
@@ -20,37 +22,6 @@ namespace RichText {
 
     typedef std::vector<WrapCharPtr> WrapString;
 
-    struct WrapLine {
-        WrapString m_chars;
-        float line_height = 0.f;
-        float first_max_ascent = 0.f;
-        float first_max_descent = 0.f;
-    };
-
-    class WrapParagraph {
-    private:
-        std::map<int, WrapLine> m_lines;
-    public:
-        void push_back(const WrapCharPtr& ptr, int line) {
-            if (m_lines.find(line) == m_lines.end()) {
-                m_lines[line] = WrapLine();
-            }
-            m_lines[line].m_chars.push_back(ptr);
-        }
-        void clear() { m_lines.clear(); }
-
-        bool empty() const { return m_lines.empty(); }
-
-        std::map<int, WrapLine>& getLines() { return m_lines; }
-        bool isCharInParagraph(int line_number, int char_number) const {
-            return m_lines.find(line_number) != m_lines.end() &&
-                char_number < m_lines.at(line_number).m_chars.size();
-        }
-        WrapCharPtr getChar(int line_number, int char_number) const {
-            return m_lines.at(line_number).m_chars.at(char_number);
-        }
-    };
-
     /**
      * @brief The convention for line positions is as follow:
      *
@@ -67,11 +38,81 @@ namespace RichText {
      * \nn line break positions: 31
      *  \n line break positions: 52, 53
      */
-    struct Line {
+    struct SubLine {
         int start;
-        float line_pos_y;
-        float height;
+        float height = 0.f;
+        float rel_y_pos;
+        float max_ascent = 0.f;
+        float max_descent = 0.f;
     };
+
+    struct WrapLine {
+        std::vector<SubLine> sublines;
+        WrapString chars;
+        float y_pos;
+        float total_height;
+    };
+
+    class WrapParagraph {
+    private:
+        std::map<int, WrapLine> m_lines;
+    public:
+        void push_back(const WrapCharPtr& ptr, int line) {
+            if (m_lines.find(line) == m_lines.end()) {
+                m_lines[line] = WrapLine();
+            }
+            m_lines[line].chars.push_back(ptr);
+        }
+        void clear() { m_lines.clear(); }
+        bool empty() const { return m_lines.empty(); }
+        std::map<int, WrapLine>::iterator begin() { return m_lines.begin(); }
+        std::map<int, WrapLine>::iterator end() { return m_lines.end(); }
+        WrapLine& operator[](int line) { return m_lines[line]; }
+        WrapLine& at(int line) { return m_lines.at(line); }
+
+        std::map<int, WrapLine>& getLines() { return m_lines; }
+    };
+
+    class AbstractElement;
+    typedef AbstractElement* AbstractElementPtr;
+
+    class WrapDocument {
+    private:
+        std::unordered_map<AbstractElementPtr, WrapParagraph> m_data;
+        std::unordered_map<int, std::unordered_set<AbstractElementPtr>> m_line_to_widget;
+    public:
+        void push_back(AbstractElementPtr el_ptr, const WrapCharPtr& char_ptr, int line) {
+            if (m_data.find(el_ptr) == m_data.end()) {
+                m_data[el_ptr] = WrapParagraph();
+            }
+            m_data[el_ptr].push_back(char_ptr, line);
+            m_line_to_widget[line].insert(el_ptr);
+        }
+
+        void clear() { m_data.clear(); }
+        bool empty() const { return m_data.empty(); }
+        void erase(AbstractElementPtr el_ptr) {
+            for (auto& pair : m_data[el_ptr].getLines()) {
+                m_line_to_widget[pair.first].erase(el_ptr);
+            }
+            m_data.erase(el_ptr);
+        }
+        std::unordered_map<AbstractElementPtr, WrapParagraph>::iterator begin() { return m_data.begin(); }
+        std::unordered_map<AbstractElementPtr, WrapParagraph>::iterator end() { return m_data.end(); }
+        WrapParagraph& operator[](AbstractElementPtr ptr) { return m_data[ptr]; }
+        WrapParagraph& at(AbstractElementPtr ptr) { return m_data.at(ptr); }
+        std::unordered_map<AbstractElementPtr, WrapParagraph>::iterator find(AbstractElementPtr ptr) { return m_data.find(ptr); }
+        void insert(AbstractElementPtr ptr, WrapParagraph&& paragraph) { m_data.insert({ ptr, paragraph }); }
+
+        std::unordered_set<AbstractElementPtr>& getWidgetsOnLine(int line) { return m_line_to_widget[line]; }
+        std::unordered_map<AbstractElementPtr, WrapParagraph>& getData() { return m_data; }
+    };
+
+    // struct Line {
+    //     int start;
+    //     float line_pos_y;
+    //     float height;
+    // };
 
     /**
      * @brief Only handles wrapping and scrolling
@@ -82,7 +123,7 @@ namespace RichText {
         WrapString* m_current_string;
 
         // Calculated quantities
-        std::list<Line> m_lines;
+        std::list<SubLine> m_lines;
         std::set<int> m_line_positions;
         float m_total_height;
 
@@ -101,7 +142,7 @@ namespace RichText {
         inline int find_next_line_break(int cursor_pos);
 
         inline void push_char_on_line(WrapCharPtr c, float* cursor_x_coord);
-        inline void push_new_line(std::list<Line>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
+        inline void push_new_line(std::list<SubLine>::iterator& line_it, int cursor_pos, float* cursor_x_coord);
 
         void algorithm();
     public:
@@ -121,7 +162,6 @@ namespace RichText {
         void recalculate();
         void recalculate(WrapString* string);
 
-        const std::list<Line>& getLines() { return m_lines; }
         float getHeight() { return m_height; }
         float getFirstMaxAscent() { return m_first_max_ascent; }
         float getFirstMaxDescent() { return m_first_max_descent; }

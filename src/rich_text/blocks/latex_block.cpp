@@ -12,10 +12,10 @@ namespace RichText {
         hk_build_widget(ctx);
 
         // Draw all the chars generated in the block
-        for (auto& pair : m_chars.getLines()) {
+        for (auto& pair : ctx->doc->at(this).getLines()) {
             auto int_pos = m_int_dimensions.getPos();
             int_pos.x = ctx->x_offset.getOffset(pair.first);
-            for (auto ptr : pair.second.m_chars) {
+            for (auto ptr : pair.second.chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
                     ret = false;
@@ -41,19 +41,20 @@ namespace RichText {
     bool DisplayLatexWidget::hk_build_widget(DrawContext* ctx) {
         bool success = false;
         if (m_widget_dirty & DIRTY_CHARS) {
-            m_chars.clear();
+            auto& paragraph = ctx->doc->at(this);
+            paragraph.clear();
 
             bool success = true;
 
             if (m_is_selected) {
                 success &= hk_build_pre_delimiter_chars(ctx);
                 for (const auto& bounds : m_text_boundaries) {
-                    success &= Utf8StrToImCharStr(m_ui_state, &m_chars, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_special_chars_style, false);
+                    success &= Utf8StrToImCharStr(m_ui_state, &paragraph, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_special_chars_style, false);
                 }
                 success &= hk_build_post_delimiter_chars(ctx);
                 m_wrapper.clear();
                 m_wrapper.setLineSpace(m_style.line_space, false);
-                m_wrapper.setParagraph(&m_chars, false);
+                m_wrapper.setParagraph(&paragraph, false);
                 m_wrapper.recalculate();
             }
 

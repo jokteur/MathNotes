@@ -47,7 +47,10 @@ namespace RichText {
         float descent;
     };
 
-    typedef std::unordered_map<int, LineInfo> Lines;
+    /* Points to elements that have a WrapParagraph */
+    typedef std::unordered_set<AbstractElementPtr> ElementsList;
+
+    typedef std::unordered_map<int, ElementsList> LinesInfos;
 
     class MultiOffset {
     private:
@@ -75,7 +78,8 @@ namespace RichText {
         /* For children, there can be multiple x offset on each line */
         MultiOffset x_offset;
         Rect boundaries;
-        Lines* lines;
+        // LinesInfos* lines;
+        WrapDocument* doc;
         std::vector<TextCursor>* cursors;
     };
     struct DelimiterInfo {
@@ -87,7 +91,7 @@ namespace RichText {
 
     struct AbstractElement : public Drawable {
     protected:
-        WrapParagraph m_chars;
+        // WrapParagraph m_chars;
         float m_pre_max_width = 0.f;
         std::vector<DelimiterInfo> m_pre_delimiters;
         WrapString m_post_delimiters;
@@ -107,6 +111,7 @@ namespace RichText {
         void set_selected_pre_only(DrawContext* context);
         void set_selected_all(DrawContext* context);
         void set_selected_never(DrawContext* context) { m_is_selected = false; }
+        void init_paragraph(DrawContext* context);
 
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
@@ -180,7 +185,7 @@ namespace RichText {
     private:
         AbstractElementPtr m_ptr = nullptr;
     public:
-        Lines m_lines;
+        // Lines m_lines;
         RootNode(AbstractElementPtr ptr) : m_ptr(ptr) {}
 
         /* We don't want copy constructor to avoid accidentally deleting memory twice */
@@ -189,6 +194,9 @@ namespace RichText {
 
         AbstractElement& get() {
             return *m_ptr;
+        }
+        AbstractElementPtr getPtr() {
+            return m_ptr;
         }
         ~RootNode() {
             delete m_ptr;

@@ -25,9 +25,9 @@ namespace RichText {
         c->calculated_position.x = *cursor_pos_x + c->info->offset.x;
         *cursor_pos_x += c->info->advance;
     }
-    inline void WrapAlgorithm::push_new_line(std::list<Line>::iterator& line_it, int cursor_idx, float* cursor_pos_x) {
+    inline void WrapAlgorithm::push_new_line(std::list<SubLine>::iterator& line_it, int cursor_idx, float* cursor_pos_x) {
         //ZoneScoped;
-        m_lines.insert(std::next(line_it), Line{ cursor_idx, 0.f });
+        m_lines.insert(std::next(line_it), SubLine{ cursor_idx, 0.f });
         line_it++;
         *cursor_pos_x = 0.f;
     }
@@ -41,7 +41,7 @@ namespace RichText {
         // Initial conditions
         m_lines.clear();
         m_line_positions.clear();
-        m_lines.push_back(Line{ 0, 0.f });
+        m_lines.push_back(SubLine{ 0, 0.f });
         m_line_positions.insert(0);
         // m_height = 0.f;
 
@@ -128,7 +128,7 @@ namespace RichText {
             float max_descent = 0.f;
             for (auto current_line_it = m_lines.begin();current_line_it != m_lines.end();current_line_it++) {
                 auto next_it = std::next(current_line_it);
-                current_line_it->line_pos_y = cursor_pos_y;
+                current_line_it->rel_y_pos = cursor_pos_y;
                 int line_end_idx = m_current_string->size();
                 if (next_it != m_lines.end()) {
                     line_end_idx = next_it->start;
@@ -154,6 +154,8 @@ namespace RichText {
                     c->calculated_position.y = cursor_pos_y + max_ascent - c->info->ascent + c->info->offset.y;
                 }
                 current_line_it->height = max_ascent + max_descent;
+                current_line_it->max_ascent = max_ascent;
+                current_line_it->max_descent = max_descent;
                 cursor_pos_y += current_line_it->height * m_line_space;
             }
             m_height = cursor_pos_y;// + max_ascent + max_descent;
@@ -166,12 +168,11 @@ namespace RichText {
         auto width_it = m_widths.begin();
         for (auto& pair : m_paragraph->getLines()) {
             m_width = *width_it;
-            m_current_string = &pair.second.m_chars;
-            float prev_height = m_height;
+            m_current_string = &pair.second.chars;
             algorithm();
-            pair.second.first_max_ascent = m_first_max_ascent;
-            pair.second.first_max_descent = m_first_max_descent;
-            pair.second.line_height = m_height - prev_height;
+            // pair.second.max_ascent = m_first_max_ascent;
+            // pair.second.max_descent = m_first_max_descent;
+            // pair.second.height = m_lines.front().height;
             auto next = std::next(width_it);
             if (next != m_widths.end())
                 width_it = next;

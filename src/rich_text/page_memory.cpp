@@ -154,6 +154,7 @@ namespace RichText {
                 // std::lock_guard<std::mutex> lk(m_root_mutex);
                 for (auto idx : to_destroy) {
                     // m_lastly_destroyed_elements.insert(idx);
+                    m_wrap_document.erase(m_elements[idx]->getPtr());
                     m_elements.erase(idx);
                 }
             }
