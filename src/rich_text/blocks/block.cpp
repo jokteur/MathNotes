@@ -18,14 +18,14 @@ namespace RichText {
         hk_build_widget(ctx);
         /* This function roughly helps setting width and height from
          * pre-delimiters */
-        get_line_height_from_delimiters(ctx);
+         // get_line_height_from_delimiters(ctx);
 
-        /* There are two offset used in normal blocks:
-         * - current_offset for delimiter
-         * - child_offset for all block childrens.
-         *   These offsets are determined by the pre-delimiters (in set_pre_margins)
-         *   or the margins of the block
-         */
+         /* There are two offset used in normal blocks:
+          * - current_offset for delimiter
+          * - child_offset for all block childrens.
+          *   These offsets are determined by the pre-delimiters (in set_pre_margins)
+          *   or the margins of the block
+          */
         m_current_offset = ctx->x_offset;
 
         set_pre_margins(ctx);
@@ -118,9 +118,16 @@ namespace RichText {
         bool ret = true;
         auto pos = ImVec2(x_offset.getOffset(line_number), y_pos);
         /* Compensate for line ascent from child (if necessary) */
-        // pos.y += (*ctx->lines)[line_number].ascent - del_info.max_ascent;
+        auto& line = ctx->doc->getLine(line_number);
+        if (!line.sublines.empty()) {
+            auto& subline = line.sublines.front();
+            pos.y += subline.max_ascent - del_info.max_ascent;
+        }
         for (auto ptr : del_info.str) {
             auto p = std::static_pointer_cast<DrawableChar>(ptr);
+            auto& line = ctx->doc->getLine(line_number);
+            if (line.y_pos > 0.f)
+                pos.y += line.y_pos;
             ret &= p->draw(ctx->draw_list, ctx->boundaries, pos);
         }
         return ret;
@@ -297,6 +304,7 @@ namespace RichText {
 
     void AbstractLeafBlock::hk_update_line_info(DrawContext* ctx) {
         float position = ctx->cursor_y_pos;
+        // ctx->doc->at(this).
         // for (auto& pair : m_chars.getLines()) {
         //     /* Update line info */
         //     auto it = ctx->lines->find(pair.first);
@@ -319,7 +327,7 @@ namespace RichText {
         auto x_offset = ctx->x_offset;
 
         // Draw all the chars generated in the block
-        for (auto& pair : ctx->doc->at(this).getLines()) {
+        for (auto& pair : ctx->doc->at(this).getParagraph()) {
             auto int_pos = m_int_dimensions.getPos();
             int_pos.x = ctx->x_offset.getOffset(pair.first);
             for (auto ptr : pair.second.chars) {
@@ -429,12 +437,6 @@ namespace RichText {
             m_wrapper.setLineSpace(m_style.line_space, false);
             m_wrapper.setParagraph(&paragraph);
 
-            float position = ctx->cursor_y_pos;
-            for (auto pair : paragraph.getLines()) {
-                // (*ctx->lines)[pair.first] = LineInfo{ position, pair.second.line_height };
-                // position += pair.second.line_height;
-            }
-
             if (success)
                 m_widget_dirty = false;
         }
@@ -456,7 +458,7 @@ namespace RichText {
         auto& paragraph = ctx->doc->at(this);
 
         // Draw all the chars generated in the block
-        for (auto& pair : paragraph.getLines()) {
+        for (auto& pair : paragraph.getParagraph()) {
             auto int_pos = m_int_dimensions.getPos();
             int_pos.x = ctx->x_offset.getOffset(pair.first);
             for (auto ptr : pair.second.chars) {

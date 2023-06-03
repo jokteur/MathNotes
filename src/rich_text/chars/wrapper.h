@@ -49,8 +49,8 @@ namespace RichText {
     struct WrapLine {
         std::vector<SubLine> sublines;
         WrapString chars;
-        float y_pos;
-        float total_height;
+        float y_pos = 0.f;
+        float total_height = 0.f;
     };
 
     class WrapParagraph {
@@ -70,7 +70,7 @@ namespace RichText {
         WrapLine& operator[](int line) { return m_lines[line]; }
         WrapLine& at(int line) { return m_lines.at(line); }
 
-        std::map<int, WrapLine>& getLines() { return m_lines; }
+        std::map<int, WrapLine>& getParagraph() { return m_lines; }
     };
 
     class AbstractElement;
@@ -80,23 +80,13 @@ namespace RichText {
     private:
         std::unordered_map<AbstractElementPtr, WrapParagraph> m_data;
         std::unordered_map<int, std::unordered_set<AbstractElementPtr>> m_line_to_widget;
+        WrapLine m_empty_line;
     public:
-        void push_back(AbstractElementPtr el_ptr, const WrapCharPtr& char_ptr, int line) {
-            if (m_data.find(el_ptr) == m_data.end()) {
-                m_data[el_ptr] = WrapParagraph();
-            }
-            m_data[el_ptr].push_back(char_ptr, line);
-            m_line_to_widget[line].insert(el_ptr);
-        }
+        void push_back(AbstractElementPtr el_ptr, const WrapCharPtr& char_ptr, int line);
 
         void clear() { m_data.clear(); }
         bool empty() const { return m_data.empty(); }
-        void erase(AbstractElementPtr el_ptr) {
-            for (auto& pair : m_data[el_ptr].getLines()) {
-                m_line_to_widget[pair.first].erase(el_ptr);
-            }
-            m_data.erase(el_ptr);
-        }
+        void erase(AbstractElementPtr el_ptr);
         std::unordered_map<AbstractElementPtr, WrapParagraph>::iterator begin() { return m_data.begin(); }
         std::unordered_map<AbstractElementPtr, WrapParagraph>::iterator end() { return m_data.end(); }
         WrapParagraph& operator[](AbstractElementPtr ptr) { return m_data[ptr]; }
@@ -104,15 +94,16 @@ namespace RichText {
         std::unordered_map<AbstractElementPtr, WrapParagraph>::iterator find(AbstractElementPtr ptr) { return m_data.find(ptr); }
         void insert(AbstractElementPtr ptr, WrapParagraph&& paragraph) { m_data.insert({ ptr, paragraph }); }
 
-        std::unordered_set<AbstractElementPtr>& getWidgetsOnLine(int line) { return m_line_to_widget[line]; }
+        /* Returns the set of AbstractElement that have chars the given line
+         * If none, returns an empty set
+         */
+        std::unordered_set<AbstractElementPtr>& getWidgetsOnLine(int line);
+        /* Returns the corresponding WrapLine of the first widget that acts on this line
+         * If no line is registered, returns a default WrapLine (i.e. empty sublines)
+         */
+        WrapLine& getLine(int line);
         std::unordered_map<AbstractElementPtr, WrapParagraph>& getData() { return m_data; }
     };
-
-    // struct Line {
-    //     int start;
-    //     float line_pos_y;
-    //     float height;
-    // };
 
     /**
      * @brief Only handles wrapping and scrolling

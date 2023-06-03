@@ -69,11 +69,11 @@ file(GLOB source_list RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/system/*.cpp
     src/core/*.cpp
     src/ab/*.cpp
-    src/rich_text/*.cpp
     src/rich_text/interactive/*.cpp
     src/rich_text/chars/*.cpp
     src/rich_text/spans/*.cpp
     src/rich_text/blocks/*.cpp
+    src/rich_text/*.cpp
     src/latex/*.cpp
     src/translations/*.cpp
     src/utils.cpp

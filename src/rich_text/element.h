@@ -149,7 +149,7 @@ namespace RichText {
         Style m_style;
         Style m_special_chars_style;
 
-        bool m_is_selected = false;
+        bool m_is_selected = true;
         WrapAlgorithm m_wrapper;
 
         // Position of the pointer in m_childrens;

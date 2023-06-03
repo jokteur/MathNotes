@@ -12,7 +12,7 @@ namespace RichText {
         hk_build_widget(ctx);
 
         // Draw all the chars generated in the block
-        for (auto& pair : ctx->doc->at(this).getLines()) {
+        for (auto& pair : ctx->doc->at(this).getParagraph()) {
             auto int_pos = m_int_dimensions.getPos();
             int_pos.x = ctx->x_offset.getOffset(pair.first);
             for (auto ptr : pair.second.chars) {
