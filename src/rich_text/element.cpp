@@ -86,6 +86,9 @@ namespace RichText {
         return m_max;
     }
 
+    /* =========
+     * Debugging
+     * ========= */
     void AbstractElement::hk_debug_attributes() {
         /* State */
         ImGui::Text("Dirty state %u", m_widget_dirty);
@@ -178,6 +181,9 @@ namespace RichText {
             ImGui::TreePop();
         }
     }
+    /* ========
+     * Building
+     * ======== */
     bool AbstractElement::add_chars(WrapParagraph*) {
         return true;
     }
@@ -200,7 +206,6 @@ namespace RichText {
         m_ext_dimensions.x = x_offset.getMin();
         m_ext_dimensions.y = cursor_y_pos;
 
-        // for (auto offset)
         if (!m_is_selected)
             x_offset += m_style.h_margins.x.getFloat();
         cursor_y_pos += m_style.v_margins.x.getFloat();
@@ -219,11 +224,11 @@ namespace RichText {
     void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
         if (m_category == C_BLOCK && ctx->cursor_y_pos - last_y_pos == 0.f) {
             for (const auto& bounds : m_text_boundaries) {
-                auto& set = ctx->doc->getWidgetsOnLine(bounds.line_number);
-                if (set.empty())
-                    continue;
-                auto ptr = *set.begin();
-                ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
+                // auto& set = ctx->doc->getWidgetsOnLine(bounds.line_number);
+                // if (set.empty())
+                //     continue;
+                // auto ptr = *set.begin();
+                // ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
             }
         }
         ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
@@ -242,59 +247,43 @@ namespace RichText {
 
         m_is_dimension_set = true;
     }
-    bool AbstractElement::hk_draw_secondary(DrawContext*) { return true; }
-    bool AbstractElement::hk_build_widget(DrawContext*) { return true; }
-    void AbstractElement::hk_update_line_info(DrawContext* ctx) {
-        auto& lines = ctx->doc->at(this).getParagraph();
-        auto it = lines.begin();
-        for (const auto& bounds : m_text_boundaries) {
-            if (it == lines.end())
-                break;
-
-        }
-    }
-
-    void AbstractElement::init_paragraph(DrawContext* ctx) {
-        if (ctx->doc->find(this) == ctx->doc->end()) {
-            (*ctx->doc)[this];
-        }
-    }
-
-    bool AbstractElement::hk_draw_main(DrawContext* ctx) {
-        //ZoneScoped;
+    bool AbstractElement::hk_build_main(DrawContext* ctx) {
         bool ret = true;
-        for (auto& pair : ctx->doc->at(this).getParagraph()) {
-            float pos = ctx->cursor_y_pos;
-            // (*ctx->lines)[pair.first] = LineInfo{ pos , 0.f };
-            for (auto& ptr : pair.second.chars) {
-                auto p = std::static_pointer_cast<DrawableChar>(ptr);
-                if (!p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos()))
-                    ret = false;
-            }
-            // (*ctx->lines)[pair.first].height = ctx->cursor_y_pos - pos;
-        }
-        auto x_offset = ctx->x_offset;
+        ret &= hk_build_chars(ctx);
         for (auto& ptr : m_childrens) {
-            if (!ptr->draw(ctx))
+            if (!ptr->hk_build(ctx)) {
+                m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
-            ctx->x_offset = x_offset;
+            }
+            ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
         }
+        return true;
+    }
+    bool AbstractElement::hk_build_chars(DrawContext*) { return true; }
+    bool AbstractElement::hk_build(DrawContext* ctx) {
+        bool ret = true;
+        float initial_y_pos = ctx->cursor_y_pos;
+        hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
+        if (!m_is_dimension_set || m_widget_dirty) {
+            hk_set_selected(ctx);
+            if (!hk_build_main(ctx)) {
+                m_widget_dirty |= DIRTY_CHARS;
+                ret = false;
+            }
+            hk_set_dimensions(ctx, initial_y_pos);
+            // hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
+            // hk_draw_background(ctx->draw_list);
+            // hk_draw_text_cursor(ctx); 
+        }
+        ctx->cursor_y_pos += m_ext_dimensions.h;
+
+        // if (m_no_y_update) {
+        //     m_no_y_update = false;
+        //     ctx->cursor_y_pos = initial_y_pos;
+        // }
         return ret;
     }
-    void AbstractElement::hk_draw_background(Draw::DrawList* draw_list) {
 
-    }
-    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries) {
-        const auto& ext_dim = m_ext_dimensions;
-        if (m_show_boundaries && (isInsideRectY(ext_dim.y, boundaries) || isInsideRectY(ext_dim.y + ext_dim.y, boundaries))) {
-            auto cursor_pos = ImGui::GetCursorScreenPos();
-            ImVec2 p_min = cursor_pos + ext_dim.getPos();
-            ImVec2 p_max = p_min + ext_dim.getDim();
-            float r, g, b;
-            ImGui::ColorConvertHSVtoRGB((float)m_tree_level / 6.f, 1, 0.7, r, g, b);
-            (*draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
-        }
-    }
     void AbstractElement::set_selected_all(DrawContext* ctx) {
         // bool is_selected = false;
         // for (const auto& cursor : *ctx->cursors) {
@@ -347,40 +336,11 @@ namespace RichText {
         //     }
         // }
     }
+    void AbstractElement::set_selected_never(DrawContext*) {
+        m_is_selected = false;
+    }
     void AbstractElement::hk_set_selected(DrawContext* ctx) {
         set_selected_all(ctx);
-    }
-    void AbstractElement::hk_draw_text_cursor(DrawContext* ctx) {
-
-    }
-    bool AbstractElement::draw(DrawContext* ctx) {
-        //ZoneScoped;
-        bool ret = true;
-        float initial_y_pos = ctx->cursor_y_pos;
-        hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
-        m_is_visible = is_in_boundaries(ctx->boundaries);
-        if (m_is_visible || !m_is_dimension_set || m_widget_dirty) {
-            init_paragraph(ctx);
-            visible_count++;
-            hk_set_selected(ctx);
-            if (!hk_draw_main(ctx)) {
-                m_widget_dirty |= DIRTY_CHARS;
-                ret = false;
-            }
-            hk_set_dimensions(ctx, initial_y_pos);
-            hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
-            hk_draw_background(ctx->draw_list);
-            hk_draw_text_cursor(ctx);
-        }
-        else {
-            ctx->cursor_y_pos += m_ext_dimensions.h;
-        }
-
-        if (m_no_y_update) {
-            m_no_y_update = false;
-            ctx->cursor_y_pos = initial_y_pos;
-        }
-        return ret;
     }
     void AbstractElement::setWindowWidth(float width) {
         //ZoneScoped;
@@ -393,5 +353,56 @@ namespace RichText {
         for (auto ptr : m_childrens) {
             ptr->setWindowWidth(width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat());
         }
+    }
+
+    /* =======
+     * Drawing
+     * ======= */
+    void AbstractElement::hk_draw_background(Draw::DrawList* draw_list) {
+
+    }
+    bool AbstractElement::hk_draw_secondary(DrawContext*) { return true; }
+    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries) {
+        const auto& ext_dim = m_ext_dimensions;
+        if (m_show_boundaries && (isInsideRectY(ext_dim.y, boundaries) || isInsideRectY(ext_dim.y + ext_dim.y, boundaries))) {
+            auto cursor_pos = ImGui::GetCursorScreenPos();
+            ImVec2 p_min = cursor_pos + ext_dim.getPos();
+            ImVec2 p_max = p_min + ext_dim.getDim();
+            float r, g, b;
+            ImGui::ColorConvertHSVtoRGB((float)m_tree_level / 6.f, 1, 0.7, r, g, b);
+            (*draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
+        }
+    }
+    void AbstractElement::hk_draw_text_cursor(DrawContext* ctx) {
+
+    }
+    bool AbstractElement::draw(DrawContext* ctx) {
+        bool ret = true;
+
+        bool is_visible = is_in_boundaries(ctx->boundaries);
+        if (!is_visible) {
+            ctx->cursor_y_pos += m_ext_dimensions.h;
+            return true;
+        }
+
+        /* Display chars */
+        for (auto& pair : m_paragraph) {
+            float pos = ctx->cursor_y_pos;
+            for (auto& ptr : pair.second.chars) {
+                auto p = std::static_pointer_cast<DrawableChar>(ptr);
+                if (!p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos()))
+                    ret = false;
+            }
+        }
+
+        /* Display childrens */
+        for (auto& child : m_childrens) {
+            ret &= child->draw(ctx);
+        }
+
+        ret &= hk_draw_secondary(ctx);
+        ctx->cursor_y_pos += m_ext_dimensions.h;
+
+        return ret;
     }
 }

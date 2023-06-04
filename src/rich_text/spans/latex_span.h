@@ -17,8 +17,8 @@ namespace RichText {
         bool build_latex_image();
 
         bool add_chars(WrapParagraph* wrap_string) override;
-        bool hk_draw_main(DrawContext* context) override;
-        // bool hk_build_widget(DrawContext* ctx) override;
+        // bool hk_draw_main(DrawContext* context) override;
+        // bool hk_build_chars(DrawContext* ctx) override;
 
         void  hk_debug_attributes() override;
     };

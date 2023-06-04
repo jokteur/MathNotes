@@ -2,6 +2,7 @@
 
 #include "time_counter.h"
 #include "ui/ui_utils.h"
+#include <cmath>
 
 namespace RichText {
 
@@ -46,9 +47,9 @@ namespace RichText {
         float current_widget_y_size = 0.f;
         float updated_current_widget_y_size = 0.f;
         for (auto pair : m_mem->getElements()) {
-            if (m_current_width != width && pair.second == m_mem->getCurrentBlock()) {
-                current_widget_y_size = m_mem->getCurrentBlock()->get().m_ext_dimensions.h;
-            }
+            // if (m_current_width != width && pair.second == m_mem->getCurrentBlock()) {
+            //     current_widget_y_size = m_mem->getCurrentBlock()->get().m_ext_dimensions.h;
+            // }
             if (m_current_width != width || pair.second->get().m_widget_dirty & pair.second->get().DIRTY_WIDTH) {
                 pair.second->get().setWindowWidth(width);
             }
@@ -57,6 +58,16 @@ namespace RichText {
             resize_event = true;
             m_current_width = width;
         }
+
+        /* Building the widgets (if necessary)*/
+        ctx->cursor_y_pos = 0.f;
+        ctx->draw_list = &m_draw_list;
+        TimeCounter::getInstance().startCounter("BuildAll");
+        for (auto pair : m_mem->getElements()) {
+            auto& element = pair.second->get();
+            element.hk_build(ctx);
+        }
+        TimeCounter::getInstance().stopCounter("BuildAll");
 
         if (!m_mem->empty()) {
             if (!m_scrollbar_grab)
@@ -67,8 +78,6 @@ namespace RichText {
             boundaries.h = vMax.y - vMin.y;
             boundaries.w = width;
             m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
-
-            // m_draw_list->AddRect(vMin, vMax, Colors::red, 0.f, 0, 2.f);
 
             // Background, ForeGround
             m_draw_list.Split(2);
@@ -90,7 +99,7 @@ namespace RichText {
             ctx->cursor_y_pos = m_display_height + 1000.f;
             ctx->draw_list = &m_draw_list;
             ctx->boundaries = boundaries;
-            ctx->doc = &m_mem->getWrapDocument();
+            // ctx->doc = &m_mem->getWrapDocument();
             /* Designates the height taken by the elements before the current one */
 
             TimeCounter::getInstance().startCounter("DisplayAll");

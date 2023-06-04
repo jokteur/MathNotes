@@ -79,7 +79,7 @@ namespace RichText {
         MultiOffset x_offset;
         Rect boundaries;
         // LinesInfos* lines;
-        WrapDocument* doc;
+        // WrapDocument* doc;
         std::vector<TextCursor>* cursors;
     };
     struct DelimiterInfo {
@@ -96,6 +96,8 @@ namespace RichText {
         std::vector<DelimiterInfo> m_pre_delimiters;
         WrapString m_post_delimiters;
     public:
+        WrapParagraph m_paragraph;
+
         static int count;
         static int visible_count;
 
@@ -110,8 +112,7 @@ namespace RichText {
 
         void set_selected_pre_only(DrawContext* context);
         void set_selected_all(DrawContext* context);
-        void set_selected_never(DrawContext* context) { m_is_selected = false; }
-        void init_paragraph(DrawContext* context);
+        void set_selected_never(DrawContext* context);
 
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
@@ -120,7 +121,7 @@ namespace RichText {
 
         unsigned int m_widget_dirty = ALL_DIRTY;
         bool m_is_visible = false;
-        bool m_no_y_update = false;
+        // bool m_no_y_update = false;
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(WrapParagraph* wrap_chars);
@@ -128,18 +129,22 @@ namespace RichText {
 
         bool is_in_boundaries(const Rect& boundaries);
 
-        // Draw hooks
-        bool virtual hk_build_widget(DrawContext* context);
-        void virtual hk_update_line_info(DrawContext* context);
-        float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
+        // Build hooks
+        bool virtual hk_build_chars(DrawContext* context);
+        bool virtual hk_build_main(DrawContext* context);
+        bool virtual hk_build(DrawContext* context);
         void virtual hk_set_dimensions(DrawContext* context, float last_y_pos);
-        bool virtual hk_draw_main(DrawContext* context);
+        void virtual hk_set_selected(DrawContext* context);
+
+        // void virtual hk_update_line_info(DrawContext* context);
+        // Draw hooks
+        float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
+        // bool virtual hk_draw_main(DrawContext* context);
         /* Implement this function if you want to draw visual elements
          * that are not part of fundamental widget construction and char drawing */
         bool virtual hk_draw_secondary(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
-        void virtual hk_set_selected(DrawContext* context);
         void virtual hk_draw_text_cursor(DrawContext* context);
 
         /* Debug prints object info in a special window created by parent */

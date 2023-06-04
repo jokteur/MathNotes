@@ -7,7 +7,7 @@ namespace RichText {
     private:
         RootElements m_elements;
         AB::File* m_file;
-        WrapDocument m_wrap_document;
+        // WrapDocument m_wrap_document;
 
         int m_block_idx_start = 1e9;
         int m_block_idx_end = -1;
@@ -92,6 +92,6 @@ namespace RichText {
 
         void manage();
 
-        WrapDocument& getWrapDocument() { return m_wrap_document; }
+        // WrapDocument& getWrapDocument() { return m_wrap_document; }
     };
 }

@@ -46,28 +46,28 @@ namespace RichText {
     void TextString::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
 
     }
-    bool TextString::hk_draw_main(DrawContext* ctx) {
-        //ZoneScoped;
-        bool ret = true;
-        // We do not update cursor_y_pos in text span (taken care of parent block)
-            // Draw all backgrounds
-        if (m_style.font_bg_color != Colors::transparent) {
-            auto cursor_pos = ImGui::GetCursorScreenPos();
-            int i = 0;
-            // for (auto pair : m_chars.getLines()) {
-            //     for (auto p : pair.second.m_chars) {
-            //         auto ptr = std::static_pointer_cast<DrawableChar>(p);
-            //         ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
-            //         p_min.x += ctx->x_offset.getOffset(pair.first);
-            //         p_min.y += ctx->cursor_y_pos;
-            //         ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
-            //         (*ctx->draw_list)->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
-            //         i++;
-            //     }
-            // }
-        }
-        return ret;
-    }
+    // bool TextString::hk_draw_main(DrawContext* ctx) {
+    //     //ZoneScoped;
+    //     bool ret = true;
+    //     // We do not update cursor_y_pos in text span (taken care of parent block)
+    //         // Draw all backgrounds
+    //     if (m_style.font_bg_color != Colors::transparent) {
+    //         auto cursor_pos = ImGui::GetCursorScreenPos();
+    //         int i = 0;
+    //         // for (auto pair : m_chars.getLines()) {
+    //         //     for (auto p : pair.second.m_chars) {
+    //         //         auto ptr = std::static_pointer_cast<DrawableChar>(p);
+    //         //         ImVec2 p_min = cursor_pos + ptr->calculated_position - ptr->info->offset;
+    //         //         p_min.x += ctx->x_offset.getOffset(pair.first);
+    //         //         p_min.y += ctx->cursor_y_pos;
+    //         //         ImVec2 p_max = p_min + ImVec2(ptr->info->advance, ptr->info->ascent - ptr->info->descent);
+    //         //         (*ctx->draw_list)->AddRectFilled(p_min, p_max, m_style.font_bg_color, 0);
+    //         //         i++;
+    //         //     }
+    //         // }
+    //     }
+    //     return ret;
+    // }
     void TextString::hk_debug(const std::string&) {
         if (ImGui::TreeNode((std::string("T: ") + type_to_name(m_type) + "##" + std::to_string(m_id)).c_str())) {
             std::string str;

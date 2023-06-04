@@ -26,12 +26,13 @@ namespace RichText {
         void set_pre_margins(DrawContext* context);
         void get_line_height_from_delimiters(DrawContext* context);
         bool draw_pre_line(DrawContext* ctx, DelimiterInfo& del_info, int line_number, const MultiOffset& x_offset, float y_pos);
-        void place_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars, TextCursor& cursor);
+        // void place_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars, TextCursor& cursor);
 
-        bool hk_build_widget(DrawContext* context) override;
-        bool hk_draw_main(DrawContext* context) override;
+        bool hk_build_chars(DrawContext* context) override;
+        bool hk_build_main(DrawContext* context) override;
+        // bool hk_draw_main(DrawContext* context) override;
         void hk_draw_background(Draw::DrawList* draw_list) override;
-        void hk_draw_text_cursor(DrawContext* context) override;
+        // void hk_draw_text_cursor(DrawContext* context) override;
         void hk_debug_attributes() override;
         void hk_set_selected(DrawContext* context) override;
 
@@ -53,9 +54,10 @@ namespace RichText {
 
         bool hk_build_pre_delimiter_chars(DrawContext* context) override;
         bool hk_build_post_delimiter_chars(DrawContext* context) override;
-        void hk_update_line_info(DrawContext* context) override;
-        bool hk_build_widget(DrawContext* context) override;
-        bool hk_draw_main(DrawContext* context) override;
+        // void hk_update_line_info(DrawContext* context) override;
+        // bool hk_build_main(DrawContext* context) override;
+        bool hk_build_chars(DrawContext* context) override;
+        // bool hk_draw_main(DrawContext* context) override;
         void hk_draw_text_cursor(DrawContext* context) override;
         void hk_set_selected(DrawContext* context) override;
     };
@@ -65,8 +67,8 @@ namespace RichText {
             m_category = C_BLOCK;
             m_type = T_BLOCK_HIDDENSPACE;
         }
-        bool hk_build_widget(DrawContext* context) override;
-        bool hk_draw_main(DrawContext* context) override;
+        bool hk_build_chars(DrawContext* context) override;
+        // bool hk_draw_main(DrawContext* context) override;
         bool add_chars(WrapParagraph* wrap_chars) override;
     };
     struct HrBlock : public AbstractLeafBlock {
@@ -74,7 +76,7 @@ namespace RichText {
             m_category = C_BLOCK;
             m_type = T_BLOCK_HR;
         }
-        // bool hk_build_widget(float x_offset);
+        // bool hk_build_chars(float x_offset);
         // bool add_chars(std::vector<WrapCharPtr>& wrap_chars) override;
     };
 }

@@ -5,56 +5,55 @@ namespace RichText {
     DisplayLatexWidget::DisplayLatexWidget() : AbstractLeafBlock() {
         m_type = T_BLOCK_LATEX;
     }
-    bool DisplayLatexWidget::hk_draw_main(DrawContext* ctx) {
-        //ZoneScoped;
-        bool ret = true;
+    // bool DisplayLatexWidget::hk_draw_secondary(DrawContext* ctx) {
+    //     //ZoneScoped;
+    //     bool ret = true;
 
-        hk_build_widget(ctx);
+    //     hk_build_widget(ctx);
 
-        // Draw all the chars generated in the block
-        for (auto& pair : ctx->doc->at(this).getParagraph()) {
-            auto int_pos = m_int_dimensions.getPos();
-            int_pos.x = ctx->x_offset.getOffset(pair.first);
-            for (auto ptr : pair.second.chars) {
-                auto p = std::static_pointer_cast<DrawableChar>(ptr);
-                if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
-                    ret = false;
-            }
-        }
+    //     // Draw all the chars generated in the block
+    //     for (auto& pair : ctx->doc->at(this).getParagraph()) {
+    //         auto int_pos = m_int_dimensions.getPos();
+    //         int_pos.x = ctx->x_offset.getOffset(pair.first);
+    //         for (auto ptr : pair.second.chars) {
+    //             auto p = std::static_pointer_cast<DrawableChar>(ptr);
+    //             if (!p->draw(ctx->draw_list, ctx->boundaries, int_pos))
+    //                 ret = false;
+    //         }
+    //     }
 
-        hk_update_line_info(ctx);
+    //     // hk_update_line_info(ctx);
 
-        ctx->cursor_y_pos += m_wrapper.getHeight();
+    //     // ctx->cursor_y_pos += m_wrapper.getHeight();
 
 
-        if (m_latex_char != nullptr) {
-            auto dims = m_latex_char->m_latex_image->getDimensions();
-            float available_space = m_window_width - ctx->x_offset.getMax() - dims.x;
-            if (available_space < 0.f)
-                available_space = 0.f;
+    //     if (m_latex_char != nullptr) {
+    //         auto dims = m_latex_char->m_latex_image->getDimensions();
+    //         float available_space = m_window_width - ctx->x_offset.getMax() - dims.x;
+    //         if (available_space < 0.f)
+    //             available_space = 0.f;
 
-            m_latex_char->draw(ctx->draw_list, ctx->boundaries, ImVec2(ctx->x_offset.getMax() + available_space / 2.f, ctx->cursor_y_pos));
-            ctx->cursor_y_pos += m_latex_char->m_latex_image->getDimensions().y;
-        }
-        return ret;
-    }
-    bool DisplayLatexWidget::hk_build_widget(DrawContext* ctx) {
+    //         m_latex_char->draw(ctx->draw_list, ctx->boundaries, ImVec2(ctx->x_offset.getMax() + available_space / 2.f, ctx->cursor_y_pos));
+    //         ctx->cursor_y_pos += m_latex_char->m_latex_image->getDimensions().y;
+    //     }
+    //     return ret;
+    // }
+    bool DisplayLatexWidget::hk_build_chars(DrawContext* ctx) {
         bool success = false;
         if (m_widget_dirty & DIRTY_CHARS) {
-            auto& paragraph = ctx->doc->at(this);
-            paragraph.clear();
+            m_paragraph.clear();
 
             bool success = true;
 
             if (m_is_selected) {
                 success &= hk_build_pre_delimiter_chars(ctx);
                 for (const auto& bounds : m_text_boundaries) {
-                    success &= Utf8StrToImCharStr(m_ui_state, &paragraph, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_special_chars_style, false);
+                    success &= Utf8StrToImCharStr(m_ui_state, &m_paragraph, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_special_chars_style, false);
                 }
                 success &= hk_build_post_delimiter_chars(ctx);
                 m_wrapper.clear();
                 m_wrapper.setLineSpace(m_style.line_space, false);
-                m_wrapper.setParagraph(&paragraph, false);
+                m_wrapper.setParagraph(&m_paragraph, false);
                 m_wrapper.recalculate();
             }
 

@@ -8,34 +8,34 @@ namespace RichText {
     /* ============
      * WrapDocument
      *============= */
-    void WrapDocument::push_back(AbstractElementPtr el_ptr, const WrapCharPtr& char_ptr, int line) {
-        if (m_data.find(el_ptr) == m_data.end()) {
-            m_data[el_ptr] = WrapParagraph();
-        }
-        m_data[el_ptr].push_back(char_ptr, line);
-        m_line_to_widget[line].insert(el_ptr);
-    }
-    void WrapDocument::erase(AbstractElementPtr el_ptr) {
-        for (auto& pair : m_data[el_ptr].getParagraph()) {
-            m_line_to_widget[pair.first].erase(el_ptr);
-        }
-        m_data.erase(el_ptr);
-    }
-    std::unordered_set<AbstractElementPtr>& WrapDocument::getWidgetsOnLine(int line) {
-        if (m_line_to_widget.find(line) == m_line_to_widget.end())
-            m_line_to_widget[line];
-        return m_line_to_widget[line];
-    }
-    WrapLine& WrapDocument::getLine(int line) {
-        auto& set = getWidgetsOnLine(line);
-        if (set.empty())
-            return m_empty_line;
-        return m_data[*set.begin()].at(line);
-    }
+     // void WrapDocument::push_back(AbstractElementPtr el_ptr, const WrapCharPtr& char_ptr, int line) {
+     //     if (m_data.find(el_ptr) == m_data.end()) {
+     //         m_data[el_ptr] = WrapParagraph();
+     //     }
+     //     m_data[el_ptr].push_back(char_ptr, line);
+     //     m_line_to_widget[line].insert(el_ptr);
+     // }
+     // void WrapDocument::erase(AbstractElementPtr el_ptr) {
+     //     for (auto& pair : m_data[el_ptr].getParagraph()) {
+     //         m_line_to_widget[pair.first].erase(el_ptr);
+     //     }
+     //     m_data.erase(el_ptr);
+     // }
+     // std::unordered_set<AbstractElementPtr>& WrapDocument::getWidgetsOnLine(int line) {
+     //     if (m_line_to_widget.find(line) == m_line_to_widget.end())
+     //         m_line_to_widget[line];
+     //     return m_line_to_widget[line];
+     // }
+     // WrapLine& WrapDocument::getLine(int line) {
+     //     auto& set = getWidgetsOnLine(line);
+     //     if (set.empty())
+     //         return m_empty_line;
+     //     return m_data[*set.begin()].at(line);
+     // }
 
-    /* =============
-     * WrapAlgorithm
-     *============== */
+     /* =============
+      * WrapAlgorithm
+      *============== */
     WrapAlgorithm::WrapAlgorithm(float width, float line_space) {
         m_width = width;
         m_line_space = line_space;

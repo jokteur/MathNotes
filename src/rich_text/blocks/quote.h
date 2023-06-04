@@ -10,7 +10,7 @@ namespace RichText {
 
         emfloat m_delimiter_offset = emfloat{ 0.f };
 
-        // void hk_build_widget(float x_offset) override;
+        // void hk_build_chars(float x_offset) override;
     };
     using QuoteWidgetPtr = std::shared_ptr<QuoteWidget>;
 }

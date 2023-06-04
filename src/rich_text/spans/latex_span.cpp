@@ -52,18 +52,18 @@ namespace RichText {
         return success;
     }
 
-    bool LatexSpan::hk_draw_main(DrawContext* ctx) {
-        //ZoneScoped;
-        bool ret = true;
+    // bool LatexSpan::hk_draw_main(DrawContext* ctx) {
+    //     //ZoneScoped;
+    //     bool ret = true;
 
-        /* Build widget must be called after drawing the children, because we need to know
-         * the positions of the first chars in line in childrens before displaying
-         * the delimiters */
-        hk_build_widget(ctx);
+    //     /* Build widget must be called after drawing the children, because we need to know
+    //      * the positions of the first chars in line in childrens before displaying
+    //      * the delimiters */
+    //     hk_build_chars(ctx);
 
-        return ret;
-    }
-    // bool LatexSpan::hk_build_widget(DrawContext* ctx) {
+    //     return ret;
+    // }
+    // bool LatexSpan::hk_build_chars(DrawContext* ctx) {
     //     // build_latex_image();
     //     return true;
     // }
