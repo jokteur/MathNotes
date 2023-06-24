@@ -249,13 +249,15 @@ namespace RichText {
     }
     bool AbstractElement::hk_build_main(DrawContext* ctx) {
         bool ret = true;
-        ret &= hk_build_chars(ctx);
+        if (!hk_build_chars(ctx)) {
+            m_widget_dirty |= DIRTY_CHARS;
+            ret = false;
+        }
         for (auto& ptr : m_childrens) {
             if (!ptr->hk_build(ctx)) {
                 m_widget_dirty |= DIRTY_CHARS;
                 ret = false;
             }
-            ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
         }
         return true;
     }
@@ -275,7 +277,7 @@ namespace RichText {
             // hk_draw_background(ctx->draw_list);
             // hk_draw_text_cursor(ctx); 
         }
-        ctx->cursor_y_pos += m_ext_dimensions.h;
+        // ctx->cursor_y_pos += m_ext_dimensions.h;
 
         // if (m_no_y_update) {
         //     m_no_y_update = false;
@@ -381,7 +383,7 @@ namespace RichText {
 
         bool is_visible = is_in_boundaries(ctx->boundaries);
         if (!is_visible) {
-            ctx->cursor_y_pos += m_ext_dimensions.h;
+            // ctx->cursor_y_pos += m_ext_dimensions.h;
             return true;
         }
 
@@ -401,7 +403,8 @@ namespace RichText {
         }
 
         ret &= hk_draw_secondary(ctx);
-        ctx->cursor_y_pos += m_ext_dimensions.h;
+
+        // ctx->cursor_y_pos += m_ext_dimensions.h;
 
         return ret;
     }

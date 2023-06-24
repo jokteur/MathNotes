@@ -56,7 +56,6 @@ namespace RichText {
                 ret = false;
             }
             ctx->x_offset = child_x_offset;
-            ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
         }
         //     ctx->x_offset = x_offset;
         //     // Draw all childrens (spans)
@@ -70,8 +69,6 @@ namespace RichText {
         //     }
             // Update cursor from wrapper
         ctx->cursor_y_pos += m_wrapper.getHeight();
-
-
 
         // while (bounds_it != m_text_boundaries.end()) {
         //     int line_number = bounds_it->line_number;
@@ -392,17 +389,18 @@ namespace RichText {
     //     return ret;
     // }
 
-    // bool AbstractLeafBlock::hk_build_main(DrawContext* ctx) {
-    //     bool ret = true;
-    //     ret &= hk_build_chars(ctx);
-    //     for (auto& ptr : m_childrens) {
-    //         if (!ptr->hk_build(ctx)) {
-    //             m_widget_dirty |= DIRTY_CHARS;
-    //             ret = false;
-    //         }
-    //     }
-    //     return true;
-    // }
+    bool AbstractLeafBlock::hk_build_main(DrawContext* ctx) {
+        bool ret = true;
+        ret &= hk_build_chars(ctx);
+        for (auto& ptr : m_childrens) {
+            if (!ptr->hk_build(ctx)) {
+                m_widget_dirty |= DIRTY_CHARS;
+                ret = false;
+            }
+        }
+        ctx->cursor_y_pos += m_wrapper.getHeight();
+        return true;
+    }
     bool AbstractLeafBlock::hk_build_pre_delimiter_chars(DrawContext* ctx) {
         bool success = true;
         for (const auto& bounds : m_text_boundaries) {
