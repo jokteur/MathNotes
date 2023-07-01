@@ -169,21 +169,37 @@ namespace RichText {
 
     bool AbstractElement::hk_build_hlayout(DrawContext* ctx) {
         bool ret = true;
-        hk_set_x_cursor(ctx);
-        auto child_x_offset = ctx->x_offset;
+        if (m_widget_dirty & (DIRTY_WIDTH | DIRTY_CHARS)) {
+            hk_set_x_cursor(ctx);
+            auto child_x_offset = ctx->x_offset;
 
-        for (auto ptr : m_childrens) {
-            ctx->x_offset = child_x_offset;
-            ret &= !ptr->hk_build_hlayout(ctx);
-        }
+            for (auto ptr : m_childrens) {
+                ctx->x_offset = child_x_offset;
+                ret &= !ptr->hk_build_hlayout(ctx);
+            }
 
-        if (ret) {
-            m_widget_dirty ^= DIRTY_WIDTH;
+            if (ret) {
+                m_widget_dirty &= ~DIRTY_WIDTH;
+            }
         }
         return ret;
     }
     bool AbstractElement::hk_build_vlayout(DrawContext* ctx) {
-        return true;
+        bool ret = true;
+        if (m_widget_dirty & DIRTY_HEIGHT) {
+            hk_set_y_cursor(ctx);
+
+            float y_offset = ctx->cursor_y_pos;
+            for (auto ptr : m_childrens) {
+                ret &= !ptr->hk_build_vlayout(ctx);
+            }
+            hk_set_y_dim(ctx);
+
+            if (ret) {
+                m_widget_dirty &= ~DIRTY_HEIGHT;
+            }
+        }
+        return ret;
     }
 
     // void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
@@ -220,7 +236,6 @@ namespace RichText {
         if (m_widget_dirty) {
             hk_build_hlayout(ctx);
             hk_build_vlayout(ctx);
-            hk_set_y_dim(ctx);
             // hk_set_selected(ctx);
             // if (!hk_build_main(ctx)) {
             //     m_widget_dirty |= DIRTY_CHARS;
@@ -343,11 +358,11 @@ namespace RichText {
 
         /* Display chars */
         for (auto& pair : m_text_column) {
-            float pos = ctx->cursor_y_pos;
+            auto pos = m_int_dimensions.getPos() + ctx->draw_offset;;
+            pos.y += pair.second.y_pos;
             for (auto& ptr : pair.second.chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
-                if (!p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos()))
-                    ret = false;
+                ret &= p->draw(ctx->draw_list, ctx->boundaries, pos);
             }
         }
 

@@ -28,24 +28,22 @@ namespace RichText {
             success &= AbstractBlock::hk_build_pre_delimiter_chars(ctx);
         else if (!number.empty()) {
             m_pre_delimiters.clear();
-            m_pre_delimiters.push_back(DelimiterInfo{});
             const auto bounds = m_text_boundaries.front();
-            auto& delimiter = m_pre_delimiters.back();
+            m_pre_delimiters[bounds.line_number] = WrapLine{};
+            auto& delimiter = m_pre_delimiters[bounds.line_number];
             auto style = m_style;
             style.set_font_color(Colors::darkslategray);
-            success &= Utf8StrToImCharStr(m_ui_state, &delimiter.str, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, style);
+            success &= Utf8StrToImCharStr(m_ui_state, &delimiter.chars, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, style);
 
             WrapAlgorithm wrapper;
             wrapper.setWidth(4000.f, false);
-            wrapper.recalculate(&delimiter.str);
-            if (!delimiter.str.empty()) {
-                auto last_char = delimiter.str.back();
+            wrapper.recalculate(&delimiter.chars);
+            if (!delimiter.chars.empty()) {
+                auto last_char = delimiter.chars.back();
                 /* Delimiter y position will be calculated later, after setWidth of wrapper in children
                  * has been called
                  */
                 delimiter.width = last_char->calculated_position.x + last_char->info->advance;
-                delimiter.max_ascent = wrapper.getFirstMaxAscent();
-                m_pre_max_width = std::max(m_pre_max_width, delimiter.width);
             }
 
             /* Remove the margin that has been added */

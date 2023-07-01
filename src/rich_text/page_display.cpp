@@ -17,6 +17,7 @@ namespace RichText {
     void PageDisplay::FrameUpdate(const std::string& window_name, DrawContext* ctx) {
         m_window_name = window_name;
 
+        /* Window boundaries */
         float width = ImGui::GetWindowContentRegionWidth();
         width -= ImGui::GetStyle().ScrollbarSize;
         ImVec2 vMin = ImGui::GetWindowContentRegionMin();
@@ -30,6 +31,12 @@ namespace RichText {
 
         vMin.y += 0;
         vMax.y -= 0;
+        Rect boundaries;
+        boundaries.y = 0.f;
+        boundaries.h = vMax.y - vMin.y;
+        boundaries.w = width;
+        m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
+        ctx->boundaries = boundaries;
 
         /* Once we know the height of the page,
          * we can estimate how many lines we should
@@ -59,82 +66,69 @@ namespace RichText {
             m_current_width = width;
         }
 
-        /* Building the widgets (if necessary)*/
-        ctx->cursor_y_pos = 0.f;
-        ctx->draw_list = &m_draw_list;
+        /* Building the widgets (no-op if already built)*/
+        /* We want to separate elements in two groups:
+         * - before m_current_line
+         * - after m_current_line
+         *
+         * All the elements before should not be displayed, but they are still important
+         * to be build once to calculate the scroll height
+         *
+         * As the elements height can only be known when displaying them once, we still need
+         * to call the draw fct. This is why we first draw them safely outside of the screen
+         *
+         * Once we reach the m_current_line element, then we can set y_pos properly
+         */
+        ctx->cursor_y_pos = 0; // m_display_height + 1000.f;
+        bool found_current = false;
         TimeCounter::getInstance().startCounter("BuildAll");
         for (auto pair : m_mem->getElements()) {
+            /* Each root block begins with an offset of zero */
+            ctx->x_offset.clear();
             auto& element = pair.second->get();
+            ctx->lines = LinesInfos();
+            /* If this if is true, we switch from before m_current_line to after m_current_line */
+            // if (!found_current && pair.first >= m_mem->getCurrentBlockIdx()) {
+            //     found_current = true;
+            //     m_before_height = ctx->cursor_y_pos - m_display_height - 1000.f;
+            //     ctx->cursor_y_pos = -roundf(m_y_displacement);
+            //     updated_current_widget_y_size = pair.second->get().m_ext_dimensions.h;
+            //     continue;
+            // }
             element.hk_build(ctx);
         }
+        m_after_height = ctx->cursor_y_pos + roundf(m_y_displacement);
+        if (m_after_height < 0.f)
+            m_after_height = 0.f;
         TimeCounter::getInstance().stopCounter("BuildAll");
 
-        if (!m_mem->empty()) {
-            if (!m_scrollbar_grab)
-                manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+        if (!m_scrollbar_grab)
+            manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
 
-            Rect boundaries;
-            boundaries.y = 0.f;
-            boundaries.h = vMax.y - vMin.y;
-            boundaries.w = width;
-            m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
+        /* Drawing all the widgets */
+        // Background, ForeGround
+        m_draw_list.Split(2);
+        m_draw_list.SetCurrentChannel(1);
 
-            // Background, ForeGround
-            m_draw_list.Split(2);
-            m_draw_list.SetCurrentChannel(1);
-
-            /* We want to separate elements in two groups:
-             * - before m_current_line
-             * - after m_current_line
-             *
-             * All the elements before should not be displayed, but they are still important
-             * to be build once to calculate the scroll height
-             *
-             * As the elements height can only be known when displaying them once, we still need
-             * to call the draw fct. This is why we first draw them safely outside of the screen
-             *
-             * Once we reach the m_current_line element, then we can set y_pos properly
-             */
-            bool found_current = false;
-            ctx->cursor_y_pos = m_display_height + 1000.f;
-            ctx->draw_list = &m_draw_list;
-            ctx->boundaries = boundaries;
-            // ctx->doc = &m_mem->getWrapDocument();
-            /* Designates the height taken by the elements before the current one */
-
-            TimeCounter::getInstance().startCounter("DisplayAll");
-            for (auto pair : m_mem->getElements()) {
-                const auto& bounds = pair.second->get().m_text_boundaries;
-                TimeCounter::getInstance().startCounter("Clear offsets");
-                ctx->x_offset.clear(bounds.front().line_number, bounds.back().line_number);
-                TimeCounter::getInstance().stopCounter("Clear offsets");
-
-                if (!found_current && pair.first >= m_mem->getCurrentBlockIdx()) {
-                    found_current = true;
-                    m_before_height = ctx->cursor_y_pos - m_display_height - 1000.f;
-                    ctx->cursor_y_pos = -roundf(m_y_displacement);
-                    pair.second->get().draw(ctx);
-                    updated_current_widget_y_size = pair.second->get().m_ext_dimensions.h;
-                    continue;
-                }
-                pair.second->get().draw(ctx);
-            }
-            TimeCounter::getInstance().stopCounter("DisplayAll");
-
-            m_after_height = ctx->cursor_y_pos + roundf(m_y_displacement);
-            // m_after_height -= 2 * m_line_height;
-            if (m_after_height < 0.f)
-                m_after_height = 0.f;
-            m_draw_list.Merge();
-
-            display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+        ctx->draw_list = &m_draw_list;
+        /* Designates the height taken by the elements before the current one */
+        TimeCounter::getInstance().startCounter("DisplayAll");
+        for (auto pair : m_mem->getElements()) {
+            pair.second->get().draw(ctx);
         }
+        TimeCounter::getInstance().stopCounter("DisplayAll");
+        m_draw_list.Merge();
+
+        /* Scrollbar has to be displayed after it has been built, to estime the heights of the page */
+        display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
     }
 
     /* ================================
      * Scrolling and element management
      * ================================ */
     void PageDisplay::display_scrollbar(const Rect& b) {
+        if (m_mem->empty())
+            return;
         /* Find approximate height before the first parsed block
          * and after the last parsed block */
         int num_lines_before = m_mem->getNumLineBefore();

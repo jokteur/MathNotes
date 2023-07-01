@@ -51,6 +51,7 @@ namespace RichText {
         std::vector<SubLine> sublines;
         WrapString chars;
         float y_pos = 0.f;
+        float width = 0.f;
         float total_height = 0.f;
     };
 

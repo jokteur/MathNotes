@@ -203,6 +203,13 @@ namespace RichText {
             if (m_offset != nullptr)
                 m_x_offset = m_offset->getOffset(pair.first);
             algorithm();
+
+            float total_height = 0.f;
+            for (auto& subline : m_lines) {
+                pair.second.sublines.push_back(subline);
+                total_height += subline.height;
+            }
+            pair.second.total_height = total_height;
             // pair.second.max_ascent = m_first_max_ascent;
             // pair.second.max_descent = m_first_max_descent;
             // pair.second.height = m_lines.front().height;

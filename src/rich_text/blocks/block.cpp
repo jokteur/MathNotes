@@ -132,38 +132,6 @@ namespace RichText {
     //     return ret;
     // }
 
-
-    // bool AbstractBlock::hk_draw_main(DrawContext* ctx) {
-    //     //ZoneScoped;
-    //     bool ret = true;
-    //     for (auto& child : m_childrens) {
-    //         ret &= child->draw(ctx);
-    //     }
-
-    //     ret &= hk_draw_secondary(ctx);
-
-    //     return ret;
-    // }
-
-    bool AbstractBlock::draw_pre_line(DrawContext* ctx, DelimiterInfo& del_info, int line_number, const MultiOffset& x_offset, float y_pos) {
-        bool ret = true;
-        auto pos = ImVec2(x_offset.getOffset(line_number), y_pos);
-        /* Compensate for line ascent from child (if necessary) */
-        // auto& line = ctx->doc->getLine(line_number);
-        // if (!line.sublines.empty()) {
-        //     auto& subline = line.sublines.front();
-        //     pos.y += subline.max_ascent - del_info.max_ascent;
-        // }
-        // for (auto ptr : del_info.str) {
-        //     auto p = std::static_pointer_cast<DrawableChar>(ptr);
-        //     auto& line = ctx->doc->getLine(line_number);
-        //     if (line.y_pos > 0.f)
-        //         pos.y += line.y_pos;
-        //     ret &= p->draw(ctx->draw_list, ctx->boundaries, pos);
-        // }
-        return ret;
-    }
-
     void AbstractBlock::hk_draw_background(Draw::DrawList* draw_list) {
         if (m_style.bg_color != Colors::transparent) {
             draw_list->SetCurrentChannel(0);
@@ -178,58 +146,58 @@ namespace RichText {
     void AbstractBlock::get_line_height_from_delimiters(DrawContext* ctx) {
         float position = ctx->cursor_y_pos;
         int i = 0;
-        for (const auto& bounds : m_text_boundaries) {
-            if (i < m_pre_delimiters.size()) {
-                /* Update line info */
-                auto& str = m_pre_delimiters[i].str;
-                if (str.empty())
-                    continue;
-                float max_ascent = 0.f;
-                float max_descent = 0.f;
-                for (auto ch : str) {
-                    if (max_ascent < ch->info->ascent)
-                        max_ascent = ch->info->ascent;
-                    if (max_descent < ch->info->descent)
-                        max_descent = ch->info->descent;
-                }
-                float height = max_ascent + max_descent;
-                height *= m_style.line_space;
-                // (*ctx->lines)[bounds.line_number] = LineInfo{
-                //     position,
-                //     height,
-                //     max_ascent,
-                //     max_descent
-                // };
-                position += height;
-            }
-            i++;
-        }
+        // for (const auto& bounds : m_text_boundaries) {
+        //     if (i < m_pre_delimiters.size()) {
+        //         /* Update line info */
+        //         auto& str = m_pre_delimiters[i].str;
+        //         if (str.empty())
+        //             continue;
+        //         float max_ascent = 0.f;
+        //         float max_descent = 0.f;
+        //         for (auto ch : str) {
+        //             if (max_ascent < ch->info->ascent)
+        //                 max_ascent = ch->info->ascent;
+        //             if (max_descent < ch->info->descent)
+        //                 max_descent = ch->info->descent;
+        //         }
+        //         float height = max_ascent + max_descent;
+        //         height *= m_style.line_space;
+        //         // (*ctx->lines)[bounds.line_number] = LineInfo{
+        //         //     position,
+        //         //     height,
+        //         //     max_ascent,
+        //         //     max_descent
+        //         // };
+        //         position += height;
+        //     }
+        //     i++;
+        // }
     }
     void AbstractBlock::set_pre_margins(DrawContext* ctx) {
-        int i = 0;
-        for (auto& bounds : m_text_boundaries) {
-            /* Draw pre delimiters */
-            if (i < m_pre_delimiters.size()) {
-                ctx->x_offset.addOffset(bounds.line_number, m_pre_delimiters[i].width);
-            }
-            i++;
+        for (auto& pair : m_pre_delimiters) {
+            ctx->x_offset.addOffset(pair.first, pair.second.width);
         }
     }
     void AbstractBlock::set_pre_y_position(DrawContext* ctx) {
         int i = 0;
-        for (const auto& bounds : m_text_boundaries) {
-            if (i >= m_pre_delimiters.size())
-                break;
-            // auto line_it = ctx->lines->find(bounds.line_number);
 
-            // if (line_it != ctx->lines->end()) {
-            //     m_pre_delimiters[i].y_pos = line_it->second.position;
-            // }
-            // else {
-            m_pre_delimiters[i].y_pos = ctx->cursor_y_pos;
-            // }
-            i++;
-        }
+        // for (const auto& bounds : m_text_boundaries) {
+        //     int line_number = bounds.line_number;
+        //     if ()
+        // }
+        // for (const auto& bounds : m_text_boundaries) {
+        //     if (i >= m_pre_delimiters.size())
+        //         break;
+        //     // auto line_it = ctx->lines->find(bounds.line_number);
+
+        //     // if (line_it != ctx->lines->end()) {
+        //     //     m_pre_delimiters[i].y_pos = line_it->second.position;
+        //     // }
+        //     // else {
+        //     m_pre_delimiters[i].y_pos = ctx->cursor_y_pos;
+        //     // }
+        //     i++;
+        // }
     }
     bool AbstractBlock::hk_build_pre_delimiter_chars(DrawContext* ctx) {
         //ZoneScoped;
@@ -239,26 +207,19 @@ namespace RichText {
             WrapAlgorithm wrapper;
             wrapper.setWidth(10000.f, false);
             for (const auto& bounds : m_text_boundaries) {
-                m_pre_delimiters.push_back(DelimiterInfo{});
-                auto& delimiter = m_pre_delimiters.back();
+                m_pre_delimiters[bounds.line_number] = WrapLine{};
+                auto& line = m_pre_delimiters[bounds.line_number];
                 if (bounds.pre == bounds.beg) {
                     continue;
                 }
-                bool res = Utf8StrToImCharStr(m_ui_state, &delimiter.str, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, m_special_chars_style, true);
-                if (!res) {
-                    success = false;
-                    continue;
-                }
+                success &= Utf8StrToImCharStr(m_ui_state, &line.chars, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, m_special_chars_style, true);
 
                 float x_offset = ctx->x_offset.getOffset(bounds.line_number);
-                wrapper.recalculate(&delimiter.str, x_offset);
-                auto last_char = delimiter.str.back();
-                /* Delimiter y position will be calculated later, after setWidth of wrapper in children
-                 * has been called
-                 */
-                delimiter.width = last_char->calculated_position.x + last_char->info->advance;
-                delimiter.max_ascent = wrapper.getFirstMaxAscent();
-                m_pre_max_width = std::max(m_pre_max_width, delimiter.width);
+                wrapper.recalculate(&line.chars, x_offset);
+                if (line.chars.size() > 0) {
+                    auto last_char = line.chars.back();
+                    line.width = last_char->calculated_position.x + last_char->info->advance - x_offset;
+                }
             }
         }
         return success;
@@ -323,7 +284,7 @@ namespace RichText {
         bool ret = true;
         bool char_success = true;
 
-        if (m_widget_dirty & (DIRTY_WIDTH | DIRTY_CHARS)) {
+        if (m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH)) {
             hk_set_x_cursor(ctx);
 
             char_success &= hk_build_pre_delimiter_chars(ctx);
@@ -348,21 +309,40 @@ namespace RichText {
 
             for (auto ptr : m_childrens) {
                 ctx->x_offset = child_x_offset;
-                ret &= !ptr->hk_build_hlayout(ctx);
+                ret &= ptr->hk_build_hlayout(ctx);
             }
 
             char_success &= hk_build_chars(ctx);
 
-            if (ret)
-                m_widget_dirty ^= DIRTY_WIDTH;
             if (char_success)
-                m_widget_dirty ^= DIRTY_CHARS;
+                m_widget_dirty &= ~DIRTY_CHARS;
 
         }
         return ret;
     }
     bool AbstractBlock::hk_build_vlayout(DrawContext* ctx) {
         bool ret = true;
+        if (m_widget_dirty & DIRTY_HEIGHT) {
+            hk_set_y_cursor(ctx);
+
+            float y_offset = ctx->cursor_y_pos;
+            for (auto ptr : m_childrens) {
+                ret &= !ptr->hk_build_vlayout(ctx);
+            }
+            ctx->cursor_y_pos = y_offset;
+
+            int i = 0;
+            for (auto& pair : m_pre_delimiters) {
+                auto& line = pair.second;
+            }
+            for (auto& pair : m_text_column) {
+                auto& line = pair.second;
+                line.y_pos = ctx->cursor_y_pos;
+                ctx->cursor_y_pos += line.total_height;
+            }
+            hk_set_y_dim(ctx);
+            m_widget_dirty &= ~DIRTY_HEIGHT;
+        }
         return ret;
     }
     bool AbstractBlock::draw(DrawContext* ctx) {
@@ -370,22 +350,24 @@ namespace RichText {
 
         bool is_visible = is_in_boundaries(ctx->boundaries);
         if (!is_visible) {
-            // ctx->cursor_y_pos += m_ext_dimensions.h;
             return true;
         }
 
         /* Display chars */
         for (auto& pair : m_text_column) {
-            float pos = ctx->cursor_y_pos;
             for (auto& ptr : pair.second.chars) {
+                auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
+                pos.y += pair.second.y_pos;
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
-                ret &= !p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos());
+                ret &= !p->draw(ctx->draw_list, ctx->boundaries, pos);
             }
         }
-        for (auto& del_info : m_pre_delimiters) {
-            for (auto ptr : del_info.str) {
+        for (auto& pair : m_pre_delimiters) {
+            for (auto& ptr : pair.second.chars) {
+                auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
+                pos.y += pair.second.y_pos;
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
-                ret &= !p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos());
+                ret &= !p->draw(ctx->draw_list, ctx->boundaries, pos);
             }
         }
 
@@ -472,6 +454,44 @@ namespace RichText {
     //     ctx->cursor_y_pos += m_wrapper.getHeight();
     //     return true;
     // }
+    bool AbstractLeafBlock::hk_build_hlayout(DrawContext* ctx) {
+        bool ret = true;
+        bool char_success = true;
+
+        if (m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH)) {
+            hk_set_x_cursor(ctx);
+
+            /* There are two offset used in normal blocks:
+             * - current_offset for delimiter
+             * - child_offset for all block childrens.
+             *   These offsets are determined by the pre-delimiters (in set_pre_margins)
+             *   or the margins of the block
+             */
+            set_pre_margins(ctx);
+
+            /* If true, this helps vertically align all the pre-delimiters */
+            if (m_style.align_pre_indent) {
+                float max_offset = ctx->x_offset.getMax();
+                int first_line = m_text_boundaries.front().line_number;
+                int last_line = m_text_boundaries.back().line_number;
+                ctx->x_offset.clear(first_line, last_line);
+                ctx->x_offset += max_offset;
+            }
+            auto child_x_offset = ctx->x_offset;
+
+            for (auto ptr : m_childrens) {
+                ctx->x_offset = child_x_offset;
+                ret &= ptr->hk_build_hlayout(ctx);
+            }
+
+            char_success &= hk_build_chars(ctx);
+
+            if (char_success)
+                m_widget_dirty &= ~DIRTY_CHARS;
+
+        }
+        return ret;
+    }
     bool AbstractLeafBlock::hk_build_pre_delimiter_chars(DrawContext* ctx) {
         bool success = true;
         for (const auto& bounds : m_text_boundaries) {
@@ -508,7 +528,7 @@ namespace RichText {
                 success &= hk_build_post_delimiter_chars(ctx);
 
             if (success)
-                m_widget_dirty ^= DIRTY_CHARS;
+                m_widget_dirty &= ~DIRTY_CHARS;
 
             m_wrapper.clear();
             m_wrapper.setLineSpace(m_style.line_space, false);
@@ -518,11 +538,11 @@ namespace RichText {
         if (m_widget_dirty & DIRTY_WIDTH) {
             float internal_size = m_int_dimensions.w;
             m_wrapper.setWidth(internal_size, false);
-            m_widget_dirty ^= DIRTY_WIDTH;
+            m_widget_dirty &= ~DIRTY_WIDTH;
             m_wrapper.setMultiOffset(&ctx->x_offset, false);
         }
         m_wrapper.recalculate();
-        return m_widget_dirty;
+        return !(m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH));
     }
 
     /* ===========

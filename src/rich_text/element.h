@@ -59,26 +59,18 @@ namespace RichText {
         /* For children, there can be multiple x offset on each line */
         MultiOffset x_offset;
         Rect boundaries;
-        // LinesInfos* lines;
+        LinesInfos lines;
         // WrapDocument* doc;
         std::vector<TextCursor>* cursors;
-    };
-    struct DelimiterInfo {
-        WrapString str;
-        float max_ascent = 0.f;
-        float width = 0.f;
-        float y_pos = 0.f;
+        ImVec2 draw_offset;
     };
 
     struct AbstractElement : public Drawable {
     protected:
         // WrapColumn m_chars;
-        float m_pre_max_width = 0.f;
-        std::vector<DelimiterInfo> m_pre_delimiters;
-        WrapString m_post_delimiters;
-    public:
         WrapColumn m_text_column;
-
+        float m_y_offset = 0.f;
+    public:
         static int count;
         static int visible_count;
 
