@@ -33,7 +33,7 @@ namespace RichText {
         return true;
     }
 
-    bool Utf8StrToImCharStr(UIState& ui_state, WrapParagraph* wrap_p, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points) {
+    bool Utf8StrToImCharStr(UIState& ui_state, WrapColumn* wrap_p, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points) {
         //ZoneScoped;
         if (start == end)
             return true;

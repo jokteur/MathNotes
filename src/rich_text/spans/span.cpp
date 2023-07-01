@@ -10,7 +10,7 @@ namespace RichText {
     /* =====
      * SPANS
      * ===== */
-    bool AbstractSpan::hk_add_pre_chars(WrapParagraph* wrap_chars) {
+    bool AbstractSpan::hk_add_pre_chars(WrapColumn* wrap_chars) {
         //ZoneScoped;
         bool success = true;
         if (m_is_selected) {
@@ -22,7 +22,7 @@ namespace RichText {
         }
         return success;
     }
-    bool AbstractSpan::hk_add_post_chars(WrapParagraph* wrap_chars) {
+    bool AbstractSpan::hk_add_post_chars(WrapColumn* wrap_chars) {
         //ZoneScoped;
         bool success = true;
         if (m_is_selected) {
@@ -34,7 +34,7 @@ namespace RichText {
         }
         return success;
     }
-    bool AbstractSpan::add_chars(WrapParagraph* wrap_chars) {
+    bool AbstractSpan::add_chars(WrapColumn* wrap_chars) {
         //ZoneScoped;
         bool success = true;
         // m_chars.clear();

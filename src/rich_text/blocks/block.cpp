@@ -10,127 +10,127 @@
 
 namespace RichText {
 
-    bool AbstractBlock::hk_build_main(DrawContext* ctx) {
-        bool ret = true;
-        // At this point, margins have already been taken into account
-        hk_build_chars(ctx);
-        /* This function roughly helps setting width and height from
-         * pre-delimiters */
-         // get_line_height_from_delimiters(ctx);
+    // bool AbstractBlock::hk_build_main(DrawContext* ctx) {
+    //     bool ret = true;
+    //     // At this point, margins have already been taken into account
+    //     hk_build_chars(ctx);
+    //     /* This function roughly helps setting width and height from
+    //      * pre-delimiters */
+    //      // get_line_height_from_delimiters(ctx);
 
-         /* There are two offset used in normal blocks:
-          * - current_offset for delimiter
-          * - child_offset for all block childrens.
-          *   These offsets are determined by the pre-delimiters (in set_pre_margins)
-          *   or the margins of the block
-          */
-        m_current_offset = ctx->x_offset;
+    //      /* There are two offset used in normal blocks:
+    //       * - current_offset for delimiter
+    //       * - child_offset for all block childrens.
+    //       *   These offsets are determined by the pre-delimiters (in set_pre_margins)
+    //       *   or the margins of the block
+    //       */
+    //     m_current_offset = ctx->x_offset;
 
-        set_pre_margins(ctx);
+    //     set_pre_margins(ctx);
 
-        /* If true, this helps vertically align all the pre-delimiters */
-        // if (m_style.align_pre_indent) {
-        //     float max_offset = ctx->x_offset.getMax();
-        //     int first_line = m_text_boundaries.front().line_number;
-        //     int last_line = m_text_boundaries.back().line_number;
-        //     ctx->x_offset.clear(first_line, last_line);
-        //     ctx->x_offset += max_offset;
-        // }
-        auto child_x_offset = ctx->x_offset;
+    //     /* If true, this helps vertically align all the pre-delimiters */
+    //     // if (m_style.align_pre_indent) {
+    //     //     float max_offset = ctx->x_offset.getMax();
+    //     //     int first_line = m_text_boundaries.front().line_number;
+    //     //     int last_line = m_text_boundaries.back().line_number;
+    //     //     ctx->x_offset.clear(first_line, last_line);
+    //     //     ctx->x_offset += max_offset;
+    //     // }
+    //     auto child_x_offset = ctx->x_offset;
 
-        /* Placing the y cursor is delicate. We may have empty delimiters to show
-         * before showing some block children. E.g.:
-         * >        <-- The first delimiter is empty
-         * >> ab    <-- The sub-quote & p is only shown on the second line
-         *    cd        cursor_y_pos must be correct. The height of the paragraph
-         *    ef        determines the position of the next empty delimiter
-         * >
-         *  */
-        auto child_it = m_childrens.begin();
-        auto bounds_it = m_text_boundaries.begin();
-        int i = 0;
-        ctx->x_offset = child_x_offset;
-        for (auto& ptr : m_childrens) {
-            if (!ptr->hk_build(ctx)) {
-                m_widget_dirty |= DIRTY_CHARS;
-                ret = false;
-            }
-            ctx->x_offset = child_x_offset;
-        }
-        //     ctx->x_offset = x_offset;
-        //     // Draw all childrens (spans)
-        //     for (auto ptr : m_childrens) {
-        //         if (ptr->m_category != C_SPAN) {
-        //             break;
-        //         }
-        //         if (!ptr->draw(ctx))
-        //             ret = false;
-        //         ctx->x_offset = x_offset;
-        //     }
-            // Update cursor from wrapper
-        ctx->cursor_y_pos += m_wrapper.getHeight();
+    //     /* Placing the y cursor is delicate. We may have empty delimiters to show
+    //      * before showing some block children. E.g.:
+    //      * >        <-- The first delimiter is empty
+    //      * >> ab    <-- The sub-quote & p is only shown on the second line
+    //      *    cd        cursor_y_pos must be correct. The height of the paragraph
+    //      *    ef        determines the position of the next empty delimiter
+    //      * >
+    //      *  */
+    //     auto child_it = m_childrens.begin();
+    //     auto bounds_it = m_text_boundaries.begin();
+    //     int i = 0;
+    //     ctx->x_offset = child_x_offset;
+    //     for (auto& ptr : m_childrens) {
+    //         if (!ptr->hk_build(ctx)) {
+    //             m_widget_dirty |= DIRTY_CHARS;
+    //             ret = false;
+    //         }
+    //         ctx->x_offset = child_x_offset;
+    //     }
+    //     //     ctx->x_offset = x_offset;
+    //     //     // Draw all childrens (spans)
+    //     //     for (auto ptr : m_childrens) {
+    //     //         if (ptr->m_category != C_SPAN) {
+    //     //             break;
+    //     //         }
+    //     //         if (!ptr->draw(ctx))
+    //     //             ret = false;
+    //     //         ctx->x_offset = x_offset;
+    //     //     }
+    //         // Update cursor from wrapper
+    //     ctx->cursor_y_pos += m_wrapper.getHeight();
 
-        // while (bounds_it != m_text_boundaries.end()) {
-        //     int line_number = bounds_it->line_number;
-        //     bool child_drawn = false;
-        //     float pre_y_pos = ctx->cursor_y_pos;
-        //     /* Build the child if at this line it exists */
-        //     if (child_it != m_childrens.end() && (*child_it)->m_text_boundaries.front().line_number == line_number) {
-        //         ctx->x_offset = child_x_offset;
-        //         (*child_it)->draw(ctx);
-        //         child_drawn = true;
-        //     }
+    //     // while (bounds_it != m_text_boundaries.end()) {
+    //     //     int line_number = bounds_it->line_number;
+    //     //     bool child_drawn = false;
+    //     //     float pre_y_pos = ctx->cursor_y_pos;
+    //     //     /* Build the child if at this line it exists */
+    //     //     if (child_it != m_childrens.end() && (*child_it)->m_text_boundaries.front().line_number == line_number) {
+    //     //         ctx->x_offset = child_x_offset;
+    //     //         (*child_it)->draw(ctx);
+    //     //         child_drawn = true;
+    //     //     }
 
-        //     /* Display pre-delimiters */
-        //     if (i < m_pre_delimiters.size()) {
-        //         if (child_drawn) {
-        //             while (bounds_it != m_text_boundaries.end() && bounds_it->line_number <= (*child_it)->m_text_boundaries.back().line_number) {
-        //                 auto& del_info = m_pre_delimiters[i];
-        //                 // pre_y_pos = (*ctx->lines)[line_number].position;
-        //                 ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, m_current_offset, pre_y_pos);
-        //                 bounds_it++;
-        //                 i++;
-        //                 if (bounds_it != m_text_boundaries.end())
-        //                     line_number = bounds_it->line_number;
-        //                 if (i >= m_pre_delimiters.size())
-        //                     break;
-        //             }
-        //         }
-        //         else {
-        //             auto& del_info = m_pre_delimiters[i];
-        //             ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, m_current_offset, ctx->cursor_y_pos);
+    //     //     /* Display pre-delimiters */
+    //     //     if (i < m_pre_delimiters.size()) {
+    //     //         if (child_drawn) {
+    //     //             while (bounds_it != m_text_boundaries.end() && bounds_it->line_number <= (*child_it)->m_text_boundaries.back().line_number) {
+    //     //                 auto& del_info = m_pre_delimiters[i];
+    //     //                 // pre_y_pos = (*ctx->lines)[line_number].position;
+    //     //                 ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, m_current_offset, pre_y_pos);
+    //     //                 bounds_it++;
+    //     //                 i++;
+    //     //                 if (bounds_it != m_text_boundaries.end())
+    //     //                     line_number = bounds_it->line_number;
+    //     //                 if (i >= m_pre_delimiters.size())
+    //     //                     break;
+    //     //             }
+    //     //         }
+    //     //         else {
+    //     //             auto& del_info = m_pre_delimiters[i];
+    //     //             ret &= draw_pre_line(ctx, del_info, bounds_it->line_number, m_current_offset, ctx->cursor_y_pos);
 
-        //             /* We need to update the y position because no child
-        //              * has had influence on it */
-        //             if (!del_info.str.empty()) {
-        //                 auto& info = del_info.str.front()->info;
-        //                 float height = info->ascent + info->descent;
-        //                 height *= m_style.line_space;
-        //                 ctx->cursor_y_pos += height;
-        //             }
-        //             /* We may have empty delimiter (i.e. new line) that still count*/
-        //             else {
-        //                 ctx->cursor_y_pos += m_style.font_size.getFloat();
-        //             }
-        //             bounds_it++;
-        //             i++;
-        //         }
-        //     }
-        //     else {
-        //         bounds_it++;
-        //     }
-        //     if (child_drawn) {
-        //         child_it = std::next(child_it);
-        //     }
-        //     if (bounds_it == m_text_boundaries.end()) {
-        //         break;
-        //     }
-        // }
+    //     //             /* We need to update the y position because no child
+    //     //              * has had influence on it */
+    //     //             if (!del_info.str.empty()) {
+    //     //                 auto& info = del_info.str.front()->info;
+    //     //                 float height = info->ascent + info->descent;
+    //     //                 height *= m_style.line_space;
+    //     //                 ctx->cursor_y_pos += height;
+    //     //             }
+    //     //             /* We may have empty delimiter (i.e. new line) that still count*/
+    //     //             else {
+    //     //                 ctx->cursor_y_pos += m_style.font_size.getFloat();
+    //     //             }
+    //     //             bounds_it++;
+    //     //             i++;
+    //     //         }
+    //     //     }
+    //     //     else {
+    //     //         bounds_it++;
+    //     //     }
+    //     //     if (child_drawn) {
+    //     //         child_it = std::next(child_it);
+    //     //     }
+    //     //     if (bounds_it == m_text_boundaries.end()) {
+    //     //         break;
+    //     //     }
+    //     // }
 
-        // ret &= hk_draw_secondary(ctx);
+    //     // ret &= hk_draw_secondary(ctx);
 
-        return ret;
-    }
+    //     return ret;
+    // }
 
 
     // bool AbstractBlock::hk_draw_main(DrawContext* ctx) {
@@ -205,16 +205,6 @@ namespace RichText {
             i++;
         }
     }
-    bool AbstractBlock::hk_build_chars(DrawContext* ctx) {
-        //ZoneScoped;
-        if (m_widget_dirty) {
-            m_pre_delimiters.clear();
-            bool result = hk_build_pre_delimiter_chars(ctx);
-            if (result)
-                m_widget_dirty ^= DIRTY_CHARS;
-        }
-        return true;
-    }
     void AbstractBlock::set_pre_margins(DrawContext* ctx) {
         int i = 0;
         for (auto& bounds : m_text_boundaries) {
@@ -246,9 +236,8 @@ namespace RichText {
         bool success = true;
         m_pre_delimiters.clear();
         if (m_is_selected) {
-
             WrapAlgorithm wrapper;
-            wrapper.setWidth(4000.f, false);
+            wrapper.setWidth(10000.f, false);
             for (const auto& bounds : m_text_boundaries) {
                 m_pre_delimiters.push_back(DelimiterInfo{});
                 auto& delimiter = m_pre_delimiters.back();
@@ -260,7 +249,9 @@ namespace RichText {
                     success = false;
                     continue;
                 }
-                wrapper.recalculate(&delimiter.str);
+
+                float x_offset = ctx->x_offset.getOffset(bounds.line_number);
+                wrapper.recalculate(&delimiter.str, x_offset);
                 auto last_char = delimiter.str.back();
                 /* Delimiter y position will be calculated later, after setWidth of wrapper in children
                  * has been called
@@ -328,6 +319,85 @@ namespace RichText {
     void AbstractBlock::hk_debug_attributes() {
         AbstractElement::hk_debug_attributes();
     }
+    bool AbstractBlock::hk_build_hlayout(DrawContext* ctx) {
+        bool ret = true;
+        bool char_success = true;
+
+        if (m_widget_dirty & (DIRTY_WIDTH | DIRTY_CHARS)) {
+            hk_set_x_cursor(ctx);
+
+            char_success &= hk_build_pre_delimiter_chars(ctx);
+
+            /* There are two offset used in normal blocks:
+             * - current_offset for delimiter
+             * - child_offset for all block childrens.
+             *   These offsets are determined by the pre-delimiters (in set_pre_margins)
+             *   or the margins of the block
+             */
+            set_pre_margins(ctx);
+
+            /* If true, this helps vertically align all the pre-delimiters */
+            if (m_style.align_pre_indent) {
+                float max_offset = ctx->x_offset.getMax();
+                int first_line = m_text_boundaries.front().line_number;
+                int last_line = m_text_boundaries.back().line_number;
+                ctx->x_offset.clear(first_line, last_line);
+                ctx->x_offset += max_offset;
+            }
+            auto child_x_offset = ctx->x_offset;
+
+            for (auto ptr : m_childrens) {
+                ctx->x_offset = child_x_offset;
+                ret &= !ptr->hk_build_hlayout(ctx);
+            }
+
+            char_success &= hk_build_chars(ctx);
+
+            if (ret)
+                m_widget_dirty ^= DIRTY_WIDTH;
+            if (char_success)
+                m_widget_dirty ^= DIRTY_CHARS;
+
+        }
+        return ret;
+    }
+    bool AbstractBlock::hk_build_vlayout(DrawContext* ctx) {
+        bool ret = true;
+        return ret;
+    }
+    bool AbstractBlock::draw(DrawContext* ctx) {
+        bool ret = true;
+
+        bool is_visible = is_in_boundaries(ctx->boundaries);
+        if (!is_visible) {
+            // ctx->cursor_y_pos += m_ext_dimensions.h;
+            return true;
+        }
+
+        /* Display chars */
+        for (auto& pair : m_text_column) {
+            float pos = ctx->cursor_y_pos;
+            for (auto& ptr : pair.second.chars) {
+                auto p = std::static_pointer_cast<DrawableChar>(ptr);
+                ret &= !p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos());
+            }
+        }
+        for (auto& del_info : m_pre_delimiters) {
+            for (auto ptr : del_info.str) {
+                auto p = std::static_pointer_cast<DrawableChar>(ptr);
+                ret &= !p->draw(ctx->draw_list, ctx->boundaries, m_int_dimensions.getPos());
+            }
+        }
+
+        /* Display childrens */
+        for (auto& child : m_childrens) {
+            ret &= child->draw(ctx);
+        }
+
+        ret &= hk_draw_secondary(ctx);
+
+        return ret;
+    }
 
     /* =========
      * LeafBlock
@@ -389,24 +459,25 @@ namespace RichText {
     //     return ret;
     // }
 
-    bool AbstractLeafBlock::hk_build_main(DrawContext* ctx) {
-        bool ret = true;
-        ret &= hk_build_chars(ctx);
-        for (auto& ptr : m_childrens) {
-            if (!ptr->hk_build(ctx)) {
-                m_widget_dirty |= DIRTY_CHARS;
-                ret = false;
-            }
-        }
-        ctx->cursor_y_pos += m_wrapper.getHeight();
-        return true;
-    }
+
+    // bool AbstractLeafBlock::hk_build_main(DrawContext* ctx) {
+    //     bool ret = true;
+    //     ret &= hk_build_chars(ctx);
+    //     for (auto& ptr : m_childrens) {
+    //         if (!ptr->hk_build(ctx)) {
+    //             m_widget_dirty |= DIRTY_CHARS;
+    //             ret = false;
+    //         }
+    //     }
+    //     ctx->cursor_y_pos += m_wrapper.getHeight();
+    //     return true;
+    // }
     bool AbstractLeafBlock::hk_build_pre_delimiter_chars(DrawContext* ctx) {
         bool success = true;
         for (const auto& bounds : m_text_boundaries) {
             int line_number = bounds.line_number;
             if (bounds.pre < bounds.beg && m_is_selected) {
-                success &= Utf8StrToImCharStr(m_ui_state, &m_paragraph, m_safe_string, line_number, bounds.pre, bounds.beg, m_special_chars_style, true);
+                success &= Utf8StrToImCharStr(m_ui_state, &m_text_column, m_safe_string, line_number, bounds.pre, bounds.beg, m_special_chars_style, true);
             }
         }
         return success;
@@ -416,7 +487,7 @@ namespace RichText {
         const auto& bounds = m_text_boundaries.back();
         int line_number = bounds.line_number;
         if (bounds.end < bounds.post && m_is_selected) {
-            success &= Utf8StrToImCharStr(m_ui_state, &m_paragraph, m_safe_string, line_number, bounds.end, bounds.post, m_special_chars_style, true);
+            success &= Utf8StrToImCharStr(m_ui_state, &m_text_column, m_safe_string, line_number, bounds.end, bounds.post, m_special_chars_style, true);
         }
         return success;
     }
@@ -424,17 +495,14 @@ namespace RichText {
     bool AbstractLeafBlock::hk_build_chars(DrawContext* ctx) {
         //ZoneScoped;
         if (m_widget_dirty & DIRTY_CHARS) {
-            m_paragraph.clear();
+            m_text_column.clear();
 
             bool success = true;
             if (m_is_selected)
                 success &= hk_build_pre_delimiter_chars(ctx);
 
             for (auto ptr : m_childrens) {
-                if (ptr->m_category != C_SPAN) {
-                    break;
-                }
-                success &= ptr->add_chars(&m_paragraph);
+                success &= ptr->add_chars(&m_text_column);
             }
             if (m_is_selected)
                 success &= hk_build_post_delimiter_chars(ctx);
@@ -444,13 +512,14 @@ namespace RichText {
 
             m_wrapper.clear();
             m_wrapper.setLineSpace(m_style.line_space, false);
-            m_wrapper.setParagraph(&m_paragraph, false);
+            m_wrapper.setTextColumn(&m_text_column, false);
+            m_wrapper.setMultiOffset(&ctx->x_offset, false);
         }
         if (m_widget_dirty & DIRTY_WIDTH) {
-            float internal_size = m_window_width - ctx->x_offset.getMin() - m_style.h_margins.y.getFloat();
+            float internal_size = m_int_dimensions.w;
             m_wrapper.setWidth(internal_size, false);
-
             m_widget_dirty ^= DIRTY_WIDTH;
+            m_wrapper.setMultiOffset(&ctx->x_offset, false);
         }
         m_wrapper.recalculate();
         return m_widget_dirty;
@@ -463,27 +532,27 @@ namespace RichText {
         //ZoneScoped;
         // ctx->cursor_y_pos += 1.f;
         if (m_widget_dirty) {
-            m_paragraph.clear();
+            m_text_column.clear();
 
             bool success = true;
 
             if (m_is_selected) {
                 auto& bounds = m_text_boundaries.front();
-                success &= Utf8StrToImCharStr(m_ui_state, &m_paragraph, m_safe_string, bounds.line_number, bounds.pre, bounds.end, m_special_chars_style, true);
+                success &= Utf8StrToImCharStr(m_ui_state, &m_text_column, m_safe_string, bounds.line_number, bounds.pre, bounds.end, m_special_chars_style, true);
             }
 
             m_wrapper.clear();
             float internal_size = m_window_width - ctx->x_offset.getMax() - m_style.h_margins.y.getFloat();
             m_wrapper.setWidth(internal_size, false);
             m_wrapper.setLineSpace(m_style.line_space, false);
-            m_wrapper.setParagraph(&m_paragraph);
+            m_wrapper.setTextColumn(&m_text_column);
 
             if (success)
                 m_widget_dirty = false;
         }
         return m_widget_dirty;
     }
-    bool HiddenSpace::add_chars(WrapParagraph* wrap_chars) {
+    bool HiddenSpace::add_chars(WrapColumn* wrap_chars) {
         //ZoneScoped;
         bool success = true;
         return success;

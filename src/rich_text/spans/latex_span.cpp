@@ -30,7 +30,7 @@ namespace RichText {
         }
         return success;
     }
-    bool LatexSpan::add_chars(WrapParagraph* wrap_chars) {
+    bool LatexSpan::add_chars(WrapColumn* wrap_chars) {
         //ZoneScoped;
         build_latex_image();
 

@@ -89,7 +89,7 @@ namespace RichText {
         {
             //ZoneScoped;
             auto current_line_it = m_lines.begin();
-            float cursor_pos_x = 0.f;
+            float cursor_pos_x = m_x_offset;
 
             int word_idx = 0;
             float word_pos_x = 0.f;
@@ -193,13 +193,15 @@ namespace RichText {
         }
     }
     void WrapAlgorithm::recalculate() {
-        if (m_paragraph == nullptr)
+        if (m_text_column == nullptr)
             return;
         m_height = 0.f;
         auto width_it = m_widths.begin();
-        for (auto& pair : m_paragraph->getParagraph()) {
+        for (auto& pair : m_text_column->getParagraph()) {
             m_width = *width_it;
             m_current_string = &pair.second.chars;
+            if (m_offset != nullptr)
+                m_x_offset = m_offset->getOffset(pair.first);
             algorithm();
             // pair.second.max_ascent = m_first_max_ascent;
             // pair.second.max_descent = m_first_max_descent;
@@ -209,14 +211,15 @@ namespace RichText {
                 width_it = next;
         }
     }
-    void WrapAlgorithm::recalculate(WrapString* string) {
+    void WrapAlgorithm::recalculate(WrapString* string, float x_offset) {
         m_height = 0.f;
         m_current_string = string;
+        m_x_offset = x_offset;
         m_width = m_widths.front();
         algorithm();
     }
-    void WrapAlgorithm::setParagraph(WrapParagraph* paragraph, bool redo) {
-        m_paragraph = paragraph;
+    void WrapAlgorithm::setTextColumn(WrapColumn* paragraph, bool redo) {
+        m_text_column = paragraph;
         if (redo)
             recalculate();
     }
@@ -237,6 +240,11 @@ namespace RichText {
     void WrapAlgorithm::setLineSpace(float line_space, bool redo) {
         //ZoneScoped;
         m_line_space = line_space;
+        if (redo)
+            recalculate();
+    }
+    void WrapAlgorithm::setMultiOffset(MultiOffset* offset, bool redo) {
+        m_offset = offset;
         if (redo)
             recalculate();
     }

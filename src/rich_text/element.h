@@ -12,6 +12,7 @@
 
 #include "geometry/basic.h"
 #include "geometry/multi_boundaries.h"
+#include "geometry/multi_offset.h"
 #include "types.h"
 
 #include "widgets_enum.h"
@@ -47,30 +48,10 @@ namespace RichText {
         float descent;
     };
 
-    /* Points to elements that have a WrapParagraph */
+    /* Points to elements that have a WrapColumn */
     typedef std::unordered_set<AbstractElementPtr> ElementsList;
 
     typedef std::unordered_map<int, ElementsList> LinesInfos;
-
-    class MultiOffset {
-    private:
-        std::unordered_map<int, float> m_offsets;
-        float m_min = 1e9;
-        float m_max = -1e9;
-    public:
-        MultiOffset& operator+=(float offset);
-        MultiOffset& operator-=(float offset);
-        void addOffset(int line_number, float offset);
-
-        float getOffset(int line_number) const;
-
-        void clear();
-        void clear(const std::vector<int>& lines);
-        void clear(int from, int to);
-
-        float getMin() const;
-        float getMax() const;
-    };
 
     struct DrawContext {
         Draw::DrawList* draw_list;
@@ -91,19 +72,20 @@ namespace RichText {
 
     struct AbstractElement : public Drawable {
     protected:
-        // WrapParagraph m_chars;
+        // WrapColumn m_chars;
         float m_pre_max_width = 0.f;
         std::vector<DelimiterInfo> m_pre_delimiters;
         WrapString m_post_delimiters;
     public:
-        WrapParagraph m_paragraph;
+        WrapColumn m_text_column;
 
         static int count;
         static int visible_count;
 
         const unsigned int DIRTY_WIDTH = 0x1;
         const unsigned int DIRTY_CHARS = 0x2;
-        const unsigned int ALL_DIRTY = DIRTY_WIDTH | DIRTY_CHARS;
+        const unsigned int DIRTY_HEIGHT = 0x4;
+        const unsigned int ALL_DIRTY = DIRTY_WIDTH | DIRTY_CHARS | DIRTY_HEIGHT;
 
         Type m_type;
         Category m_category;
@@ -124,21 +106,29 @@ namespace RichText {
         // bool m_no_y_update = false;
 
         // Returns false if not succesfully build chars
-        bool virtual add_chars(WrapParagraph* wrap_chars);
+        bool virtual add_chars(WrapColumn* wrap_chars);
         bool virtual draw(DrawContext* context);
 
         bool is_in_boundaries(const Rect& boundaries);
 
         // Build hooks
         bool virtual hk_build_chars(DrawContext* context);
-        bool virtual hk_build_main(DrawContext* context);
+        // bool virtual hk_build_main(DrawContext* context);
         bool virtual hk_build(DrawContext* context);
-        void virtual hk_set_dimensions(DrawContext* context, float last_y_pos);
         void virtual hk_set_selected(DrawContext* context);
+
+        // New hooks for refactoring
+        // void virtual hk_set_spacings(DrawContext* context);
+        bool virtual hk_build_hlayout(DrawContext* context);
+        bool virtual hk_build_vlayout(DrawContext* context);
+        void virtual hk_set_x_cursor(DrawContext* context);
+        void virtual hk_set_y_cursor(DrawContext* context);
+        // void virtual hk_set_x_dim(DrawContext* context);
+        void virtual hk_set_y_dim(DrawContext* context);
 
         // void virtual hk_update_line_info(DrawContext* context);
         // Draw hooks
-        float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
+        // float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
         // bool virtual hk_draw_main(DrawContext* context);
         /* Implement this function if you want to draw visual elements
          * that are not part of fundamental widget construction and char drawing */

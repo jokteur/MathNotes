@@ -10,7 +10,7 @@ namespace RichText {
         m_type = T_TEXT;
     }
 
-    bool TextString::add_chars(WrapParagraph* wrap_chars) {
+    bool TextString::add_chars(WrapColumn* wrap_chars) {
         //ZoneScoped;
         // m_chars.clear();
         bool success = true;
@@ -25,27 +25,27 @@ namespace RichText {
             success = false;
         return success;
     }
-    float TextString::hk_set_position(float& cursor_y_pos, MultiOffset& x_offset) {
-        // Dimension is also directly calculated here
-        // if (!m_chars.empty()) {
-            // auto start_char = m_draw_chars.front();
-            // auto end_char = m_draw_chars.back();
-            // float ascent = start_char->ascent;
-            // float descent = end_char->descent;
-            // m_ext_dimensions = Rect{
-            //     start_char->_calculated_position.x - start_char->offset.x,
-            //     start_char->_calculated_position.y - start_char->offset.y,
-            //     end_char->_calculated_position.x - end_char->offset.x + end_char->advance,
-            //     end_char->_calculated_position.y - end_char->offset.y + ascent - descent
-            // };
-            // m_ext_dimensions.w -= m_ext_dimensions.x;
-            // m_ext_dimensions.h -= m_ext_dimensions.y;
-        // }
-        return cursor_y_pos;
-    }
-    void TextString::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
+    // float TextString::hk_set_position(float& cursor_y_pos, MultiOffset& x_offset) {
+    //     // Dimension is also directly calculated here
+    //     // if (!m_chars.empty()) {
+    //         // auto start_char = m_draw_chars.front();
+    //         // auto end_char = m_draw_chars.back();
+    //         // float ascent = start_char->ascent;
+    //         // float descent = end_char->descent;
+    //         // m_ext_dimensions = Rect{
+    //         //     start_char->_calculated_position.x - start_char->offset.x,
+    //         //     start_char->_calculated_position.y - start_char->offset.y,
+    //         //     end_char->_calculated_position.x - end_char->offset.x + end_char->advance,
+    //         //     end_char->_calculated_position.y - end_char->offset.y + ascent - descent
+    //         // };
+    //         // m_ext_dimensions.w -= m_ext_dimensions.x;
+    //         // m_ext_dimensions.h -= m_ext_dimensions.y;
+    //     // }
+    //     return cursor_y_pos;
+    // }
+    // void TextString::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
 
-    }
+    // }
     // bool TextString::hk_draw_main(DrawContext* ctx) {
     //     //ZoneScoped;
     //     bool ret = true;

@@ -20,7 +20,6 @@ namespace RichText {
         }
         std::vector<DelimiterInfo> m_pre_delimiters;
         WrapString m_post_delimiters;
-        MultiOffset m_current_offset;
 
         void set_pre_y_position(DrawContext* context);
         void set_pre_margins(DrawContext* context);
@@ -28,11 +27,14 @@ namespace RichText {
         bool draw_pre_line(DrawContext* ctx, DelimiterInfo& del_info, int line_number, const MultiOffset& x_offset, float y_pos);
         // void place_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars, TextCursor& cursor);
 
-        bool hk_build_chars(DrawContext* context) override;
-        bool hk_build_main(DrawContext* context) override;
+        bool hk_build_hlayout(DrawContext* context) override;
+        bool hk_build_vlayout(DrawContext* context) override;
+
+        // bool hk_build_main(DrawContext* context) override;
         // bool hk_draw_main(DrawContext* context) override;
         void hk_draw_background(Draw::DrawList* draw_list) override;
         // void hk_draw_text_cursor(DrawContext* context) override;
+        bool draw(DrawContext* ctx) override;
         void hk_debug_attributes() override;
         void hk_set_selected(DrawContext* context) override;
 
@@ -55,7 +57,7 @@ namespace RichText {
         bool hk_build_pre_delimiter_chars(DrawContext* context) override;
         bool hk_build_post_delimiter_chars(DrawContext* context) override;
         // void hk_update_line_info(DrawContext* context) override;
-        bool hk_build_main(DrawContext* context) override;
+        // bool hk_build_main(DrawContext* context) override;
         bool hk_build_chars(DrawContext* context) override;
         // bool hk_draw_main(DrawContext* context) override;
         void hk_draw_text_cursor(DrawContext* context) override;
@@ -69,7 +71,7 @@ namespace RichText {
         }
         bool hk_build_chars(DrawContext* context) override;
         // bool hk_draw_main(DrawContext* context) override;
-        bool add_chars(WrapParagraph* wrap_chars) override;
+        bool add_chars(WrapColumn* wrap_chars) override;
     };
     struct HrBlock : public AbstractLeafBlock {
         HrBlock() : AbstractLeafBlock() {

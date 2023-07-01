@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "geometry/multi_offset.h"
 #include "fonts/char.h"
 
 namespace RichText {
@@ -53,7 +54,7 @@ namespace RichText {
         float total_height = 0.f;
     };
 
-    class WrapParagraph {
+    class WrapColumn {
     private:
         std::map<int, WrapLine> m_lines;
     public:
@@ -110,8 +111,9 @@ namespace RichText {
      */
     class WrapAlgorithm {
     private:
-        WrapParagraph* m_paragraph = nullptr;
+        WrapColumn* m_text_column = nullptr;
         WrapString* m_current_string;
+        MultiOffset* m_offset = nullptr;
 
         // Calculated quantities
         std::list<SubLine> m_lines;
@@ -121,6 +123,7 @@ namespace RichText {
         // User set quantities
         std::vector<float> m_widths = { 1.f };
         float m_width;
+        float m_x_offset = 0.f;
         float m_height = 0.f;
         float m_line_space = 1.3f;
         float m_first_max_ascent = 0.f;
@@ -148,10 +151,10 @@ namespace RichText {
         ~WrapAlgorithm();
 
         // void setString(WrapString* string, bool redo = true);
-        void setParagraph(WrapParagraph* paragraph, bool redo = true);
+        void setTextColumn(WrapColumn* paragraph, bool redo = true);
         void clear();
         void recalculate();
-        void recalculate(WrapString* string);
+        void recalculate(WrapString* string, float x_offset = 0.f);
 
         float getHeight() { return m_height; }
         float getFirstMaxAscent() { return m_first_max_ascent; }
@@ -160,5 +163,6 @@ namespace RichText {
         void setWidth(float width, bool redo = true);
         void setWidth(const std::vector<float>& width, bool redo = true);
         void setLineSpace(float line_space, bool redo = true);
+        void setMultiOffset(MultiOffset* offset, bool redo = true);
     };
 }

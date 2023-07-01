@@ -19,6 +19,6 @@ namespace RichText {
         bool draw(Draw::DrawList* draw_list, const Rect& boundaries, ImVec2 draw_offset = ImVec2(0.f, 0.f)) override;
     };
 
-    bool Utf8StrToImCharStr(UIState& ui_state, WrapParagraph* wrap_p, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points = false);
+    bool Utf8StrToImCharStr(UIState& ui_state, WrapColumn* wrap_p, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points = false);
     bool Utf8StrToImCharStr(UIState& ui_state, WrapString* wrap_str, SafeString str, int line, int start, int end, const Style& style, bool replace_spaces_by_points = false);
 }

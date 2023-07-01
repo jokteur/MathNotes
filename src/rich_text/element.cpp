@@ -16,76 +16,6 @@ namespace RichText {
     int AbstractElement::count = 0;
     int AbstractElement::visible_count = 0;
 
-    MultiOffset& MultiOffset::operator+=(float offset) {
-        for (auto& pair : m_offsets) {
-            pair.second += offset;
-        }
-        m_min += offset;
-        m_max += offset;
-        return *this;
-    }
-    MultiOffset& MultiOffset::operator-=(float offset) {
-        for (auto& pair : m_offsets) {
-            pair.second -= offset;
-        }
-        m_min -= offset;
-        m_max -= offset;
-        return *this;
-    }
-    float MultiOffset::getOffset(int line_number) const {
-        if (m_offsets.find(line_number) == m_offsets.end()) {
-            return 0.f;
-        }
-        return m_offsets.at(line_number);
-    }
-    void MultiOffset::addOffset(int line_number, float offset) {
-        if (m_offsets.find(line_number) == m_offsets.end()) {
-            m_offsets[line_number] = 0.f;
-        }
-        m_offsets[line_number] += offset;
-
-        m_min = 1e9;
-        m_max = -1e9;
-        for (auto& pair : m_offsets) {
-            if (pair.second < m_min)
-                m_min = pair.second;
-            if (pair.second > m_max)
-                m_max = pair.second;
-        }
-    }
-    void MultiOffset::clear() {
-        m_offsets.clear();
-        m_min = 1e9;
-        m_max = -1e9;
-    }
-    void MultiOffset::clear(const std::vector<int>& line_numbers) {
-        m_offsets.clear();
-        for (auto line_number : line_numbers) {
-            m_offsets[line_number] = 0.f;
-        }
-        m_min = 0.f;
-        m_max = 0.f;
-    }
-    void MultiOffset::clear(int from, int to) {
-        m_offsets.clear();
-        for (int i = from;i <= to;i++) {
-            m_offsets.insert({ i, 0.f });
-        }
-        m_min = 0.f;
-        m_max = 0.f;
-    }
-
-    float MultiOffset::getMin() const {
-        if (m_offsets.empty())
-            return 0.f;
-        return m_min;
-    }
-    float MultiOffset::getMax() const {
-        if (m_offsets.empty())
-            return 0.f;
-        return m_max;
-    }
-
     /* =========
      * Debugging
      * ========= */
@@ -184,7 +114,7 @@ namespace RichText {
     /* ========
      * Building
      * ======== */
-    bool AbstractElement::add_chars(WrapParagraph*) {
+    bool AbstractElement::add_chars(WrapColumn*) {
         return true;
     }
 
@@ -202,77 +132,101 @@ namespace RichText {
         return isInsideRectY(dims.y, b) || isInsideRectY(dims.y + dims.h, b)
             || b.y > dims.y && b.y + b.h < dims.y + dims.h;
     }
-    float AbstractElement::hk_set_position(float& cursor_y_pos, MultiOffset& x_offset) {
-        m_ext_dimensions.x = x_offset.getMin();
-        m_ext_dimensions.y = cursor_y_pos;
-
-        if (!m_is_selected)
-            x_offset += m_style.h_margins.x.getFloat();
-        cursor_y_pos += m_style.v_margins.x.getFloat();
-
-        if (!m_is_selected)
-            m_int_dimensions.x = x_offset.getMin();
-        m_int_dimensions.y = cursor_y_pos;
-
-        float current_y_pos = cursor_y_pos;
-
-        if (!m_is_selected)
-            x_offset += m_style.h_paddings.x.getFloat();
-        cursor_y_pos += m_style.v_paddings.x.getFloat();
-        return current_y_pos;
+    void AbstractElement::hk_set_y_cursor(DrawContext* ctx) {
+        m_ext_dimensions.y = ctx->cursor_y_pos;
+        /* Margins */
+        ctx->cursor_y_pos += m_style.v_margins.x.getFloat();
+        m_int_dimensions.y = ctx->cursor_y_pos;
+        /* Paddings */
+        ctx->cursor_y_pos += m_style.v_paddings.x.getFloat();
     }
-    void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
-        if (m_category == C_BLOCK && ctx->cursor_y_pos - last_y_pos == 0.f) {
-            for (const auto& bounds : m_text_boundaries) {
-                // auto& set = ctx->doc->getWidgetsOnLine(bounds.line_number);
-                // if (set.empty())
-                //     continue;
-                // auto ptr = *set.begin();
-                // ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
-            }
-        }
-        ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
+    void AbstractElement::hk_set_x_cursor(DrawContext* ctx) {
+        m_ext_dimensions.x = ctx->x_offset.getMin();
+
+        /* Margins */
+        if (!m_is_selected)
+            ctx->x_offset += m_style.h_margins.x.getFloat();
+
+        if (!m_is_selected)
+            m_int_dimensions.x = ctx->x_offset.getMin();
+
+        /* Paddings */
+        if (!m_is_selected)
+            ctx->x_offset += m_style.h_paddings.x.getFloat();
+
+        /* Width */
         float w = m_window_width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
-        w -= m_int_dimensions.x;
-
-        m_int_dimensions.w = w;
-        m_int_dimensions.h = ctx->cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.x.getFloat();
-
-        ctx->cursor_y_pos += m_style.v_margins.y.getFloat();
-        /* h margin x and h padding x got added to x_offset in hk_set_position,
-         * which we must re-add to have the correct width */
-        w = m_window_width - m_ext_dimensions.x;
-        m_ext_dimensions.w = w;
-        m_ext_dimensions.h = ctx->cursor_y_pos - m_ext_dimensions.y;
-
-        m_is_dimension_set = true;
+        m_int_dimensions.w = w - m_int_dimensions.x;
+        m_ext_dimensions.w = m_window_width - m_ext_dimensions.x;
     }
-    bool AbstractElement::hk_build_main(DrawContext* ctx) {
+    void AbstractElement::hk_set_y_dim(DrawContext* ctx) {
+        ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
+        float h = ctx->cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.y.getFloat();
+        m_int_dimensions.h = h;
+        ctx->cursor_y_pos += m_style.v_margins.y.getFloat();
+        m_ext_dimensions.h = ctx->cursor_y_pos - m_ext_dimensions.y;
+    }
+
+    bool AbstractElement::hk_build_hlayout(DrawContext* ctx) {
         bool ret = true;
-        if (!hk_build_chars(ctx)) {
-            m_widget_dirty |= DIRTY_CHARS;
-            ret = false;
+        hk_set_x_cursor(ctx);
+        auto child_x_offset = ctx->x_offset;
+
+        for (auto ptr : m_childrens) {
+            ctx->x_offset = child_x_offset;
+            ret &= !ptr->hk_build_hlayout(ctx);
         }
-        for (auto& ptr : m_childrens) {
-            if (!ptr->hk_build(ctx)) {
-                m_widget_dirty |= DIRTY_CHARS;
-                ret = false;
-            }
+
+        if (ret) {
+            m_widget_dirty ^= DIRTY_WIDTH;
         }
+        return ret;
+    }
+    bool AbstractElement::hk_build_vlayout(DrawContext* ctx) {
         return true;
     }
+
+    // void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
+    //     if (m_category == C_BLOCK && ctx->cursor_y_pos - last_y_pos == 0.f) {
+    //         for (const auto& bounds : m_text_boundaries) {
+    //             // auto& set = ctx->doc->getWidgetsOnLine(bounds.line_number);
+    //             // if (set.empty())
+    //             //     continue;
+    //             // auto ptr = *set.begin();
+    //             // ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
+    //         }
+    //     }
+    //     ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
+    //     float w = m_window_width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
+    //     w -= m_int_dimensions.x;
+
+    //     m_int_dimensions.w = w;
+    //     m_int_dimensions.h = ctx->cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.x.getFloat();
+
+    //     ctx->cursor_y_pos += m_style.v_margins.y.getFloat();
+    //     /* h margin x and h padding x got added to x_offset in hk_set_position,
+    //      * which we must re-add to have the correct width */
+    //     w = m_window_width - m_ext_dimensions.x;
+    //     m_ext_dimensions.w = w;
+    //     m_ext_dimensions.h = ctx->cursor_y_pos - m_ext_dimensions.y;
+
+    //     m_is_dimension_set = true;
+    // }
     bool AbstractElement::hk_build_chars(DrawContext*) { return true; }
     bool AbstractElement::hk_build(DrawContext* ctx) {
         bool ret = true;
         float initial_y_pos = ctx->cursor_y_pos;
-        hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
-        if (!m_is_dimension_set || m_widget_dirty) {
-            hk_set_selected(ctx);
-            if (!hk_build_main(ctx)) {
-                m_widget_dirty |= DIRTY_CHARS;
-                ret = false;
-            }
-            hk_set_dimensions(ctx, initial_y_pos);
+        // hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
+        if (m_widget_dirty) {
+            hk_build_hlayout(ctx);
+            hk_build_vlayout(ctx);
+            hk_set_y_dim(ctx);
+            // hk_set_selected(ctx);
+            // if (!hk_build_main(ctx)) {
+            //     m_widget_dirty |= DIRTY_CHARS;
+            //     ret = false;
+            // }
+            // hk_set_dimensions(ctx, initial_y_pos);
             // hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
             // hk_draw_background(ctx->draw_list);
             // hk_draw_text_cursor(ctx); 
@@ -353,7 +307,7 @@ namespace RichText {
         m_window_width = width;
         m_widget_dirty |= DIRTY_WIDTH;
         for (auto ptr : m_childrens) {
-            ptr->setWindowWidth(width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat());
+            ptr->setWindowWidth(width);
         }
     }
 
@@ -388,7 +342,7 @@ namespace RichText {
         }
 
         /* Display chars */
-        for (auto& pair : m_paragraph) {
+        for (auto& pair : m_text_column) {
             float pos = ctx->cursor_y_pos;
             for (auto& ptr : pair.second.chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
@@ -403,8 +357,6 @@ namespace RichText {
         }
 
         ret &= hk_draw_secondary(ctx);
-
-        // ctx->cursor_y_pos += m_ext_dimensions.h;
 
         return ret;
     }

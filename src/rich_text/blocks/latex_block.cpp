@@ -41,19 +41,19 @@ namespace RichText {
     bool DisplayLatexWidget::hk_build_chars(DrawContext* ctx) {
         bool success = false;
         if (m_widget_dirty & DIRTY_CHARS) {
-            m_paragraph.clear();
+            m_text_column.clear();
 
             bool success = true;
 
             if (m_is_selected) {
                 success &= hk_build_pre_delimiter_chars(ctx);
                 for (const auto& bounds : m_text_boundaries) {
-                    success &= Utf8StrToImCharStr(m_ui_state, &m_paragraph, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_special_chars_style, false);
+                    success &= Utf8StrToImCharStr(m_ui_state, &m_text_column, m_safe_string, bounds.line_number, bounds.beg, bounds.end, m_special_chars_style, false);
                 }
                 success &= hk_build_post_delimiter_chars(ctx);
                 m_wrapper.clear();
                 m_wrapper.setLineSpace(m_style.line_space, false);
-                m_wrapper.setParagraph(&m_paragraph, false);
+                m_wrapper.setTextColumn(&m_text_column, false);
                 m_wrapper.recalculate();
             }
 
