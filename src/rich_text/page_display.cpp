@@ -14,6 +14,9 @@ namespace RichText {
         ImGui::Text("Heigts (b, a, t): %f %f %f", m_before_height, m_after_height, m_before_height + m_after_height);
     }
 
+    /* ================================
+     * Main display and widget building
+     * ================================ */
     void PageDisplay::FrameUpdate(const std::string& window_name, DrawContext* ctx) {
         m_window_name = window_name;
 
@@ -40,70 +43,115 @@ namespace RichText {
 
         /* Once we know the height of the page,
          * we can estimate how many lines we should
-         * look ahead for block element construction*/
+         * look ahead for block element construction */
         m_display_height = vMax.y - vMin.y;
         calculate_heights();
         m_mem->manage();
 
         AbstractElement::visible_count = 0;
 
-        /* Set the width of the blocks recursively, even the ones that are not shown */
-        /* After a resize event, we want to make sure that the scroll stays at the same line
-         * This is why current_widget_y_size */
-        bool resize_event = false;
-        float current_widget_y_size = 0.f;
-        float updated_current_widget_y_size = 0.f;
+        /* Resize events may shift vertically the content. To keep the content fixed
+         * in place, we may need to reshift after rebuilding the blocks
+         *  prev_top_block_idx: record the last block display at the top of the page
+         *  prev_top_block_shift: record the vertical shift of the current block if it changes
+         * */
+        int prev_top_block_idx = m_mem->getCurrentBlockIdx();
+        Rect prev_top_block_ext_dimensions;
+        float prev_top_block_shift = 0.f;
+        float prev_percentage = (-m_y_displacement / m_total_height);
+        if (!m_mem->getElements().empty()) {
+            const auto& element = m_mem->getCurrentBlock()->get();
+            prev_top_block_ext_dimensions = element.m_ext_dimensions;
+        }
+        /* Now set the new width if necessary */
         for (auto pair : m_mem->getElements()) {
-            // if (m_current_width != width && pair.second == m_mem->getCurrentBlock()) {
-            //     current_widget_y_size = m_mem->getCurrentBlock()->get().m_ext_dimensions.h;
-            // }
-            if (m_current_width != width || pair.second->get().m_widget_dirty & pair.second->get().DIRTY_WIDTH) {
+            if (m_current_width != width) {
                 pair.second->get().setWindowWidth(width);
             }
         }
+        bool resize_event = false;
         if (m_current_width != width) {
             resize_event = true;
             m_current_width = width;
         }
 
+        if (!m_scrollbar_grab)
+            manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+
         /* Building the widgets (no-op if already built)*/
-        /* We want to separate elements in two groups:
-         * - before m_current_line
-         * - after m_current_line
-         *
-         * All the elements before should not be displayed, but they are still important
-         * to be build once to calculate the scroll height
-         *
-         * As the elements height can only be known when displaying them once, we still need
-         * to call the draw fct. This is why we first draw them safely outside of the screen
-         *
-         * Once we reach the m_current_line element, then we can set y_pos properly
-         */
-        ctx->cursor_y_pos = 0; // m_display_height + 1000.f;
+        bool redo_y_positions = false;
+        /* We may not scroll further up than the first block */
+        if (m_y_displacement > 0.f) {
+            m_y_displacement = 0.f;
+        }
+        /* We may not scroll further down than the last block */
+        if (m_total_height < -m_y_displacement) {
+            m_y_displacement = -m_total_height;
+        }
+        if (m_prev_y_displacement != m_y_displacement) {
+            redo_y_positions = true;
+            m_prev_y_displacement = m_y_displacement;
+        }
         bool found_current = false;
+        ctx->cursor_y_pos = m_y_displacement;
         TimeCounter::getInstance().startCounter("BuildAll");
         for (auto pair : m_mem->getElements()) {
             /* Each root block begins with an offset of zero */
             ctx->x_offset.clear();
             auto& element = pair.second->get();
+            float y_offset = ctx->cursor_y_pos;
             ctx->lines = LinesInfos();
-            /* If this if is true, we switch from before m_current_line to after m_current_line */
-            // if (!found_current && pair.first >= m_mem->getCurrentBlockIdx()) {
-            //     found_current = true;
-            //     m_before_height = ctx->cursor_y_pos - m_display_height - 1000.f;
-            //     ctx->cursor_y_pos = -roundf(m_y_displacement);
-            //     updated_current_widget_y_size = pair.second->get().m_ext_dimensions.h;
-            //     continue;
-            // }
+            if (redo_y_positions) {
+                element.resetYOrigin();
+            }
             element.hk_build(ctx);
+            if (pair.first == prev_top_block_idx && resize_event) {
+                prev_top_block_shift = y_offset - prev_top_block_ext_dimensions.y;
+            }
+            if (!found_current && element.is_in_boundaries(ctx->boundaries)) {
+                found_current = true;
+                m_before_height = y_offset - m_y_displacement - element.m_ext_dimensions.y;
+                if (m_mem->getCurrentBlockIdx() != pair.first) {
+                    m_mem->setCurrentBlockIdx(pair.first);
+                }
+            }
+            ctx->cursor_y_pos = y_offset + element.m_ext_dimensions.h;
         }
-        m_after_height = ctx->cursor_y_pos + roundf(m_y_displacement);
-        if (m_after_height < 0.f)
-            m_after_height = 0.f;
+        m_total_height = ctx->cursor_y_pos - m_y_displacement;
+        m_after_height = m_total_height - m_before_height;
         TimeCounter::getInstance().stopCounter("BuildAll");
 
-        if (!m_scrollbar_grab)
-            manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+        if (prev_top_block_shift != 0.f)
+            std::cout << m_before_height << " ";
+
+        /* If the user has resized the window, the content may shift vertically
+         * As explained above, if m_y_displacement != 0 and resize_event, we need to reshift
+         * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */
+        if (m_y_displacement < 0.f && resize_event && prev_top_block_shift != 0.f) {
+            /* prev_top_block_ext_dimensions.y is always negative or zero */
+            m_y_displacement -= prev_top_block_shift;
+            ctx->cursor_y_pos = m_y_displacement;
+            for (auto pair : m_mem->getElements()) {
+                /* Each root block begins with an offset of zero */
+                ctx->x_offset.clear();
+                auto& element = pair.second->get();
+                float y_offset = ctx->cursor_y_pos;
+                ctx->lines = LinesInfos();
+                element.resetYOrigin();
+                element.hk_build(ctx);
+                if (pair.first == prev_top_block_idx) {
+                    m_before_height = y_offset - m_y_displacement - element.m_ext_dimensions.y;
+                    if (m_mem->getCurrentBlockIdx() != pair.first) {
+                        m_mem->setCurrentBlockIdx(pair.first);
+                    }
+                }
+                ctx->cursor_y_pos = y_offset + element.m_ext_dimensions.h;
+            }
+            // m_total_height = ctx->cursor_y_pos - m_y_displacement - prev_top_block_shift;
+            m_after_height = m_total_height - m_before_height;
+        }
+        if (prev_top_block_shift != 0.f)
+            std::cout << m_before_height << std::endl;
 
         /* Drawing all the widgets */
         // Background, ForeGround
@@ -134,8 +182,8 @@ namespace RichText {
         int num_lines_before = m_mem->getNumLineBefore();
         int num_lines_after = m_mem->getNumLineAfter();
 
-        float before = m_before_height + m_y_displacement + num_lines_before * m_line_height;
-        float after = m_after_height - m_y_displacement + num_lines_after * m_line_height;
+        float before = m_before_height + num_lines_before * m_line_height;
+        float after = m_after_height + num_lines_after * m_line_height;
 
         float old_percentage = m_scrollbar.getPercentage();
 
@@ -169,9 +217,6 @@ namespace RichText {
                 scrollDown(mouse_wheel);
             }
         }
-        if (m_y_displacement > m_after_height) {
-            m_y_displacement = m_after_height;
-        }
     }
 
     void PageDisplay::calculate_heights() {
@@ -198,90 +243,14 @@ namespace RichText {
 
         pixels = abs(pixels);
 
-        /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_mem->getCurrentBlock()->get().m_ext_dimensions.h - m_y_displacement;
-        if (pixels < remaining_height) {
-            m_y_displacement += pixels;
-            return;
-        }
-        bool arrived_at_end = false;
-        float total_height = remaining_height;
-        while (true) {
-            /* Go to the next ptr */
-            bool ret = m_mem->nextPtr();
-            if (ret) {
-                if (!m_mem->isCurrentBlockAtTrueEnd())
-                    arrived_at_end = true;
-                break;
-            }
-
-            float element_height = m_mem->getCurrentBlock()->get().m_ext_dimensions.h;
-            total_height += element_height;
-            if (pixels < total_height) {
-                m_y_displacement = element_height - (total_height - pixels);
-                return;
-            }
-        }
-        if (arrived_at_end && !m_mem->empty()) {
-            auto last_line = m_mem->getLastBlock()->get().m_text_boundaries.back().line_number;
-            /* Estimate the average line height with the current informations */
-            float estimated_additional_lines = (pixels - total_height) / m_line_height;
-            int next_line = last_line + (int)estimated_additional_lines;
-            m_mem->gotoLine(next_line);
-            std::cout << "Change line " << next_line << std::endl;
-        }
-        if (!arrived_at_end) {
-            m_y_displacement = m_mem->getCurrentBlock()->get().m_ext_dimensions.h;
-        }
+        m_y_displacement -= roundf(pixels);
     }
     void PageDisplay::scrollUp(float pixels) {
         //ZoneScoped;
         if (m_mem->getCurrentBlock() == nullptr)
             return;
 
-        /* First check if with the scroll, we stay within the element */
-        float remaining_height = m_mem->getCurrentBlock()->get().m_ext_dimensions.h - m_y_displacement;
-        if (pixels <= m_y_displacement || m_mem->getCurrentBlockIdx() == 0) {
-            m_y_displacement -= pixels;
-            if (m_y_displacement < 0.f)
-                m_y_displacement = 0.f;
-            return;
-        }
-
-        bool arrived_at_beg = false;
-        /* Remove y displacement already */
-        pixels -= m_y_displacement;
-        float total_height = 0.f;
-
-        while (true) {
-            bool ret = m_mem->prevPtr();
-            if (ret) {
-                if (!m_mem->isCurrentBlockAtTrueBeg())
-                    arrived_at_beg = true;
-                break;
-            }
-            auto current_block_ptr = m_mem->getCurrentBlock();
-            if (current_block_ptr->get().m_ext_dimensions.h == 0.f) {
-                continue;
-            }
-            float element_height = current_block_ptr->get().m_ext_dimensions.h;
-            total_height += element_height;
-            if (pixels <= total_height) { // || prev == m_root_elements.begin()) {
-                m_y_displacement = total_height - pixels;
-                if (m_y_displacement < 0.f)
-                    m_y_displacement = 0.f;
-                return;
-            }
-        }
-        if (arrived_at_beg && !m_mem->empty()) {
-            auto first_line = m_mem->getCurrentBlock()->get().m_text_boundaries.front().line_number;
-            float estimated_additional_lines = (pixels - total_height) / m_line_height;
-            int estimated_line = first_line - (int)estimated_additional_lines;
-            if (estimated_line < 0)
-                estimated_line = 0;
-            m_mem->gotoLine(estimated_line);
-            std::cout << "Change line " << estimated_line << std::endl;
-        }
+        m_y_displacement += roundf(pixels);
     }
 
 }

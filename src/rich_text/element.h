@@ -113,8 +113,8 @@ namespace RichText {
         // void virtual hk_set_spacings(DrawContext* context);
         bool virtual hk_build_hlayout(DrawContext* context);
         bool virtual hk_build_vlayout(DrawContext* context);
-        void virtual hk_set_x_cursor(DrawContext* context);
-        void virtual hk_set_y_cursor(DrawContext* context);
+        void virtual hk_set_x_origin(DrawContext* context);
+        void virtual hk_set_y_origin(DrawContext* context);
         // void virtual hk_set_x_dim(DrawContext* context);
         void virtual hk_set_y_dim(DrawContext* context);
 
@@ -126,12 +126,14 @@ namespace RichText {
          * that are not part of fundamental widget construction and char drawing */
         bool virtual hk_draw_secondary(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
-        void virtual hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries);
+        void virtual hk_draw_show_boundaries(DrawContext* context);
         void virtual hk_draw_text_cursor(DrawContext* context);
 
         /* Debug prints object info in a special window created by parent */
         void virtual hk_debug(const std::string& prefix = "");
         void virtual hk_debug_attributes();
+
+        void resetYOrigin();
 
         Style m_style;
         Style m_special_chars_style;
@@ -147,15 +149,15 @@ namespace RichText {
         AB::Attributes m_attributes;
 
         // Widget position and size
-        Rect m_ext_dimensions;
-        Rect m_int_dimensions;
+        Rect m_ext_dimensions = { 0.f, -1.f };
+        Rect m_int_dimensions = { 0.f, -1.f };
 
         bool m_is_dimension_set = false;
         float m_scale = 1.f;
         float m_window_width = 1.f;
 
         // Debug
-        bool m_show_boundaries = false;
+        bool m_show_boundaries = true;
 
         // Internal
         SafeString m_safe_string;

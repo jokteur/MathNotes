@@ -64,7 +64,7 @@ namespace RichText {
     }
     void WrapAlgorithm::algorithm() {
         if (m_width < 1.f) {
-            return;
+            m_width = 1.f;
         }
         if (m_current_string->empty()) {
             return;

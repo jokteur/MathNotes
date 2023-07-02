@@ -37,6 +37,12 @@ namespace RichText {
         m_current_line = line_number;
         manage();
     }
+    void PageMemory::setCurrentBlockIdx(int block_idx) {
+        m_current_block_idx = block_idx;
+        m_current_block_ptr = m_elements[m_current_block_idx];
+        m_current_line = m_file->m_blocks[m_current_block_idx]->line_start;
+        manage();
+    }
     int PageMemory::getNumLineBefore() const {
         return m_file->m_blocks[m_block_idx_start]->line_start;
     }

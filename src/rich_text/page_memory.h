@@ -90,6 +90,8 @@ namespace RichText {
         */
         void gotoLine(int line_number);
 
+        void setCurrentBlockIdx(int idx);
+
         void manage();
 
         // WrapDocument& getWrapDocument() { return m_wrap_document; }

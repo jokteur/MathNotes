@@ -21,6 +21,7 @@ namespace RichText {
         int m_line_lookahead_window = 2000;
 
         float m_y_displacement = 0.f;
+        float m_prev_y_displacement = 0.f;
         bool m_scrollbar_grab = false;
 
         float m_display_height = 0.f;
@@ -28,6 +29,7 @@ namespace RichText {
         float m_line_height = 10.f;
         float m_before_height = 0.f;
         float m_after_height = 0.f;
+        float m_total_height = 0.f;
 
         // Config
         float m_min_scroll_height = 10.f;
@@ -39,6 +41,7 @@ namespace RichText {
         void display_scrollbar(const Rect& boundaries);
         void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void calculate_heights();
+        inline void build_block(DrawContext* ctx);
     public:
         PageDisplay(PageMemory* memory);
 

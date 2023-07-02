@@ -132,7 +132,7 @@ namespace RichText {
         return isInsideRectY(dims.y, b) || isInsideRectY(dims.y + dims.h, b)
             || b.y > dims.y && b.y + b.h < dims.y + dims.h;
     }
-    void AbstractElement::hk_set_y_cursor(DrawContext* ctx) {
+    void AbstractElement::hk_set_y_origin(DrawContext* ctx) {
         m_ext_dimensions.y = ctx->cursor_y_pos;
         /* Margins */
         ctx->cursor_y_pos += m_style.v_margins.x.getFloat();
@@ -140,7 +140,7 @@ namespace RichText {
         /* Paddings */
         ctx->cursor_y_pos += m_style.v_paddings.x.getFloat();
     }
-    void AbstractElement::hk_set_x_cursor(DrawContext* ctx) {
+    void AbstractElement::hk_set_x_origin(DrawContext* ctx) {
         m_ext_dimensions.x = ctx->x_offset.getMin();
 
         /* Margins */
@@ -170,7 +170,7 @@ namespace RichText {
     bool AbstractElement::hk_build_hlayout(DrawContext* ctx) {
         bool ret = true;
         if (m_widget_dirty & (DIRTY_WIDTH | DIRTY_CHARS)) {
-            hk_set_x_cursor(ctx);
+            hk_set_x_origin(ctx);
             auto child_x_offset = ctx->x_offset;
 
             for (auto ptr : m_childrens) {
@@ -187,7 +187,7 @@ namespace RichText {
     bool AbstractElement::hk_build_vlayout(DrawContext* ctx) {
         bool ret = true;
         if (m_widget_dirty & DIRTY_HEIGHT) {
-            hk_set_y_cursor(ctx);
+            hk_set_y_origin(ctx);
 
             float y_offset = ctx->cursor_y_pos;
             for (auto ptr : m_childrens) {
@@ -200,6 +200,12 @@ namespace RichText {
             }
         }
         return ret;
+    }
+    void AbstractElement::resetYOrigin() {
+        for (auto ptr : m_childrens) {
+            ptr->resetYOrigin();
+        }
+        m_widget_dirty |= DIRTY_HEIGHT;
     }
 
     // void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
@@ -242,7 +248,6 @@ namespace RichText {
             //     ret = false;
             // }
             // hk_set_dimensions(ctx, initial_y_pos);
-            // hk_draw_show_boundaries(ctx->draw_list, ctx->boundaries);
             // hk_draw_background(ctx->draw_list);
             // hk_draw_text_cursor(ctx); 
         }
@@ -316,11 +321,11 @@ namespace RichText {
     void AbstractElement::setWindowWidth(float width) {
         //ZoneScoped;
         if (m_window_width == width) {
-            m_widget_dirty ^= DIRTY_WIDTH;
+            m_widget_dirty &= ~DIRTY_WIDTH;
             return;
         }
         m_window_width = width;
-        m_widget_dirty |= DIRTY_WIDTH;
+        m_widget_dirty |= DIRTY_WIDTH | DIRTY_HEIGHT;
         for (auto ptr : m_childrens) {
             ptr->setWindowWidth(width);
         }
@@ -333,16 +338,16 @@ namespace RichText {
 
     }
     bool AbstractElement::hk_draw_secondary(DrawContext*) { return true; }
-    void AbstractElement::hk_draw_show_boundaries(Draw::DrawList* draw_list, const Rect& boundaries) {
+    void AbstractElement::hk_draw_show_boundaries(DrawContext* ctx) {
         const auto& ext_dim = m_ext_dimensions;
-        if (m_show_boundaries && (isInsideRectY(ext_dim.y, boundaries) || isInsideRectY(ext_dim.y + ext_dim.y, boundaries))) {
-            auto cursor_pos = ImGui::GetCursorScreenPos();
-            ImVec2 p_min = cursor_pos + ext_dim.getPos();
-            ImVec2 p_max = p_min + ext_dim.getDim();
-            float r, g, b;
-            ImGui::ColorConvertHSVtoRGB((float)m_tree_level / 6.f, 1, 0.7, r, g, b);
-            (*draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
-        }
+        // if (m_show_boundaries && (isInsideRectY(ext_dim.y, boundaries) || isInsideRectY(ext_dim.y + ext_dim.y, boundaries))) {
+        auto cursor_pos = ImGui::GetCursorScreenPos();
+        ImVec2 p_min = cursor_pos + ext_dim.getPos();
+        ImVec2 p_max = p_min + ext_dim.getDim();
+        float r, g, b;
+        ImGui::ColorConvertHSVtoRGB((float)m_tree_level / 6.f, 1, 0.7, r, g, b);
+        (*ctx->draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
+        // }
     }
     void AbstractElement::hk_draw_text_cursor(DrawContext* ctx) {
 
@@ -352,7 +357,6 @@ namespace RichText {
 
         bool is_visible = is_in_boundaries(ctx->boundaries);
         if (!is_visible) {
-            // ctx->cursor_y_pos += m_ext_dimensions.h;
             return true;
         }
 
@@ -371,6 +375,7 @@ namespace RichText {
             ret &= child->draw(ctx);
         }
 
+        hk_draw_show_boundaries(ctx);
         ret &= hk_draw_secondary(ctx);
 
         return ret;

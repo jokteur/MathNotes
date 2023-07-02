@@ -22,19 +22,19 @@ namespace RichText {
     void ABToWidgets::configure_parser() {
         m_parser.enter_block = [&](AB::BLOCK_TYPE b_type, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::BlockDetailPtr detail) -> bool {
             return this->block(b_type, true, bounds, attributes, detail);
-        };
+            };
         m_parser.leave_block = [&](AB::BLOCK_TYPE b_type) -> bool {
             return this->block(b_type, false);
-        };
+            };
         m_parser.enter_span = [&](AB::SPAN_TYPE s_type, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes, AB::SpanDetailPtr detail) {
             return this->span(s_type, true, bounds, attributes, detail);
-        };
+            };
         m_parser.leave_span = [&](AB::SPAN_TYPE s_type) {
             return this->span(s_type, false);
-        };
+            };
         m_parser.text = [&](AB::TEXT_TYPE t_type, const std::vector<AB::Boundaries>& bounds) {
             return this->text(t_type, bounds);
-        };
+            };
     }
     ABToWidgets::ABToWidgets() {
         configure_parser();
@@ -348,11 +348,11 @@ namespace RichText {
 
     AbstractElementPtr ABToWidgets::BLOCK_HR(bool enter, const std::vector<AB::Boundaries>& bounds, const AB::Attributes& attributes) {
         if (enter) {
-            auto header = new HrBlock();
-            header->m_text_boundaries = bounds;
-            header->m_attributes = attributes;
-            set_infos(ABConfig::P, (AbstractElement*)(header));
-            auto ptr = (AbstractElement*)(header);
+            auto hr = new HrBlock();
+            hr->m_text_boundaries = bounds;
+            hr->m_attributes = attributes;
+            set_infos(ABConfig::P, (AbstractElement*)(hr));
+            auto ptr = (AbstractElement*)(hr);
             return ptr;
         }
         else {

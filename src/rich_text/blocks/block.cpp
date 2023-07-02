@@ -285,7 +285,7 @@ namespace RichText {
         bool char_success = true;
 
         if (m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH)) {
-            hk_set_x_cursor(ctx);
+            hk_set_x_origin(ctx);
 
             char_success &= hk_build_pre_delimiter_chars(ctx);
 
@@ -323,23 +323,20 @@ namespace RichText {
     bool AbstractBlock::hk_build_vlayout(DrawContext* ctx) {
         bool ret = true;
         if (m_widget_dirty & DIRTY_HEIGHT) {
-            hk_set_y_cursor(ctx);
+            hk_set_y_origin(ctx);
 
-            float y_offset = ctx->cursor_y_pos;
+            // float y_offset = ctx->cursor_y_pos;
             for (auto ptr : m_childrens) {
                 ret &= !ptr->hk_build_vlayout(ctx);
+                // ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
             }
-            ctx->cursor_y_pos = y_offset;
+            // ctx->cursor_y_pos = y_offset;
 
             int i = 0;
             for (auto& pair : m_pre_delimiters) {
                 auto& line = pair.second;
             }
-            for (auto& pair : m_text_column) {
-                auto& line = pair.second;
-                line.y_pos = ctx->cursor_y_pos;
-                ctx->cursor_y_pos += line.total_height;
-            }
+            ctx->cursor_y_pos += m_wrapper.getHeight();
             hk_set_y_dim(ctx);
             m_widget_dirty &= ~DIRTY_HEIGHT;
         }
@@ -459,7 +456,7 @@ namespace RichText {
         bool char_success = true;
 
         if (m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH)) {
-            hk_set_x_cursor(ctx);
+            hk_set_x_origin(ctx);
 
             /* There are two offset used in normal blocks:
              * - current_offset for delimiter
