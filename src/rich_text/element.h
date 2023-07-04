@@ -48,10 +48,7 @@ namespace RichText {
         float descent;
     };
 
-    /* Points to elements that have a WrapColumn */
-    typedef std::unordered_set<AbstractElementPtr> ElementsList;
-
-    typedef std::unordered_map<int, ElementsList> LinesInfos;
+    typedef std::unordered_map<int, LineInfo> LinesInfos;
 
     struct DrawContext {
         Draw::DrawList* draw_list;
@@ -112,7 +109,7 @@ namespace RichText {
         // New hooks for refactoring
         // void virtual hk_set_spacings(DrawContext* context);
         bool virtual hk_build_hlayout(DrawContext* context);
-        bool virtual hk_build_vlayout(DrawContext* context);
+        bool virtual hk_build_vlayout(DrawContext* context, int line_number = -1);
         void virtual hk_set_x_origin(DrawContext* context);
         void virtual hk_set_y_origin(DrawContext* context);
         // void virtual hk_set_x_dim(DrawContext* context);

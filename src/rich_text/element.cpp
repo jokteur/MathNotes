@@ -184,14 +184,14 @@ namespace RichText {
         }
         return ret;
     }
-    bool AbstractElement::hk_build_vlayout(DrawContext* ctx) {
+    bool AbstractElement::hk_build_vlayout(DrawContext* ctx, int line_number) {
         bool ret = true;
         if (m_widget_dirty & DIRTY_HEIGHT) {
             hk_set_y_origin(ctx);
 
             float y_offset = ctx->cursor_y_pos;
             for (auto ptr : m_childrens) {
-                ret &= !ptr->hk_build_vlayout(ctx);
+                ret &= !ptr->hk_build_vlayout(ctx, line_number);
             }
             hk_set_y_dim(ctx);
 
@@ -340,14 +340,14 @@ namespace RichText {
     bool AbstractElement::hk_draw_secondary(DrawContext*) { return true; }
     void AbstractElement::hk_draw_show_boundaries(DrawContext* ctx) {
         const auto& ext_dim = m_ext_dimensions;
-        // if (m_show_boundaries && (isInsideRectY(ext_dim.y, boundaries) || isInsideRectY(ext_dim.y + ext_dim.y, boundaries))) {
-        auto cursor_pos = ImGui::GetCursorScreenPos();
-        ImVec2 p_min = cursor_pos + ext_dim.getPos();
-        ImVec2 p_max = p_min + ext_dim.getDim();
-        float r, g, b;
-        ImGui::ColorConvertHSVtoRGB((float)m_tree_level / 6.f, 1, 0.7, r, g, b);
-        (*ctx->draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
-        // }
+        if (m_show_boundaries && is_in_boundaries(ctx->boundaries)) {
+            auto cursor_pos = ImGui::GetCursorScreenPos();
+            ImVec2 p_min = cursor_pos + ext_dim.getPos();
+            ImVec2 p_max = p_min + ext_dim.getDim();
+            float r, g, b;
+            ImGui::ColorConvertHSVtoRGB((float)m_tree_level / 6.f, 1, 0.7, r, g, b);
+            (*ctx->draw_list)->AddRect(p_min, p_max, ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, 1.f)));
+        }
     }
     void AbstractElement::hk_draw_text_cursor(DrawContext* ctx) {
 

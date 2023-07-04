@@ -20,13 +20,11 @@ namespace RichText {
         }
         WrapColumn m_pre_delimiters;
 
-        void set_pre_y_position(DrawContext* context);
         void set_pre_margins(DrawContext* context);
-        void get_line_height_from_delimiters(DrawContext* context);
         // void place_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars, TextCursor& cursor);
 
         bool hk_build_hlayout(DrawContext* context) override;
-        bool hk_build_vlayout(DrawContext* context) override;
+        bool hk_build_vlayout(DrawContext* context, int line_number = -1) override;
 
         // bool hk_build_main(DrawContext* context) override;
         // bool hk_draw_main(DrawContext* context) override;
@@ -58,6 +56,7 @@ namespace RichText {
         // bool hk_build_main(DrawContext* context) override;
         bool hk_build_chars(DrawContext* context) override;
         bool hk_build_hlayout(DrawContext* context) override;
+        bool hk_build_vlayout(DrawContext* context, int line_number = -1) override;
 
         // bool hk_draw_main(DrawContext* context) override;
         void hk_draw_text_cursor(DrawContext* context) override;

@@ -69,6 +69,7 @@ namespace RichText {
         bool empty() const { return m_lines.empty(); }
         std::map<int, WrapLine>::iterator begin() { return m_lines.begin(); }
         std::map<int, WrapLine>::iterator end() { return m_lines.end(); }
+        std::map<int, WrapLine>::iterator find(int line) { return m_lines.find(line); }
         WrapLine& operator[](int line) { return m_lines[line]; }
         WrapLine& at(int line) { return m_lines.at(line); }
 
