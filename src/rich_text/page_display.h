@@ -8,6 +8,13 @@
 #include "chars/wrapper.h"
 
 namespace RichText {
+    struct PrevElementInfo {
+        int prev_top_block_idx = -1;
+        bool resize_event = false;
+        float prev_top_block_shift = 0.f;
+        Rect prev_top_block_ext_dimensions;
+    };
+
     class PageDisplay : public Drawable {
     private:
         PageMemory* m_mem;
@@ -38,10 +45,13 @@ namespace RichText {
 
         VerticalScrollBar m_scrollbar;
 
-        void display_scrollbar(const Rect& boundaries);
-        void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void calculate_heights();
-        inline void build_block(DrawContext* ctx);
+        void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
+        void set_and_check_width(PrevElementInfo* prev_info, float width);
+        void set_displacement(DrawContext* ctx);
+        void build(DrawContext* ctx, PrevElementInfo* prev_top_block_shift);
+        void correct_displacement(PrevElementInfo* info);
+        void display_scrollbar(const Rect& boundaries);
     public:
         PageDisplay(PageMemory* memory);
 

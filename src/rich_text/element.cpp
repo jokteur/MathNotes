@@ -201,11 +201,18 @@ namespace RichText {
         }
         return ret;
     }
-    void AbstractElement::resetYOrigin() {
+    // void AbstractElement::resetYOrigin() {
+    //     for (auto ptr : m_childrens) {
+    //         ptr->resetYOrigin();
+    //     }
+    //     m_widget_dirty |= DIRTY_HEIGHT;
+    // }
+    void AbstractElement::displaceYOrigin(float displacement) {
         for (auto ptr : m_childrens) {
-            ptr->resetYOrigin();
+            ptr->displaceYOrigin(displacement);
         }
-        m_widget_dirty |= DIRTY_HEIGHT;
+        m_ext_dimensions.y += displacement;
+        m_int_dimensions.y += displacement;
     }
 
     // void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
@@ -234,20 +241,18 @@ namespace RichText {
 
     //     m_is_dimension_set = true;
     // }
-    bool AbstractElement::hk_build_chars(DrawContext*) { return true; }
+    bool AbstractElement::hk_build_chars(DrawContext*) {
+        m_widget_dirty &= ~DIRTY_WIDTH;
+        return true;
+    }
     bool AbstractElement::hk_build(DrawContext* ctx) {
         bool ret = true;
         float initial_y_pos = ctx->cursor_y_pos;
         // hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
         if (m_widget_dirty) {
-            hk_build_hlayout(ctx);
-            hk_build_vlayout(ctx);
             // hk_set_selected(ctx);
-            // if (!hk_build_main(ctx)) {
-            //     m_widget_dirty |= DIRTY_CHARS;
-            //     ret = false;
-            // }
-            // hk_set_dimensions(ctx, initial_y_pos);
+            ret &= hk_build_hlayout(ctx);
+            ret &= hk_build_vlayout(ctx);
             // hk_draw_background(ctx->draw_list);
             // hk_draw_text_cursor(ctx); 
         }
@@ -363,7 +368,7 @@ namespace RichText {
         /* Display chars */
         for (auto& pair : m_text_column) {
             auto pos = m_int_dimensions.getPos() + ctx->draw_offset;;
-            pos.y += pair.second.y_pos;
+            pos.y += pair.second.relative_y_pos;
             for (auto& ptr : pair.second.chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 ret &= p->draw(ctx->draw_list, ctx->boundaries, pos);

@@ -39,17 +39,8 @@ namespace RichText {
                     continue;
                 }
                 success &= Utf8StrToImCharStr(m_ui_state, &line.chars, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, m_special_chars_style, true);
-            }
-            wrapper.setMultiOffset(&ctx->x_offset, false);
-            wrapper.setTextColumn(&m_pre_delimiters, false);
-            wrapper.recalculate();
-            for (auto& pair : m_pre_delimiters) {
-                auto& line = pair.second;
-                float x_offset = ctx->x_offset.getOffset(pair.first);
-                if (line.chars.size() > 0) {
-                    auto last_char = line.chars.back();
-                    line.width = last_char->calculated_position.x + last_char->info->advance - x_offset;
-                }
+                float x_offset = ctx->x_offset.getOffset(bounds.line_number);
+                wrapper.recalculate(&line, x_offset);
             }
         }
         return success;
@@ -146,13 +137,13 @@ namespace RichText {
 
             if (char_success)
                 m_widget_dirty &= ~DIRTY_CHARS;
-
         }
         return ret;
     }
+
     bool AbstractBlock::hk_build_vlayout(DrawContext* ctx, int line_number) {
         bool ret = true;
-        if (m_widget_dirty & DIRTY_HEIGHT) {
+        if (m_widget_dirty) {
             float y_offset = 0.f;
             if (m_text_boundaries.front().line_number == line_number || line_number < 0) {
                 hk_set_y_origin(ctx);
@@ -164,17 +155,19 @@ namespace RichText {
                         ptr->hk_build_vlayout(ctx, current_line_number);
                     }
                     if (ctx->lines.find(current_line_number) != ctx->lines.end()) {
-                        pair.second.y_pos = ctx->lines[current_line_number].position;
-                        ctx->cursor_y_pos = pair.second.y_pos + pair.second.total_height;
+                        // Relative position
+                        pair.second.relative_y_pos = ctx->lines[current_line_number].position - m_int_dimensions.y;
                     }
                     else {
-                        // pair.second.y_pos = ctx->cursor_y_pos;
-                        ctx->cursor_y_pos += pair.second.total_height;
+                        // Relative position
+                        pair.second.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
+                        ctx->cursor_y_pos += pair.second.height;
                     }
                 }
                 hk_set_y_dim(ctx);
                 m_widget_dirty &= ~DIRTY_HEIGHT;
             }
+
             else {
                 if (m_pre_delimiters.find(line_number) == m_pre_delimiters.end()) {
                     return true;
@@ -184,19 +177,21 @@ namespace RichText {
                 }
                 auto& line = m_pre_delimiters[line_number];
                 if (ctx->lines.find(line_number) != ctx->lines.end()) {
-                    line.y_pos = ctx->lines[line_number].position;
+                    // Relative position
+                    line.relative_y_pos = ctx->lines[line_number].position - m_int_dimensions.y;
                 }
                 else {
-                    line.y_pos = ctx->cursor_y_pos;
+                    // Relative position
+                    line.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
+                    ctx->lines[line_number];
                     ctx->lines[line_number].position = ctx->cursor_y_pos;
-                    ctx->cursor_y_pos += line.total_height;
+                    ctx->cursor_y_pos += line.height;
                 }
                 if (m_text_boundaries.back().line_number == line_number) {
                     hk_set_y_dim(ctx);
                     m_widget_dirty &= ~DIRTY_HEIGHT;
                 }
             }
-
         }
         return ret;
     }
@@ -210,17 +205,17 @@ namespace RichText {
 
         /* Display chars */
         for (auto& pair : m_text_column) {
+            auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
+            pos.y += pair.second.relative_y_pos;
             for (auto& ptr : pair.second.chars) {
-                auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
-                pos.y += pair.second.y_pos;
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 ret &= !p->draw(ctx->draw_list, ctx->boundaries, pos);
             }
         }
         for (auto& pair : m_pre_delimiters) {
+            auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
+            pos.y += pair.second.relative_y_pos;
             for (auto& ptr : pair.second.chars) {
-                auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
-                pos.y += pair.second.y_pos;
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
                 ret &= !p->draw(ctx->draw_list, ctx->boundaries, pos);
             }
@@ -282,18 +277,18 @@ namespace RichText {
             if (line_number >= 0 && m_text_boundaries.front().line_number != line_number) {
                 return ret;
             }
+
             hk_set_y_origin(ctx);
             /* Update line infos for parent elements which need to align the delimiters */
             for (auto& pair : m_text_column) {
                 const auto& line = pair.second;
                 auto& line_info = ctx->lines[pair.first];
                 line_info.position = ctx->cursor_y_pos;
-                ctx->cursor_y_pos += line.total_height;
-                line_info.height = line.total_height;
+                ctx->cursor_y_pos += line.height;
+                line_info.height = line.height;
                 line_info.ascent = line.sublines.front().max_ascent;
                 line_info.descent = line.sublines.front().max_descent;
             }
-            // ctx->cursor_y_pos += m_wrapper.getHeight();
             hk_set_y_dim(ctx);
             m_widget_dirty &= ~DIRTY_HEIGHT;
         }

@@ -40,6 +40,7 @@ namespace RichText {
         boundaries.w = width;
         m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
         ctx->boundaries = boundaries;
+        ctx->force_dirty = false;
 
         /* Once we know the height of the page,
          * we can estimate how many lines we should
@@ -55,106 +56,25 @@ namespace RichText {
          *  prev_top_block_idx: record the last block display at the top of the page
          *  prev_top_block_shift: record the vertical shift of the current block if it changes
          * */
-        int prev_top_block_idx = m_mem->getCurrentBlockIdx();
-        Rect prev_top_block_ext_dimensions;
-        float prev_top_block_shift = 0.f;
-        float prev_percentage = (-m_y_displacement / m_total_height);
-        if (!m_mem->getElements().empty()) {
-            const auto& element = m_mem->getCurrentBlock()->get();
-            prev_top_block_ext_dimensions = element.m_ext_dimensions;
-        }
-        /* Now set the new width if necessary */
-        for (auto pair : m_mem->getElements()) {
-            if (m_current_width != width) {
-                pair.second->get().setWindowWidth(width);
-            }
-        }
-        bool resize_event = false;
-        if (m_current_width != width) {
-            resize_event = true;
-            m_current_width = width;
-        }
+        PrevElementInfo prev_info;
+        set_and_check_width(&prev_info, width);
 
         if (!m_scrollbar_grab)
             manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+        set_displacement(ctx);
 
         /* Building the widgets (no-op if already built)*/
-        bool redo_y_positions = false;
-        /* We may not scroll further up than the first block */
-        if (m_y_displacement > 0.f) {
-            m_y_displacement = 0.f;
-        }
-        /* We may not scroll further down than the last block */
-        if (m_total_height < -m_y_displacement) {
-            m_y_displacement = -m_total_height;
-        }
-        if (m_prev_y_displacement != m_y_displacement) {
-            redo_y_positions = true;
-            m_prev_y_displacement = m_y_displacement;
-        }
-        bool found_current = false;
-        ctx->cursor_y_pos = m_y_displacement;
         TimeCounter::getInstance().startCounter("BuildAll");
-        for (auto pair : m_mem->getElements()) {
-            /* Each root block begins with an offset of zero */
-            ctx->x_offset.clear();
-            auto& element = pair.second->get();
-            float y_offset = ctx->cursor_y_pos;
-            ctx->lines = LinesInfos();
-            if (redo_y_positions) {
-                element.resetYOrigin();
-            }
-            element.hk_build(ctx);
-            if (pair.first == prev_top_block_idx && resize_event) {
-                prev_top_block_shift = y_offset - prev_top_block_ext_dimensions.y;
-            }
-            if (!found_current && element.is_in_boundaries(ctx->boundaries)) {
-                found_current = true;
-                m_before_height = y_offset - m_y_displacement - element.m_ext_dimensions.y;
-                if (m_mem->getCurrentBlockIdx() != pair.first) {
-                    m_mem->setCurrentBlockIdx(pair.first);
-                }
-            }
-            ctx->cursor_y_pos = y_offset + element.m_ext_dimensions.h;
-        }
-        m_total_height = ctx->cursor_y_pos - m_y_displacement;
-        m_after_height = m_total_height - m_before_height;
+        build(ctx, &prev_info);
         TimeCounter::getInstance().stopCounter("BuildAll");
-
-        if (prev_top_block_shift != 0.f)
-            std::cout << m_before_height << " ";
 
         /* If the user has resized the window, the content may shift vertically
          * As explained above, if m_y_displacement != 0 and resize_event, we need to reshift
          * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */
-        if (m_y_displacement < 0.f && resize_event && prev_top_block_shift != 0.f) {
-            /* prev_top_block_ext_dimensions.y is always negative or zero */
-            m_y_displacement -= prev_top_block_shift;
-            ctx->cursor_y_pos = m_y_displacement;
-            for (auto pair : m_mem->getElements()) {
-                /* Each root block begins with an offset of zero */
-                ctx->x_offset.clear();
-                auto& element = pair.second->get();
-                float y_offset = ctx->cursor_y_pos;
-                ctx->lines = LinesInfos();
-                element.resetYOrigin();
-                element.hk_build(ctx);
-                if (pair.first == prev_top_block_idx) {
-                    m_before_height = y_offset - m_y_displacement - element.m_ext_dimensions.y;
-                    if (m_mem->getCurrentBlockIdx() != pair.first) {
-                        m_mem->setCurrentBlockIdx(pair.first);
-                    }
-                }
-                ctx->cursor_y_pos = y_offset + element.m_ext_dimensions.h;
-            }
-            // m_total_height = ctx->cursor_y_pos - m_y_displacement - prev_top_block_shift;
-            m_after_height = m_total_height - m_before_height;
-        }
-        if (prev_top_block_shift != 0.f)
-            std::cout << m_before_height << std::endl;
+         // correct_displacement(&prev_info);
 
-        /* Drawing all the widgets */
-        // Background, ForeGround
+         /* Drawing all the widgets */
+         // Background, ForeGround
         m_draw_list.Split(2);
         m_draw_list.SetCurrentChannel(1);
 
@@ -171,9 +91,9 @@ namespace RichText {
         display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
     }
 
-    /* ================================
-     * Scrolling and element management
-     * ================================ */
+    /* =========
+     * Scrolling
+     * ========= */
     void PageDisplay::display_scrollbar(const Rect& b) {
         if (m_mem->empty())
             return;
@@ -216,6 +136,111 @@ namespace RichText {
             else if (mouse_wheel < 0.f) {
                 scrollDown(mouse_wheel);
             }
+        }
+    }
+
+    /* ===============================
+     * Element building and management
+     * =============================== */
+    void PageDisplay::set_displacement(DrawContext* ctx) {
+        /* Check if the user scrolled through the page */
+        /* We may not scroll further up than the first block */
+        if (m_y_displacement > 0.f) {
+            m_y_displacement = 0.f;
+        }
+        /* We may not scroll further down than the last block */
+        if (m_total_height < -m_y_displacement) {
+            m_y_displacement = -m_total_height;
+        }
+        float displacement_diff = 0.f;
+        if (m_prev_y_displacement != m_y_displacement) {
+            displacement_diff = m_y_displacement - m_prev_y_displacement;
+            m_prev_y_displacement = m_y_displacement;
+        }
+        ctx->cursor_y_pos = m_y_displacement;
+        /* If the user has scroll, then we can simply shift the origins
+         * of all elements (which is less costly than rebuilding all the widgets)
+         */
+        if (displacement_diff) {
+            int i = 0;
+            for (auto pair : m_mem->getElements()) {
+                auto& element = pair.second->get();
+                pair.second->get().displaceYOrigin(displacement_diff);
+                if (i == 0) {
+                    m_y_displacement = element.m_ext_dimensions.y;
+                    m_prev_y_displacement = m_y_displacement;
+                }
+                i++;
+            }
+        }
+    }
+    void PageDisplay::set_and_check_width(PrevElementInfo* prev_info, float width) {
+        prev_info->prev_top_block_idx = m_mem->getCurrentBlockIdx();
+        if (!m_mem->getElements().empty()) {
+            const auto& element = m_mem->getCurrentBlock()->get();
+            prev_info->prev_top_block_ext_dimensions = element.m_ext_dimensions;
+        }
+        /* Now set the new width if necessary */
+        if (m_current_width != width) {
+            for (auto pair : m_mem->getElements()) {
+                pair.second->get().setWindowWidth(width);
+            }
+        }
+        if (m_current_width != width) {
+            prev_info->resize_event = true;
+            m_current_width = width;
+        }
+    }
+
+    void PageDisplay::build(DrawContext* ctx, PrevElementInfo* info) {
+        bool found_current = false;
+        for (auto pair : m_mem->getElements()) {
+            /* Each root block begins with an offset of zero */
+            ctx->x_offset.clear();
+            auto& element = pair.second->get();
+            float y_offset = ctx->cursor_y_pos;
+            ctx->lines = LinesInfos();
+            if (!element.hk_build(ctx)) {
+                ctx->force_dirty = true;
+            }
+            if (pair.first == info->prev_top_block_idx && info->resize_event) {
+                info->prev_top_block_shift = y_offset - info->prev_top_block_ext_dimensions.y;
+            }
+            if (!found_current && element.is_in_boundaries(ctx->boundaries)) {
+                found_current = true;
+                m_before_height = y_offset - m_y_displacement - element.m_ext_dimensions.y;
+                if (m_mem->getCurrentBlockIdx() != pair.first) {
+                    m_mem->setCurrentBlockIdx(pair.first);
+                }
+            }
+            ctx->cursor_y_pos = y_offset + element.m_ext_dimensions.h;
+        }
+        m_total_height = ctx->cursor_y_pos - m_y_displacement;
+        m_after_height = m_total_height - m_before_height;
+    }
+    void PageDisplay::correct_displacement(PrevElementInfo* info) {
+        if (m_y_displacement < 0.f && info->resize_event && info->prev_top_block_shift != 0.f) {
+            /* prev_top_block_ext_dimensions.y is always negative or zero */
+            m_y_displacement -= info->prev_top_block_shift;
+            int i = 0;
+            for (auto pair : m_mem->getElements()) {
+                /* Each root block begins with an offset of zero */
+                auto& element = pair.second->get();
+                pair.second->get().displaceYOrigin(-info->prev_top_block_shift);
+                if (i == 0) {
+                    m_y_displacement = element.m_ext_dimensions.y;
+                }
+                float y_offset = pair.second->get().m_ext_dimensions.y;
+                if (pair.first == info->prev_top_block_idx) {
+                    m_before_height = y_offset - m_y_displacement - element.m_ext_dimensions.y;
+                    if (m_mem->getCurrentBlockIdx() != pair.first) {
+                        m_mem->setCurrentBlockIdx(pair.first);
+                    }
+                }
+                i++;
+            }
+            // m_total_height = ctx->cursor_y_pos - m_y_displacement - prev_top_block_shift;
+            m_after_height = m_total_height - m_before_height;
         }
     }
 

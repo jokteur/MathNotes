@@ -30,21 +30,14 @@ namespace RichText {
             m_pre_delimiters.clear();
             const auto bounds = m_text_boundaries.front();
             m_pre_delimiters[bounds.line_number] = WrapLine{};
-            auto& delimiter = m_pre_delimiters[bounds.line_number];
+            auto& line = m_pre_delimiters[bounds.line_number];
             auto style = m_style;
             style.set_font_color(Colors::darkslategray);
-            success &= Utf8StrToImCharStr(m_ui_state, &delimiter.chars, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, style);
+            success &= Utf8StrToImCharStr(m_ui_state, &line.chars, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, style);
 
             WrapAlgorithm wrapper;
             wrapper.setWidth(4000.f, false);
-            wrapper.recalculate(&delimiter.chars);
-            if (!delimiter.chars.empty()) {
-                auto last_char = delimiter.chars.back();
-                /* Delimiter y position will be calculated later, after setWidth of wrapper in children
-                 * has been called
-                 */
-                delimiter.width = last_char->calculated_position.x + last_char->info->advance;
-            }
+            wrapper.recalculate(&line, ctx->x_offset.getOffset(bounds.line_number));
 
             /* Remove the margin that has been added */
             ctx->x_offset -= m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat();

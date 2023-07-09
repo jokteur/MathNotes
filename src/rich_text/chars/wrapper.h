@@ -50,9 +50,9 @@ namespace RichText {
     struct WrapLine {
         std::vector<SubLine> sublines;
         WrapString chars;
-        float y_pos = 0.f;
+        float relative_y_pos = 0.f;
         float width = 0.f;
-        float total_height = 0.f;
+        float height = 0.f;
     };
 
     class WrapColumn {
@@ -118,7 +118,7 @@ namespace RichText {
         MultiOffset* m_offset = nullptr;
 
         // Calculated quantities
-        std::list<SubLine> m_lines;
+        std::list<SubLine> m_sublines;
         std::set<int> m_line_positions;
         float m_total_height;
 
@@ -156,7 +156,7 @@ namespace RichText {
         void setTextColumn(WrapColumn* paragraph, bool redo = true);
         void clear();
         void recalculate();
-        void recalculate(WrapString* string, float x_offset = 0.f);
+        void recalculate(WrapLine* line, float x_offset = 0.f);
 
         float getHeight() { return m_height; }
         float getFirstMaxAscent() { return m_first_max_ascent; }
