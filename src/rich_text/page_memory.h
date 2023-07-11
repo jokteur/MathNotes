@@ -26,6 +26,7 @@ namespace RichText {
         RootElements::iterator find_prev_ptr();
         RootElements::iterator find_next_ptr();
     public:
+        enum MemoryState { NO_CHANGE, CHANGE_NO_SKIP, CHANGE_SKIP };
         /**
          * Handles the memory of a AB page.
          * Some files may be very big, and this class helps manage the memory by dynamically
@@ -100,7 +101,7 @@ namespace RichText {
          * @return true if memory has changed
          * @return false otherwise
          */
-        bool manage();
+        void manage(MemoryState& state);
 
         // WrapDocument& getWrapDocument() { return m_wrap_document; }
     };

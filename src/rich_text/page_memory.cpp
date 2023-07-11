@@ -35,7 +35,7 @@ namespace RichText {
     }
     void PageMemory::gotoLine(int line_number) {
         m_current_line = line_number;
-        manage();
+        // manage();
     }
     void PageMemory::setCurrentBlockIdx(int block_idx) {
         m_current_block_idx = block_idx;
@@ -90,7 +90,7 @@ namespace RichText {
         return false;
     }
 
-    bool PageMemory::manage() {
+    void PageMemory::manage(MemoryState& state) {
         find_current_ptr();
         bool memory_modified = false;
         int half_window = 0.9 * m_line_lookahead_window / 2;
@@ -98,6 +98,7 @@ namespace RichText {
         // if (half_window < 1500) {
         //     half_window = 1500;
         // }
+        state = NO_CHANGE;
         int start_line = m_current_line - half_window;
         int end_line = m_current_line + half_window;
         if (start_line < 0) {
@@ -107,7 +108,7 @@ namespace RichText {
         auto bounds = m_file->getBlocksBoundsContaining(start_line, end_line);
 
         if (bounds.start.block_idx == -1)
-            return false;
+            return;
 
         int start = bounds.start.block_idx;
         int end = bounds.end.block_idx;
@@ -131,13 +132,13 @@ namespace RichText {
                 m_current_block_idx = it->first;
                 m_current_block_ptr = it->second;
             }
-            memory_modified = true;
+            state = CHANGE_SKIP;
         }
         else {
             /* Blocks to build before */
             if (start < m_block_idx_start) {
                 parse_job(start, m_block_idx_start);
-                memory_modified = true;
+                state = CHANGE_NO_SKIP;
             }
             /* Blocks to destroy before */
             else if (start > m_block_idx_start) {
@@ -145,12 +146,12 @@ namespace RichText {
                 for (int i = m_block_idx_start; i < start;i++) {
                     to_destroy.insert(i);
                 }
-                memory_modified = true;
+                state = CHANGE_NO_SKIP;
             }
             /* Blocks to build after */
             if (end > m_block_idx_end) {
                 parse_job(m_block_idx_end, end);
-                memory_modified = true;
+                state = CHANGE_NO_SKIP;
             }
             /* Blocks to destroy after */
             else if (end < m_block_idx_end) {
@@ -158,7 +159,7 @@ namespace RichText {
                 for (int i = end + 1; i <= m_block_idx_end;i++) {
                     to_destroy.insert(i);
                 }
-                memory_modified = true;
+                state = CHANGE_NO_SKIP;
             }
 
             {
@@ -173,6 +174,5 @@ namespace RichText {
             m_block_idx_start = start;
             m_block_idx_end = end;
         }
-        return memory_modified;
     }
 }

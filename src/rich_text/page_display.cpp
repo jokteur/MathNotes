@@ -83,11 +83,12 @@ namespace RichText {
             /* Scrollbar has to be displayed after it has been built, to estimate the heights of the page */
             display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
 
-            bool new_memory = m_mem->manage();
+            PageMemory::MemoryState state = PageMemory::NO_CHANGE;
+            m_mem->manage(state);
             /* New memory means that blocks before can be added or deleted
              * This shift the content vertically, we must redo a pass and
              * shift m_y_displacement appropriatly */
-            if (new_memory) {
+            if (state == PageMemory::CHANGE_NO_SKIP) {
                 set_and_check_width(&prev_info, width);
                 auto prev_idx = m_mem->getCurrentBlockIdx();
                 prev_info.prev_top_block_idx = prev_idx;
@@ -99,6 +100,18 @@ namespace RichText {
                 TimeCounter::getInstance().startCounter("BuildAll (2nd)");
                 build(ctx, &prev_info);
                 TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
+                correct_displacement(&prev_info);
+            }
+            else if (state == PageMemory::CHANGE_SKIP && m_mem->getCurrentBlockIdx() >= 0) {
+                auto prev_idx = m_mem->getCurrentBlockIdx();
+                auto prev_block = m_mem->getCurrentBlock();
+                prev_info.prev_top_block_idx = prev_idx;
+                prev_info.event = true;
+                ctx->cursor_y_pos = 0.f;
+                TimeCounter::getInstance().startCounter("BuildAll (2nd)");
+                build(ctx, &prev_info);
+                TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
+                prev_info.prev_top_block_shift = -prev_block->get().m_ext_dimensions.y;
                 correct_displacement(&prev_info);
             }
 
@@ -289,16 +302,28 @@ namespace RichText {
         if (m_mem->getCurrentBlock() == nullptr)
             return;
 
-        pixels = abs(pixels);
+        pixels = roundf(abs(pixels));
 
-        m_y_displacement -= roundf(pixels);
+        if (pixels > m_after_height) {
+            int lines_to_skip = pixels / m_line_height;
+            m_mem->gotoLine(m_mem->getCurrentLine() + lines_to_skip);
+        }
+        else
+            m_y_displacement -= pixels;
     }
     void PageDisplay::scrollUp(float pixels) {
         //ZoneScoped;
         if (m_mem->getCurrentBlock() == nullptr)
             return;
 
-        m_y_displacement += roundf(pixels);
+        pixels = roundf(pixels);
+
+        if (pixels > m_before_height) {
+            int lines_to_skip = pixels / m_line_height;
+            m_mem->gotoLine(m_mem->getCurrentLine() - lines_to_skip);
+        }
+        else
+            m_y_displacement += pixels;
     }
 
 }
