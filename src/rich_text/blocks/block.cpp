@@ -103,12 +103,11 @@ namespace RichText {
     }
     bool AbstractBlock::hk_build_hlayout(DrawContext* ctx) {
         bool ret = true;
-        bool char_success = true;
 
         if (m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH)) {
             hk_set_x_origin(ctx);
 
-            char_success &= hk_build_pre_delimiter_chars(ctx);
+            ret &= hk_build_pre_delimiter_chars(ctx);
 
             /* There are two offset used in normal blocks:
              * - current_offset for delimiter
@@ -133,9 +132,9 @@ namespace RichText {
                 ret &= ptr->hk_build_hlayout(ctx);
             }
 
-            char_success &= hk_build_chars(ctx);
+            ret &= hk_build_chars(ctx);
 
-            if (char_success)
+            if (ret)
                 m_widget_dirty &= ~DIRTY_CHARS;
         }
         return ret;
@@ -143,7 +142,7 @@ namespace RichText {
 
     bool AbstractBlock::hk_build_vlayout(DrawContext* ctx, int line_number) {
         bool ret = true;
-        if (m_widget_dirty) {
+        if (m_widget_dirty || ctx->force_dirty_height) {
             float y_offset = 0.f;
             if (m_text_boundaries.front().line_number == line_number || line_number < 0) {
                 hk_set_y_origin(ctx);
@@ -152,11 +151,13 @@ namespace RichText {
                 for (auto& pair : m_pre_delimiters) {
                     const int current_line_number = pair.first;
                     for (auto ptr : m_childrens) {
-                        ptr->hk_build_vlayout(ctx, current_line_number);
+                        ret &= ptr->hk_build_vlayout(ctx, current_line_number);
                     }
                     if (ctx->lines.find(current_line_number) != ctx->lines.end()) {
                         // Relative position
                         pair.second.relative_y_pos = ctx->lines[current_line_number].position - m_int_dimensions.y;
+                        if (!pair.second.sublines.empty())
+                            pair.second.relative_y_pos += ctx->lines[current_line_number].ascent - pair.second.sublines.front().max_ascent;
                     }
                     else {
                         // Relative position
@@ -165,7 +166,8 @@ namespace RichText {
                     }
                 }
                 hk_set_y_dim(ctx);
-                m_widget_dirty &= ~DIRTY_HEIGHT;
+                if (ret && !(m_widget_dirty & DIRTY_WIDTH))
+                    m_widget_dirty &= ~DIRTY_HEIGHT;
             }
 
             else {
@@ -173,12 +175,14 @@ namespace RichText {
                     return true;
                 }
                 for (auto ptr : m_childrens) {
-                    ptr->hk_build_vlayout(ctx, line_number);
+                    ret &= ptr->hk_build_vlayout(ctx, line_number);
                 }
                 auto& line = m_pre_delimiters[line_number];
                 if (ctx->lines.find(line_number) != ctx->lines.end()) {
                     // Relative position
                     line.relative_y_pos = ctx->lines[line_number].position - m_int_dimensions.y;
+                    if (!line.sublines.empty())
+                        line.relative_y_pos += ctx->lines[line_number].ascent - line.sublines.front().max_ascent;
                 }
                 else {
                     // Relative position
@@ -189,7 +193,8 @@ namespace RichText {
                 }
                 if (m_text_boundaries.back().line_number == line_number) {
                     hk_set_y_dim(ctx);
-                    m_widget_dirty &= ~DIRTY_HEIGHT;
+                    if (ret && !(m_widget_dirty & DIRTY_WIDTH))
+                        m_widget_dirty &= ~DIRTY_HEIGHT;
                 }
             }
         }
@@ -235,27 +240,10 @@ namespace RichText {
      * ========= */
     bool AbstractLeafBlock::hk_build_hlayout(DrawContext* ctx) {
         bool ret = true;
-        bool char_success = true;
 
         if (m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH)) {
             hk_set_x_origin(ctx);
 
-            /* There are two offset used in normal blocks:
-             * - current_offset for delimiter
-             * - child_offset for all block childrens.
-             *   These offsets are determined by the pre-delimiters (in set_pre_margins)
-             *   or the margins of the block
-             */
-            set_pre_margins(ctx);
-
-            /* If true, this helps vertically align all the pre-delimiters */
-            if (m_style.align_pre_indent) {
-                float max_offset = ctx->x_offset.getMax();
-                int first_line = m_text_boundaries.front().line_number;
-                int last_line = m_text_boundaries.back().line_number;
-                ctx->x_offset.clear(first_line, last_line);
-                ctx->x_offset += max_offset;
-            }
             auto child_x_offset = ctx->x_offset;
 
             for (auto ptr : m_childrens) {
@@ -263,16 +251,16 @@ namespace RichText {
                 ret &= ptr->hk_build_hlayout(ctx);
             }
 
-            char_success &= hk_build_chars(ctx);
+            ret &= hk_build_chars(ctx);
 
-            if (char_success)
+            if (ret)
                 m_widget_dirty &= ~DIRTY_CHARS;
         }
         return ret;
     }
     bool AbstractLeafBlock::hk_build_vlayout(DrawContext* ctx, int line_number) {
         bool ret = true;
-        if (m_widget_dirty & DIRTY_HEIGHT) {
+        if (m_widget_dirty & DIRTY_HEIGHT || ctx->force_dirty_height) {
             float y_offset = 0.f;
             if (line_number >= 0 && m_text_boundaries.front().line_number != line_number) {
                 return ret;
@@ -290,7 +278,8 @@ namespace RichText {
                 line_info.descent = line.sublines.front().max_descent;
             }
             hk_set_y_dim(ctx);
-            m_widget_dirty &= ~DIRTY_HEIGHT;
+            if (ret && !(m_widget_dirty & DIRTY_WIDTH))
+                m_widget_dirty &= ~DIRTY_HEIGHT;
         }
         return ret;
     }
@@ -340,7 +329,8 @@ namespace RichText {
         if (m_widget_dirty & DIRTY_WIDTH) {
             float internal_size = m_int_dimensions.w;
             m_wrapper.setWidth(internal_size, false);
-            m_widget_dirty &= ~DIRTY_WIDTH;
+            if (!(m_widget_dirty & DIRTY_CHARS))
+                m_widget_dirty &= ~DIRTY_WIDTH;
             m_wrapper.setMultiOffset(&ctx->x_offset, false);
         }
         m_wrapper.recalculate();

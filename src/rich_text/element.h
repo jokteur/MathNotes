@@ -60,7 +60,7 @@ namespace RichText {
         // WrapDocument* doc;
         std::vector<TextCursor>* cursors;
         ImVec2 draw_offset;
-        bool force_dirty = false;
+        bool force_dirty_height = false;
     };
 
     struct AbstractElement : public Drawable {

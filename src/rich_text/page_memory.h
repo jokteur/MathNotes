@@ -64,6 +64,8 @@ namespace RichText {
         /* Returns the line of the top displayed block */
         int getCurrentLine() const { return m_current_line; }
 
+        void setLineLookaheadWindow(int window) { m_line_lookahead_window = window; }
+
         bool isBlockInMemory(int block_idx) const;
         bool isCurrentBlockAtMemBeg() const;
         bool isCurrentBlockAtMemEnd() const;
@@ -92,7 +94,13 @@ namespace RichText {
 
         void setCurrentBlockIdx(int idx);
 
-        void manage();
+        /**
+         * @brief Manages dynamically the memory of the page
+         *
+         * @return true if memory has changed
+         * @return false otherwise
+         */
+        bool manage();
 
         // WrapDocument& getWrapDocument() { return m_wrap_document; }
     };

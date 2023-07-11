@@ -12,6 +12,12 @@ namespace RichText {
     void PageDisplay::debugInfo() {
         ImGui::Text("y disp: %f", m_y_displacement);
         ImGui::Text("Heigts (b, a, t): %f %f %f", m_before_height, m_after_height, m_before_height + m_after_height);
+
+        ImGui::Checkbox("Freeze widget frames", &m_freeze_frame);
+        if (m_freeze_frame) {
+            if (ImGui::Button("Next frame"))
+                m_continue = true;
+        }
     }
 
     /* ================================
@@ -40,41 +46,47 @@ namespace RichText {
         boundaries.w = width;
         m_draw_list.SetImDrawList(ImGui::GetWindowDrawList());
         ctx->boundaries = boundaries;
-        ctx->force_dirty = false;
-
-        /* Once we know the height of the page,
-         * we can estimate how many lines we should
-         * look ahead for block element construction */
-        m_display_height = vMax.y - vMin.y;
-        calculate_heights();
-        m_mem->manage();
+        ctx->force_dirty_height = false;
 
         AbstractElement::visible_count = 0;
+        if (!m_freeze_frame || m_freeze_frame && m_continue) {
+            if (m_freeze_frame)
+                m_continue = false;
+            /* Once we know the height of the page,
+             * we can estimate how many lines we should
+             * look ahead for block element construction */
+            m_display_height = vMax.y - vMin.y;
+            calculate_heights();
+            /* Resize events or content loading may shift vertically the content. To keep the content fixed
+             * in place, we may need to reshift after rebuilding the blocks
+             *  prev_top_block_idx: record the last block display at the top of the page
+             *  prev_top_block_shift: record the vertical shift of the current block if it changes
+             * */
+            PrevElementInfo prev_info;
+            bool new_memory = m_mem->manage();
+            if (new_memory) {
+                ctx->force_dirty_height = true;
+                prev_info.event = true;
+            }
+            set_and_check_width(&prev_info, width);
 
-        /* Resize events may shift vertically the content. To keep the content fixed
-         * in place, we may need to reshift after rebuilding the blocks
-         *  prev_top_block_idx: record the last block display at the top of the page
-         *  prev_top_block_shift: record the vertical shift of the current block if it changes
-         * */
-        PrevElementInfo prev_info;
-        set_and_check_width(&prev_info, width);
+            if (!m_scrollbar_grab)
+                manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+            set_displacement(ctx);
 
-        if (!m_scrollbar_grab)
-            manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
-        set_displacement(ctx);
+            /* Building the widgets (no-op if already built)*/
+            TimeCounter::getInstance().startCounter("BuildAll");
+            build(ctx, &prev_info);
+            TimeCounter::getInstance().stopCounter("BuildAll");
 
-        /* Building the widgets (no-op if already built)*/
-        TimeCounter::getInstance().startCounter("BuildAll");
-        build(ctx, &prev_info);
-        TimeCounter::getInstance().stopCounter("BuildAll");
+            /* If the user has resized the window or new content is loaded, the content may shift vertically
+             * As explained above, if m_y_displacement != 0 and event, we need to reshift
+             * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */
+            correct_displacement(&prev_info);
+        }
 
-        /* If the user has resized the window, the content may shift vertically
-         * As explained above, if m_y_displacement != 0 and resize_event, we need to reshift
-         * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */
-         // correct_displacement(&prev_info);
-
-         /* Drawing all the widgets */
-         // Background, ForeGround
+        /* Drawing all the widgets */
+        // Background, ForeGround
         m_draw_list.Split(2);
         m_draw_list.SetCurrentChannel(1);
 
@@ -181,13 +193,11 @@ namespace RichText {
             prev_info->prev_top_block_ext_dimensions = element.m_ext_dimensions;
         }
         /* Now set the new width if necessary */
-        if (m_current_width != width) {
-            for (auto pair : m_mem->getElements()) {
-                pair.second->get().setWindowWidth(width);
-            }
+        for (auto pair : m_mem->getElements()) {
+            pair.second->get().setWindowWidth(width);
         }
         if (m_current_width != width) {
-            prev_info->resize_event = true;
+            prev_info->event = true;
             m_current_width = width;
         }
     }
@@ -201,9 +211,9 @@ namespace RichText {
             float y_offset = ctx->cursor_y_pos;
             ctx->lines = LinesInfos();
             if (!element.hk_build(ctx)) {
-                ctx->force_dirty = true;
+                ctx->force_dirty_height = true;
             }
-            if (pair.first == info->prev_top_block_idx && info->resize_event) {
+            if (pair.first == info->prev_top_block_idx && info->event) {
                 info->prev_top_block_shift = y_offset - info->prev_top_block_ext_dimensions.y;
             }
             if (!found_current && element.is_in_boundaries(ctx->boundaries)) {
@@ -213,29 +223,30 @@ namespace RichText {
                     m_mem->setCurrentBlockIdx(pair.first);
                 }
             }
-            ctx->cursor_y_pos = y_offset + element.m_ext_dimensions.h;
+            ctx->cursor_y_pos = element.m_ext_dimensions.y + element.m_ext_dimensions.h;
         }
         m_total_height = ctx->cursor_y_pos - m_y_displacement;
         m_after_height = m_total_height - m_before_height;
     }
     void PageDisplay::correct_displacement(PrevElementInfo* info) {
-        if (m_y_displacement < 0.f && info->resize_event && info->prev_top_block_shift != 0.f) {
+        if (m_y_displacement < 0.f && info->event && info->prev_top_block_shift != 0.f) {
             /* prev_top_block_ext_dimensions.y is always negative or zero */
             m_y_displacement -= info->prev_top_block_shift;
+            std::cout << "Shift: " << info->prev_top_block_shift <<
+                " Last idx: " << info->prev_top_block_idx <<
+                " Current idx: " << m_mem->getCurrentBlockIdx() << std::endl;
             int i = 0;
+            m_mem->setCurrentBlockIdx(info->prev_top_block_idx);
             for (auto pair : m_mem->getElements()) {
                 /* Each root block begins with an offset of zero */
                 auto& element = pair.second->get();
                 pair.second->get().displaceYOrigin(-info->prev_top_block_shift);
-                if (i == 0) {
+                if (i == 0)
                     m_y_displacement = element.m_ext_dimensions.y;
-                }
+
                 float y_offset = pair.second->get().m_ext_dimensions.y;
                 if (pair.first == info->prev_top_block_idx) {
                     m_before_height = y_offset - m_y_displacement - element.m_ext_dimensions.y;
-                    if (m_mem->getCurrentBlockIdx() != pair.first) {
-                        m_mem->setCurrentBlockIdx(pair.first);
-                    }
                 }
                 i++;
             }
@@ -259,7 +270,7 @@ namespace RichText {
         }
         float lines_per_display = m_display_height / m_line_height;
         float num_pages_for_min_scroll = m_display_height / (m_min_scroll_height * Tempo::GetScaling());
-        m_line_lookahead_window = num_pages_for_min_scroll * lines_per_display;
+        m_mem->setLineLookaheadWindow(num_pages_for_min_scroll * lines_per_display);
     }
     void PageDisplay::scrollDown(float pixels) {
         //ZoneScoped;

@@ -186,7 +186,7 @@ namespace RichText {
     }
     bool AbstractElement::hk_build_vlayout(DrawContext* ctx, int line_number) {
         bool ret = true;
-        if (m_widget_dirty & DIRTY_HEIGHT) {
+        if (m_widget_dirty & DIRTY_HEIGHT || ctx->force_dirty_height) {
             hk_set_y_origin(ctx);
 
             float y_offset = ctx->cursor_y_pos;
@@ -201,12 +201,6 @@ namespace RichText {
         }
         return ret;
     }
-    // void AbstractElement::resetYOrigin() {
-    //     for (auto ptr : m_childrens) {
-    //         ptr->resetYOrigin();
-    //     }
-    //     m_widget_dirty |= DIRTY_HEIGHT;
-    // }
     void AbstractElement::displaceYOrigin(float displacement) {
         for (auto ptr : m_childrens) {
             ptr->displaceYOrigin(displacement);
@@ -214,33 +208,6 @@ namespace RichText {
         m_ext_dimensions.y += displacement;
         m_int_dimensions.y += displacement;
     }
-
-    // void AbstractElement::hk_set_dimensions(DrawContext* ctx, float last_y_pos) {
-    //     if (m_category == C_BLOCK && ctx->cursor_y_pos - last_y_pos == 0.f) {
-    //         for (const auto& bounds : m_text_boundaries) {
-    //             // auto& set = ctx->doc->getWidgetsOnLine(bounds.line_number);
-    //             // if (set.empty())
-    //             //     continue;
-    //             // auto ptr = *set.begin();
-    //             // ctx->cursor_y_pos += ptr->m_ext_dimensions.h;
-    //         }
-    //     }
-    //     ctx->cursor_y_pos += m_style.v_paddings.y.getFloat();
-    //     float w = m_window_width - m_style.h_paddings.y.getFloat() - m_style.h_margins.y.getFloat();
-    //     w -= m_int_dimensions.x;
-
-    //     m_int_dimensions.w = w;
-    //     m_int_dimensions.h = ctx->cursor_y_pos - m_int_dimensions.y + m_style.h_paddings.x.getFloat();
-
-    //     ctx->cursor_y_pos += m_style.v_margins.y.getFloat();
-    //     /* h margin x and h padding x got added to x_offset in hk_set_position,
-    //      * which we must re-add to have the correct width */
-    //     w = m_window_width - m_ext_dimensions.x;
-    //     m_ext_dimensions.w = w;
-    //     m_ext_dimensions.h = ctx->cursor_y_pos - m_ext_dimensions.y;
-
-    //     m_is_dimension_set = true;
-    // }
     bool AbstractElement::hk_build_chars(DrawContext*) {
         m_widget_dirty &= ~DIRTY_WIDTH;
         return true;
@@ -248,15 +215,18 @@ namespace RichText {
     bool AbstractElement::hk_build(DrawContext* ctx) {
         bool ret = true;
         float initial_y_pos = ctx->cursor_y_pos;
-        // hk_set_position(ctx->cursor_y_pos, ctx->x_offset);
         if (m_widget_dirty) {
             // hk_set_selected(ctx);
-            ret &= hk_build_hlayout(ctx);
+            if (!hk_build_hlayout(ctx)) {
+                ctx->force_dirty_height = true;
+                ret = false;
+            }
+        }
+        if (m_widget_dirty || ctx->force_dirty_height) {
             ret &= hk_build_vlayout(ctx);
             // hk_draw_background(ctx->draw_list);
             // hk_draw_text_cursor(ctx); 
         }
-        // ctx->cursor_y_pos += m_ext_dimensions.h;
 
         // if (m_no_y_update) {
         //     m_no_y_update = false;
@@ -326,7 +296,6 @@ namespace RichText {
     void AbstractElement::setWindowWidth(float width) {
         //ZoneScoped;
         if (m_window_width == width) {
-            m_widget_dirty &= ~DIRTY_WIDTH;
             return;
         }
         m_window_width = width;

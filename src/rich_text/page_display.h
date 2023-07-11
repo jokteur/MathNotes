@@ -10,7 +10,7 @@
 namespace RichText {
     struct PrevElementInfo {
         int prev_top_block_idx = -1;
-        bool resize_event = false;
+        bool event = false;
         float prev_top_block_shift = 0.f;
         Rect prev_top_block_ext_dimensions;
     };
@@ -40,6 +40,10 @@ namespace RichText {
 
         // Config
         float m_min_scroll_height = 10.f;
+
+        // Debug
+        bool m_freeze_frame = false;
+        bool m_continue = false;
 
         std::string m_window_name;
 

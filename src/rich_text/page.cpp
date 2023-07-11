@@ -65,7 +65,7 @@ namespace RichText {
                 for (int i = m_debug_root_min;i < m_debug_root_max;i++) {
                     std::string str;
                     auto& block = m_file->m_blocks[i];
-                    AB::Boundaries bounds{block->line_start, block->idx_start, block->idx_start, block->idx_end, block->idx_end};
+                    AB::Boundaries bounds{ block->line_start, block->idx_start, block->idx_start, block->idx_end, block->idx_end };
                     AB::str_from_text_boundaries(*m_file->m_safe_txt, str, { bounds });
 
                     int length = str.length();
@@ -105,12 +105,6 @@ namespace RichText {
 
         m_display.setMinScrollHeight(m_config.min_scroll_height);
         m_display.FrameUpdate(m_window_name, &ctx);
-        /* Once all the roots have been displayed, if there has been some resize event, we need to correct
-         * for the next frame such that the user doesn't lose the line which was currently being drawn */
-         // if (resize_event && abs(current_widget_y_size - updated_current_widget_y_size))
-         //     m_mem.gotoLine(m_current_block_idx);
-
-        // ImVec2 rel_pos = ImVec2(mouse_pos.x - vMin.x, mouse_pos.y - vMin.y);
         ImGui::End();
         ImGui::PopStyleColor();
 
