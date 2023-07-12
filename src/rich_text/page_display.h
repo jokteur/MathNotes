@@ -55,7 +55,7 @@ namespace RichText {
         void set_displacement(DrawContext* ctx);
         void build(DrawContext* ctx, PrevElementInfo* prev_top_block_shift);
         void correct_displacement(PrevElementInfo* info);
-        void display_scrollbar(const Rect& boundaries);
+        void display_scrollbar(const Rect& boundaries, bool deactivate);
     public:
         PageDisplay(PageMemory* memory);
 

@@ -78,10 +78,11 @@ namespace RichText {
             /* If the user has resized the window, the content may shift vertically
              * As explained above, if m_y_displacement != 0 and event, we need to reshift
              * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */
+             // prev_info.prev_top_block_shift = -prev_info.prev_top_block_shift;
             correct_displacement(&prev_info);
 
             /* Scrollbar has to be displayed after it has been built, to estimate the heights of the page */
-            display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+            display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y }, prev_info.event);
 
             PageMemory::MemoryState state = PageMemory::NO_CHANGE;
             m_mem->manage(state);
@@ -135,7 +136,7 @@ namespace RichText {
     /* =========
      * Scrolling
      * ========= */
-    void PageDisplay::display_scrollbar(const Rect& b) {
+    void PageDisplay::display_scrollbar(const Rect& b, bool deactivate) {
         if (m_mem->empty())
             return;
         /* Find approximate height before the first parsed block
@@ -150,6 +151,8 @@ namespace RichText {
 
         m_scrollbar.setMinScrollHeight(m_min_scroll_height);
         m_scrollbar.FrameUpdate(b, m_draw_list, before, after, m_window_name);
+        if (deactivate)
+            return;
         if (m_scrollbar.hasChanged()) {
             float percentage = m_scrollbar.getPercentage();
             float total_height = before + after;
@@ -216,7 +219,7 @@ namespace RichText {
         }
     }
     void PageDisplay::set_and_check_width(PrevElementInfo* prev_info, float width) {
-        // prev_info->prev_top_block_idx = m_mem->getCurrentBlockIdx();
+        prev_info->prev_top_block_idx = m_mem->getCurrentBlockIdx();
         if (!m_mem->getElements().empty() && m_mem->getCurrentBlock() != nullptr) {
             const auto& element = m_mem->getCurrentBlock()->get();
             prev_info->prev_top_block_ext_dimensions = element.m_ext_dimensions;
