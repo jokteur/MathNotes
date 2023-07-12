@@ -102,7 +102,8 @@ namespace RichText {
                 TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
                 correct_displacement(&prev_info);
             }
-            else if (state == PageMemory::CHANGE_SKIP && m_mem->getCurrentBlockIdx() >= 0) {
+            else if (state == PageMemory::CHANGE_SKIP && m_mem->getCurrentBlock() != nullptr) {
+                set_and_check_width(&prev_info, width);
                 auto prev_idx = m_mem->getCurrentBlockIdx();
                 auto prev_block = m_mem->getCurrentBlock();
                 prev_info.prev_top_block_idx = prev_idx;
@@ -114,7 +115,6 @@ namespace RichText {
                 prev_info.prev_top_block_shift = -prev_block->get().m_ext_dimensions.y;
                 correct_displacement(&prev_info);
             }
-
         }
 
         /* Drawing all the widgets */
@@ -258,7 +258,7 @@ namespace RichText {
         m_after_height = m_total_height - m_before_height;
     }
     void PageDisplay::correct_displacement(PrevElementInfo* info) {
-        if (m_y_displacement < 0.f && info->event && info->prev_top_block_shift != 0.f) {
+        if (m_y_displacement <= 0.f && info->event && info->prev_top_block_shift != 0.f) {
             /* prev_top_block_ext_dimensions.y is always negative or zero */
             std::cout << "Shift: " << info->prev_top_block_shift <<
                 " Last idx: " << info->prev_top_block_idx <<
