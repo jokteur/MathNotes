@@ -82,6 +82,7 @@ namespace RichText {
         AbstractElement();
         virtual ~AbstractElement();
 
+        void set_selected_check(bool is_selected);
         void set_selected_pre_only(DrawContext* context);
         void set_selected_all(DrawContext* context);
         void set_selected_never(DrawContext* context);
@@ -93,6 +94,7 @@ namespace RichText {
 
         unsigned int m_widget_dirty = ALL_DIRTY;
         bool m_is_visible = false;
+        bool m_has_content = true;
         // bool m_no_y_update = false;
 
         // Returns false if not succesfully build chars
@@ -103,12 +105,10 @@ namespace RichText {
 
         // Build hooks
         bool virtual hk_build_chars(DrawContext* context);
-        // bool virtual hk_build_main(DrawContext* context);
         bool virtual hk_build(DrawContext* context);
         void virtual hk_set_selected(DrawContext* context);
 
         // New hooks for refactoring
-        // void virtual hk_set_spacings(DrawContext* context);
         bool virtual hk_build_hlayout(DrawContext* context);
         bool virtual hk_build_vlayout(DrawContext* context, int line_number = -1);
         void virtual hk_set_x_origin(DrawContext* context);
@@ -116,10 +116,7 @@ namespace RichText {
         // void virtual hk_set_x_dim(DrawContext* context);
         void virtual hk_set_y_dim(DrawContext* context);
 
-        // void virtual hk_update_line_info(DrawContext* context);
         // Draw hooks
-        // float virtual hk_set_position(float& cursor_y_pos, MultiOffset& x_offset);
-        // bool virtual hk_draw_main(DrawContext* context);
         /* Implement this function if you want to draw visual elements
          * that are not part of fundamental widget construction and char drawing */
         bool virtual hk_draw_secondary(DrawContext* context);
@@ -137,7 +134,7 @@ namespace RichText {
         Style m_style;
         Style m_special_chars_style;
 
-        bool m_is_selected = true;
+        bool m_is_selected = false;
         WrapAlgorithm m_wrapper;
 
         // Position of the pointer in m_childrens;
@@ -160,7 +157,6 @@ namespace RichText {
 
         // Internal
         SafeString m_safe_string;
-        // RichTextInfo* m_rt_info;
 
         // Events
         void virtual onClick() {}

@@ -179,6 +179,7 @@ namespace RichText {
             }
 
             if (ret) {
+                m_widget_dirty &= ~DIRTY_CHARS;
                 m_widget_dirty &= ~DIRTY_WIDTH;
             }
         }
@@ -215,8 +216,14 @@ namespace RichText {
     bool AbstractElement::hk_build(DrawContext* ctx) {
         bool ret = true;
         float initial_y_pos = ctx->cursor_y_pos;
+        hk_set_selected(ctx);
         if (m_widget_dirty) {
-            // hk_set_selected(ctx);
+            int content_size = 0;
+            for (const auto& bounds : m_text_boundaries) {
+                content_size += bounds.end - bounds.beg;
+            }
+            m_has_content = content_size > 0;
+            hk_set_selected(ctx);
             if (!hk_build_hlayout(ctx)) {
                 ctx->force_dirty_height = true;
                 ret = false;
@@ -224,71 +231,62 @@ namespace RichText {
         }
         if (m_widget_dirty || ctx->force_dirty_height) {
             ret &= hk_build_vlayout(ctx);
-            // hk_draw_background(ctx->draw_list);
-            // hk_draw_text_cursor(ctx); 
         }
-
-        // if (m_no_y_update) {
-        //     m_no_y_update = false;
-        //     ctx->cursor_y_pos = initial_y_pos;
-        // }
         return ret;
     }
 
+    void AbstractElement::set_selected_check(bool is_selected) {
+        if (m_is_selected != is_selected) {
+            m_is_selected = is_selected;
+            m_widget_dirty = ALL_DIRTY;
+            auto ptr = m_parent;
+            while (ptr != nullptr) {
+                ptr->m_widget_dirty = ALL_DIRTY;
+                ptr = ptr->m_parent;
+            }
+        }
+    }
     void AbstractElement::set_selected_all(DrawContext* ctx) {
-        // bool is_selected = false;
-        // for (const auto& cursor : *ctx->cursors) {
-        //     int start = cursor.getStartPosition();
-        //     int end = cursor.getEndPosition();
+        bool is_selected = false;
+        if (m_has_content)
+            for (const auto& cursor : *ctx->cursors) {
+                int start = cursor.getStartPosition();
+                int end = cursor.getEndPosition();
 
-        //     int i = 0;
-        //     for (const auto bounds : m_text_boundaries) {
-        //         if (start >= bounds.pre && start <= bounds.post || end >= bounds.pre && end <= bounds.post) {
-        //             is_selected = true;
-        //             break;
-        //         }
-        //     }
-        //     if (is_selected)
-        //         break;
-        // }
-        // if (m_is_selected != is_selected) {
-        //     m_is_selected = is_selected;
-        //     m_widget_dirty = ALL_DIRTY;
-        //     auto ptr = m_parent;
-        //     while (ptr != nullptr) {
-        //         ptr->m_widget_dirty = ALL_DIRTY;
-        //         ptr = ptr->m_parent;
-        //     }
-        // }
+                int i = 0;
+                for (const auto bounds : m_text_boundaries) {
+                    if (start >= bounds.pre && start <= bounds.post || end >= bounds.pre && end <= bounds.post) {
+                        is_selected = true;
+                        break;
+                    }
+                }
+                if (is_selected)
+                    break;
+            }
+        else
+            is_selected = true;
+        set_selected_check(is_selected);
     }
     void AbstractElement::set_selected_pre_only(DrawContext* ctx) {
-        // bool is_selected = false;
-        // for (const auto& cursor : *ctx->cursors) {
-        //     int start = cursor.getStartPosition();
-        //     int end = cursor.getEndPosition();
-
-        //     int i = 0;
-        //     for (const auto bounds : m_text_boundaries) {
-        //         if (start >= bounds.pre && start <= bounds.beg || end >= bounds.pre && end <= bounds.beg) {
-        //             is_selected = true;
-        //             break;
-        //         }
-        //     }
-        //     if (is_selected)
-        //         break;
-        // }
-        // if (m_is_selected != is_selected) {
-        //     m_is_selected = is_selected;
-        //     m_widget_dirty = ALL_DIRTY;
-        //     auto ptr = m_parent;
-        //     while (ptr != nullptr) {
-        //         ptr->m_widget_dirty = ALL_DIRTY;
-        //         ptr = ptr->m_parent;
-        //     }
-        // }
+        bool is_selected = false;
+        for (const auto& cursor : *ctx->cursors) {
+            int start = cursor.getStartPosition();
+            int end = cursor.getEndPosition();
+            int i = 0;
+            for (const auto bounds : m_text_boundaries) {
+                if (start >= bounds.pre && start <= bounds.beg || end >= bounds.pre && end <= bounds.beg) {
+                    is_selected = true;
+                    break;
+                }
+            }
+            if (is_selected)
+                break;
+        }
+        set_selected_check(is_selected);
     }
     void AbstractElement::set_selected_never(DrawContext*) {
         m_is_selected = false;
+        set_selected_check(false);
     }
     void AbstractElement::hk_set_selected(DrawContext* ctx) {
         set_selected_all(ctx);
@@ -350,6 +348,8 @@ namespace RichText {
         }
 
         hk_draw_show_boundaries(ctx);
+        hk_draw_background(ctx->draw_list);
+        hk_draw_text_cursor(ctx);
         ret &= hk_draw_secondary(ctx);
 
         return ret;

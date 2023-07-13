@@ -73,27 +73,29 @@ namespace RichText {
          // }
          // cursor.draw(ctx, ImVec2(x_pos, y_pos + line_info.position), height);
      // }
-    // void AbstractBlock::hk_draw_text_cursor(DrawContext* ctx) {
-    //     for (auto& cursor : *ctx->cursors) {
-    //         int text_pos = cursor.getTextPosition();
-    //         int i = 0;
-    //         for (const auto bounds : m_text_boundaries) {
-    //             if (text_pos >= bounds.pre && text_pos < bounds.beg) {
-    //                 if (i < m_pre_delimiters.size()) {
-    //                     float x_pos = m_current_offset.getOffset(bounds.line_number);
-    //                     place_text_cursor(ctx, bounds.line_number, text_pos, x_pos, m_pre_delimiters[i].str, cursor);
-    //                     break;
-    //                 }
-    //                 else {
-    //                     float x_pos = ctx->x_offset.getOffset(bounds.line_number);
-    //                     place_text_cursor(ctx, bounds.line_number, text_pos, x_pos, WrapString(), cursor);
-    //                     break;
-    //                 }
-    //             }
-    //             i++;
-    //         }
-    //     }
-    // }
+    void AbstractBlock::hk_draw_text_cursor(DrawContext* ctx) {
+        for (auto& cursor : *ctx->cursors) {
+            int text_pos = cursor.getTextPosition();
+            for (const auto bounds : m_text_boundaries) {
+                if (text_pos >= bounds.pre && text_pos < bounds.beg) {
+                    if (m_pre_delimiters.find(bounds.line_number) != m_pre_delimiters.end()) {
+                        const auto line = m_pre_delimiters[bounds.line_number];
+                        if (line.sublines.empty())
+                            continue;
+                        auto subline = line.sublines.front();
+                        for (auto sub : line.sublines) {
+                            if (sub.start >= text_pos) {
+                                subline = sub;
+                                break;
+                            }
+                        }
+                        // ImVec2 pos(subline.rel_y_pos, );
+                        // cursor.draw(ctx, );
+                    }
+                }
+            }
+        }
+    }
     void AbstractBlock::hk_set_selected(DrawContext* ctx) {
         set_selected_pre_only(ctx);
     }
@@ -148,48 +150,55 @@ namespace RichText {
                 hk_set_y_origin(ctx);
             }
             if (line_number < 0) {
-                for (auto& pair : m_pre_delimiters) {
-                    const int current_line_number = pair.first;
-                    for (auto ptr : m_childrens) {
-                        ret &= ptr->hk_build_vlayout(ctx, current_line_number);
+                if (m_is_selected) {
+                    for (auto& pair : m_pre_delimiters) {
+                        const int current_line_number = pair.first;
+                        for (auto ptr : m_childrens) {
+                            ret &= ptr->hk_build_vlayout(ctx, current_line_number);
+                        }
+                        if (ctx->lines.find(current_line_number) != ctx->lines.end()) {
+                            // Relative position
+                            pair.second.relative_y_pos = ctx->lines[current_line_number].position - m_int_dimensions.y;
+                            if (!pair.second.sublines.empty())
+                                pair.second.relative_y_pos += ctx->lines[current_line_number].ascent - pair.second.sublines.front().max_ascent;
+                        }
+                        else {
+                            // Relative position
+                            pair.second.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
+                            ctx->cursor_y_pos += pair.second.height;
+                        }
                     }
-                    if (ctx->lines.find(current_line_number) != ctx->lines.end()) {
-                        // Relative position
-                        pair.second.relative_y_pos = ctx->lines[current_line_number].position - m_int_dimensions.y;
-                        if (!pair.second.sublines.empty())
-                            pair.second.relative_y_pos += ctx->lines[current_line_number].ascent - pair.second.sublines.front().max_ascent;
-                    }
-                    else {
-                        // Relative position
-                        pair.second.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
-                        ctx->cursor_y_pos += pair.second.height;
+                }
+                else {
+                    for (const auto bounds : m_text_boundaries) {
+                        for (auto ptr : m_childrens) {
+                            ret &= ptr->hk_build_vlayout(ctx, bounds.line_number);
+                        }
                     }
                 }
                 hk_set_y_dim(ctx);
                 if (ret && !(m_widget_dirty & DIRTY_WIDTH))
                     m_widget_dirty &= ~DIRTY_HEIGHT;
             }
-
             else {
-                if (m_pre_delimiters.find(line_number) == m_pre_delimiters.end()) {
-                    return true;
-                }
                 for (auto ptr : m_childrens) {
                     ret &= ptr->hk_build_vlayout(ctx, line_number);
                 }
-                auto& line = m_pre_delimiters[line_number];
-                if (ctx->lines.find(line_number) != ctx->lines.end()) {
-                    // Relative position
-                    line.relative_y_pos = ctx->lines[line_number].position - m_int_dimensions.y;
-                    if (!line.sublines.empty())
-                        line.relative_y_pos += ctx->lines[line_number].ascent - line.sublines.front().max_ascent;
-                }
-                else {
-                    // Relative position
-                    line.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
-                    ctx->lines[line_number];
-                    ctx->lines[line_number].position = ctx->cursor_y_pos;
-                    ctx->cursor_y_pos += line.height;
+                if (m_is_selected) {
+                    auto& line = m_pre_delimiters[line_number];
+                    if (ctx->lines.find(line_number) != ctx->lines.end()) {
+                        // Relative position
+                        line.relative_y_pos = ctx->lines[line_number].position - m_int_dimensions.y;
+                        if (!line.sublines.empty())
+                            line.relative_y_pos += ctx->lines[line_number].ascent - line.sublines.front().max_ascent;
+                    }
+                    else {
+                        // Relative position
+                        line.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
+                        ctx->lines[line_number];
+                        ctx->lines[line_number].position = ctx->cursor_y_pos;
+                        ctx->cursor_y_pos += line.height;
+                    }
                 }
                 if (m_text_boundaries.back().line_number == line_number) {
                     hk_set_y_dim(ctx);
@@ -229,7 +238,7 @@ namespace RichText {
         for (auto& child : m_childrens) {
             ret &= child->draw(ctx);
         }
-
+        hk_draw_text_cursor(ctx);
         ret &= hk_draw_secondary(ctx);
 
         return ret;
@@ -240,7 +249,6 @@ namespace RichText {
      * ========= */
     bool AbstractLeafBlock::hk_build_hlayout(DrawContext* ctx) {
         bool ret = true;
-
         if (m_widget_dirty & (DIRTY_CHARS | DIRTY_WIDTH)) {
             hk_set_x_origin(ctx);
 
@@ -250,7 +258,6 @@ namespace RichText {
                 ctx->x_offset = child_x_offset;
                 ret &= ptr->hk_build_hlayout(ctx);
             }
-
             ret &= hk_build_chars(ctx);
 
             if (ret)

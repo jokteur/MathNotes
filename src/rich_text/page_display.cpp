@@ -49,73 +49,68 @@ namespace RichText {
         ctx->force_dirty_height = false;
 
         AbstractElement::visible_count = 0;
-        if (!m_freeze_frame || m_freeze_frame && m_continue) {
-            if (m_freeze_frame)
-                m_continue = false;
-            /* Once we know the height of the page,
-             * we can estimate how many lines we should
-             * look ahead for block element construction */
-            m_display_height = vMax.y - vMin.y;
-            calculate_heights();
-            /* Resize events or content loading may shift vertically the content. To keep the content fixed
-             * in place, we may need to reshift after rebuilding the blocks
-             *  prev_top_block_idx: record the last block display at the top of the page
-             *  prev_top_block_shift: record the vertical shift of the current block if it changes
-             * */
-            PrevElementInfo prev_info;
+        /* Once we know the height of the page,
+         * we can estimate how many lines we should
+         * look ahead for block element construction */
+        m_display_height = vMax.y - vMin.y;
+        calculate_heights();
+        /* Resize events or content loading may shift vertically the content. To keep the content fixed
+         * in place, we may need to reshift after rebuilding the blocks
+         *  prev_top_block_idx: record the last block display at the top of the page
+         *  prev_top_block_shift: record the vertical shift of the current block if it changes
+         * */
+        PrevElementInfo prev_info;
+        set_and_check_width(&prev_info, width);
+
+        if (!m_scrollbar_grab)
+            manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
+
+        set_displacement(ctx);
+
+        /* Building the widgets (no-op if already built)*/
+        TimeCounter::getInstance().startCounter("BuildAll");
+        build(ctx, &prev_info);
+        TimeCounter::getInstance().stopCounter("BuildAll");
+
+        /* If the user has resized the window, the content may shift vertically
+         * As explained above, if m_y_displacement != 0 and event, we need to reshift
+         * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */
+        correct_displacement(&prev_info);
+
+        /* Scrollbar has to be displayed after it has been built, to estimate the heights of the page */
+        display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y }, prev_info.event);
+
+        PageMemory::MemoryState state = PageMemory::NO_CHANGE;
+        m_mem->manage(state);
+        /* New memory means that blocks before can be added or deleted
+         * This shift the content vertically, we must redo a pass and
+         * shift m_y_displacement appropriatly */
+        if (state == PageMemory::CHANGE_NO_SKIP) {
             set_and_check_width(&prev_info, width);
-
-            if (!m_scrollbar_grab)
-                manage_scroll(mouse_pos, Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y });
-
-            set_displacement(ctx);
-
-            /* Building the widgets (no-op if already built)*/
-            TimeCounter::getInstance().startCounter("BuildAll");
+            auto prev_idx = m_mem->getCurrentBlockIdx();
+            prev_info.prev_top_block_idx = prev_idx;
+            prev_info.prev_top_block_ext_dimensions = m_mem->getElements()[prev_idx]->get().m_ext_dimensions;
+            prev_info.prev_top_block_shift = 0.f;
+            prev_info.event = true;
+            ctx->force_dirty_height = true;
+            ctx->cursor_y_pos = m_y_displacement;
+            TimeCounter::getInstance().startCounter("BuildAll (2nd)");
             build(ctx, &prev_info);
-            TimeCounter::getInstance().stopCounter("BuildAll");
-
-            /* If the user has resized the window, the content may shift vertically
-             * As explained above, if m_y_displacement != 0 and event, we need to reshift
-             * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */
-             // prev_info.prev_top_block_shift = -prev_info.prev_top_block_shift;
+            TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
             correct_displacement(&prev_info);
-
-            /* Scrollbar has to be displayed after it has been built, to estimate the heights of the page */
-            display_scrollbar(Rect{ vMin.x, vMin.y, vMax.x - vMin.x, vMax.y - vMin.y }, prev_info.event);
-
-            PageMemory::MemoryState state = PageMemory::NO_CHANGE;
-            m_mem->manage(state);
-            /* New memory means that blocks before can be added or deleted
-             * This shift the content vertically, we must redo a pass and
-             * shift m_y_displacement appropriatly */
-            if (state == PageMemory::CHANGE_NO_SKIP) {
-                set_and_check_width(&prev_info, width);
-                auto prev_idx = m_mem->getCurrentBlockIdx();
-                prev_info.prev_top_block_idx = prev_idx;
-                prev_info.prev_top_block_ext_dimensions = m_mem->getElements()[prev_idx]->get().m_ext_dimensions;
-                prev_info.prev_top_block_shift = 0.f;
-                prev_info.event = true;
-                ctx->force_dirty_height = true;
-                ctx->cursor_y_pos = m_y_displacement;
-                TimeCounter::getInstance().startCounter("BuildAll (2nd)");
-                build(ctx, &prev_info);
-                TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
-                correct_displacement(&prev_info);
-            }
-            else if (state == PageMemory::CHANGE_SKIP && m_mem->getCurrentBlock() != nullptr) {
-                set_and_check_width(&prev_info, width);
-                auto prev_idx = m_mem->getCurrentBlockIdx();
-                auto prev_block = m_mem->getCurrentBlock();
-                prev_info.prev_top_block_idx = prev_idx;
-                prev_info.event = true;
-                ctx->cursor_y_pos = 0.f;
-                TimeCounter::getInstance().startCounter("BuildAll (2nd)");
-                build(ctx, &prev_info);
-                TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
-                prev_info.prev_top_block_shift = -prev_block->get().m_ext_dimensions.y;
-                correct_displacement(&prev_info);
-            }
+        }
+        else if (state == PageMemory::CHANGE_SKIP && m_mem->getCurrentBlock() != nullptr) {
+            set_and_check_width(&prev_info, width);
+            auto prev_idx = m_mem->getCurrentBlockIdx();
+            auto prev_block = m_mem->getCurrentBlock();
+            prev_info.prev_top_block_idx = prev_idx;
+            prev_info.event = true;
+            ctx->cursor_y_pos = 0.f;
+            TimeCounter::getInstance().startCounter("BuildAll (2nd)");
+            build(ctx, &prev_info);
+            TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
+            prev_info.prev_top_block_shift = -prev_block->get().m_ext_dimensions.y;
+            correct_displacement(&prev_info);
         }
 
         /* Drawing all the widgets */
@@ -233,7 +228,6 @@ namespace RichText {
             m_current_width = width;
         }
     }
-
     void PageDisplay::build(DrawContext* ctx, PrevElementInfo* info) {
         bool found_current = false;
         for (auto pair : m_mem->getElements()) {

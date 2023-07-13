@@ -9,6 +9,8 @@
 namespace RichText {
     Page::Page(AB::File* file) : Drawable(), m_mem(file), m_file(file), m_display(&m_mem) {
         m_text_cursors.push_back(TextCursor(&m_mem, m_file));
+        PageMemory::MemoryState dummy;
+        m_mem.manage(dummy);
     }
 
     void Page::debug_window() {
@@ -109,7 +111,6 @@ namespace RichText {
         ImGui::PopStyleColor();
 
         debug_window();
-
     }
 
     /* ======================

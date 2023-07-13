@@ -29,7 +29,7 @@ namespace RichText {
         // bool hk_build_main(DrawContext* context) override;
         // bool hk_draw_main(DrawContext* context) override;
         void hk_draw_background(Draw::DrawList* draw_list) override;
-        // void hk_draw_text_cursor(DrawContext* context) override;
+        void hk_draw_text_cursor(DrawContext* context) override;
         bool draw(DrawContext* ctx) override;
         void hk_debug_attributes() override;
         void hk_set_selected(DrawContext* context) override;
