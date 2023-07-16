@@ -24,7 +24,7 @@ float MultiOffset::getOffset(int line_number) const {
 }
 void MultiOffset::addOffset(int line_number, float offset) {
     if (m_offsets.find(line_number) == m_offsets.end()) {
-        m_offsets[line_number] = 0.f;
+        m_offsets[line_number] = m_min;
     }
     m_offsets[line_number] += offset;
 

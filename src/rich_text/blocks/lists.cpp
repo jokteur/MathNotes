@@ -37,10 +37,8 @@ namespace RichText {
 
             WrapAlgorithm wrapper;
             wrapper.setWidth(4000.f, false);
-            wrapper.recalculate(&line, ctx->x_offset.getOffset(bounds.line_number));
-
-            /* Remove the margin that has been added */
-            ctx->x_offset -= m_style.h_margins.x.getFloat() + m_style.h_paddings.x.getFloat();
+            float x_offset = ctx->x_offset.getOffset(bounds.line_number);
+            wrapper.recalculate(&line, x_offset);
         }
         return success;
     }

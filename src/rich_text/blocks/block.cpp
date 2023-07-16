@@ -175,7 +175,7 @@ namespace RichText {
                             ret &= ptr->hk_build_vlayout(ctx, bounds.line_number);
                         }
                         // Add height to empty blocks
-                        if (ctx->lines.find(bounds.line_number) == ctx->lines.end()) {
+                        if (ctx->lines.find(bounds.line_number) == ctx->lines.end() && bounds.beg == bounds.pre) {
                             if (ctx->line_height > 0.f)
                                 ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
                             else
@@ -208,11 +208,14 @@ namespace RichText {
                     }
                 }
                 // Add height to empty blocks
-                if (ctx->lines.find(line_number) == ctx->lines.end()) {
+                int current_text_bound_idx = line_number - m_text_boundaries.front().line_number;
+                const auto& bounds = m_text_boundaries[current_text_bound_idx];
+                if (ctx->lines.find(line_number) == ctx->lines.end() && bounds.beg == bounds.end) {
                     if (ctx->line_height > 0.f) {
                         ctx->lines[line_number];
                         ctx->lines[line_number].position = ctx->cursor_y_pos;
                         ctx->lines[line_number].height = ctx->line_height * m_style.line_space;
+                        ctx->lines[line_number].ascent = ctx->lines[line_number].height / 2.f;
                         ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
                     }
                     else
@@ -418,10 +421,9 @@ namespace RichText {
             }
             else {
                 if (ctx->line_height > 0.f)
-                    ctx->cursor_y_pos += ctx->line_height;
+                    ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
                 else
-                    ctx->force_dirty_height = true;
-                success = false;
+                    success = false;
             }
 
             m_wrapper.clear();
