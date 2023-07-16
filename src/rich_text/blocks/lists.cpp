@@ -47,11 +47,12 @@ namespace RichText {
     bool LIWidget::hk_draw_secondary(DrawContext* ctx) {
         if (!m_is_selected && number.empty()) {
             LineInfo line_info;
-            hk_get_line_info(m_text_boundaries.front().line_number, line_info);
+            hk_get_line_info(ctx, m_text_boundaries.front().line_number, line_info);
 
             auto p1 = m_int_dimensions.getPos() + ImGui::GetCursorScreenPos();
             float radius = emfloat{ 2.5 }.getFloat();
-            p1.y += line_info.height / 2.f - radius / 2.f;
+            p1.y += line_info.height / 2.f - radius;
+            p1.x -= radius * 2.f;
 
             if (list_level == 0) {
                 ctx->draw_list->get()->AddCircleFilled(

@@ -33,7 +33,7 @@ namespace RichText {
         bool draw(DrawContext* ctx) override;
         void hk_debug_attributes() override;
         void hk_set_selected(DrawContext* context) override;
-        void hk_get_line_info(int line_number, LineInfo& line_info) override;
+        void hk_get_line_info(DrawContext* context, int line_number, LineInfo& line_info) override;
 
 
         /* Blocks can be defined by vertical marker, like quotes:

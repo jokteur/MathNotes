@@ -60,6 +60,7 @@ namespace RichText {
         // WrapDocument* doc;
         std::vector<TextCursor>* cursors;
         ImVec2 draw_offset;
+        float line_height = 0.f;
         bool force_dirty_height = false;
     };
 
@@ -120,7 +121,7 @@ namespace RichText {
         // Draw hooks
         /* Implement this function if you want to draw visual elements
          * that are not part of fundamental widget construction and char drawing */
-        void virtual hk_get_line_info(int line_number, LineInfo& line_info);
+        void virtual hk_get_line_info(DrawContext* context, int line_number, LineInfo& line_info);
         bool virtual hk_draw_secondary(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(DrawContext* context);

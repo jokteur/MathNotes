@@ -6,8 +6,8 @@
 class MultiOffset {
 private:
     std::unordered_map<int, float> m_offsets;
-    float m_min = 1e9;
-    float m_max = -1e9;
+    float m_min = 0;
+    float m_max = 0;
     float m_additional_offset = 0.f;
 public:
     MultiOffset& operator+=(float offset);

@@ -53,7 +53,7 @@ namespace RichText {
          * we can estimate how many lines we should
          * look ahead for block element construction */
         m_display_height = vMax.y - vMin.y;
-        calculate_heights();
+        calculate_heights(ctx);
         /* Resize events or content loading may shift vertically the content. To keep the content fixed
          * in place, we may need to reshift after rebuilding the blocks
          *  prev_top_block_idx: record the last block display at the top of the page
@@ -279,11 +279,12 @@ namespace RichText {
         }
     }
 
-    void PageDisplay::calculate_heights() {
+    void PageDisplay::calculate_heights(DrawContext* ctx) {
+        Style default_style;
         if (m_recalculate_line_height) {
             using namespace Fonts;
             FontRequestInfo font_request;
-            font_request.size_wish = 18.f;
+            font_request.size_wish = default_style.font_size.f;
             FontInfoOut font_out;
             m_ui_state.font_manager.requestFont(font_request, font_out);
             auto font = Tempo::GetImFont(font_out.font_id);
@@ -292,6 +293,7 @@ namespace RichText {
                 m_line_height = font_out.size * font_out.ratio * m_scale * Tempo::GetScaling();
             }
         }
+        ctx->line_height = m_line_height;
         float lines_per_display = m_display_height / m_line_height;
         float num_pages_for_min_scroll = m_display_height / (m_min_scroll_height * Tempo::GetScaling());
         m_mem->setLineLookaheadWindow(num_pages_for_min_scroll * lines_per_display);

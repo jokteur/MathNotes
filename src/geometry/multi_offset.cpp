@@ -18,7 +18,7 @@ MultiOffset& MultiOffset::operator-=(float offset) {
 }
 float MultiOffset::getOffset(int line_number) const {
     if (m_offsets.find(line_number) == m_offsets.end()) {
-        return 0.f;
+        return m_min;
     }
     return m_offsets.at(line_number);
 }
@@ -39,8 +39,8 @@ void MultiOffset::addOffset(int line_number, float offset) {
 }
 void MultiOffset::clear() {
     m_offsets.clear();
-    m_min = 1e9;
-    m_max = -1e9;
+    m_min = 0.f;
+    m_max = 0.f;
 }
 void MultiOffset::clear(const std::vector<int>& line_numbers) {
     m_offsets.clear();
@@ -60,12 +60,8 @@ void MultiOffset::clear(int from, int to) {
 }
 
 float MultiOffset::getMin() const {
-    if (m_offsets.empty())
-        return 0.f;
     return m_min;
 }
 float MultiOffset::getMax() const {
-    if (m_offsets.empty())
-        return 0.f;
     return m_max;
 }

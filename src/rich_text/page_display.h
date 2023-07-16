@@ -49,7 +49,7 @@ namespace RichText {
 
         VerticalScrollBar m_scrollbar;
 
-        void calculate_heights();
+        void calculate_heights(DrawContext* ctx);
         void manage_scroll(const ImVec2& mouse_pos, const Rect& box);
         void set_and_check_width(PrevElementInfo* prev_info, float width);
         void set_displacement(DrawContext* ctx);

@@ -120,7 +120,7 @@ namespace RichText {
             set_pre_margins(ctx);
 
             /* If true, this helps vertically align all the pre-delimiters */
-            if (m_style.align_pre_indent) {
+            if (m_style.align_pre_indent && m_is_selected) {
                 float max_offset = ctx->x_offset.getMax();
                 int first_line = m_text_boundaries.front().line_number;
                 int last_line = m_text_boundaries.back().line_number;
@@ -174,6 +174,13 @@ namespace RichText {
                         for (auto ptr : m_childrens) {
                             ret &= ptr->hk_build_vlayout(ctx, bounds.line_number);
                         }
+                        // Add height to empty blocks
+                        if (ctx->lines.find(bounds.line_number) == ctx->lines.end()) {
+                            if (ctx->line_height > 0.f)
+                                ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
+                            else
+                                ret = false;
+                        }
                     }
                 }
                 hk_set_y_dim(ctx);
@@ -200,6 +207,17 @@ namespace RichText {
                         ctx->cursor_y_pos += line.height;
                     }
                 }
+                // Add height to empty blocks
+                if (ctx->lines.find(line_number) == ctx->lines.end()) {
+                    if (ctx->line_height > 0.f) {
+                        ctx->lines[line_number];
+                        ctx->lines[line_number].position = ctx->cursor_y_pos;
+                        ctx->lines[line_number].height = ctx->line_height * m_style.line_space;
+                        ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
+                    }
+                    else
+                        ret = false;
+                }
                 if (m_text_boundaries.back().line_number == line_number) {
                     hk_set_y_dim(ctx);
                     if (ret)
@@ -220,6 +238,7 @@ namespace RichText {
         /* Display chars */
         for (auto& pair : m_text_column) {
             auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
+            pos.x = 0.f;
             pos.y += pair.second.relative_y_pos;
             for (auto& ptr : pair.second.chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
@@ -228,6 +247,7 @@ namespace RichText {
         }
         for (auto& pair : m_pre_delimiters) {
             auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
+            pos.x = 0.f;
             pos.y += pair.second.relative_y_pos;
             for (auto& ptr : pair.second.chars) {
                 auto p = std::static_pointer_cast<DrawableChar>(ptr);
@@ -239,11 +259,12 @@ namespace RichText {
             ret &= child->draw(ctx);
         }
         hk_draw_text_cursor(ctx);
+        hk_draw_show_boundaries(ctx);
         ret &= hk_draw_secondary(ctx);
 
         return ret;
     }
-    void AbstractBlock::hk_get_line_info(int line_number, LineInfo& line_info) {
+    void AbstractBlock::hk_get_line_info(DrawContext* ctx, int line_number, LineInfo& line_info) {
         if (m_pre_delimiters.find(line_number) != m_pre_delimiters.end()) {
             const auto& line = m_pre_delimiters[line_number];
             line_info.position = line.relative_y_pos + m_ext_dimensions.y;
@@ -262,9 +283,15 @@ namespace RichText {
             for (auto ptr : m_childrens) {
                 if (ptr->m_text_boundaries.front().line_number <= line_number
                     && ptr->m_text_boundaries.back().line_number >= line_number) {
-                    ptr->hk_get_line_info(line_number, line_info);
+                    ptr->hk_get_line_info(ctx, line_number, line_info);
                     break;
                 }
+            }
+            if (m_childrens.empty()) {
+                line_info.position = m_ext_dimensions.y;
+                line_info.height = ctx->line_height * m_style.line_space;
+                line_info.ascent = line_info.height / 2.f;
+                line_info.descent = line_info.height / 2.f;
             }
         }
     }
@@ -308,6 +335,12 @@ namespace RichText {
                 line_info.height = line.height;
                 line_info.ascent = line.sublines.front().max_ascent;
                 line_info.descent = line.sublines.front().max_descent;
+            }
+            if (!m_has_content) {
+                if (ctx->line_height > 0.f)
+                    ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
+                else
+                    ret = false;
             }
             hk_set_y_dim(ctx);
             if (ret)
@@ -382,6 +415,13 @@ namespace RichText {
             if (m_is_selected) {
                 auto& bounds = m_text_boundaries.front();
                 success &= Utf8StrToImCharStr(m_ui_state, &m_text_column, m_safe_string, bounds.line_number, bounds.pre, bounds.end, m_special_chars_style, true);
+            }
+            else {
+                if (ctx->line_height > 0.f)
+                    ctx->cursor_y_pos += ctx->line_height;
+                else
+                    ctx->force_dirty_height = true;
+                success = false;
             }
 
             m_wrapper.clear();
