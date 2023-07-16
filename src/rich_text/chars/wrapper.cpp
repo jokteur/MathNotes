@@ -60,7 +60,7 @@ namespace RichText {
         //ZoneScoped;
         m_sublines.insert(std::next(line_it), SubLine{ cursor_idx, 0.f });
         line_it++;
-        *cursor_pos_x = 0.f;
+        *cursor_pos_x = m_x_offset;
     }
     void WrapAlgorithm::algorithm() {
         if (m_width < 1.f) {
@@ -131,7 +131,7 @@ namespace RichText {
                         if (word_idx == cursor_idx + 1) {
                             word_idx = cursor_idx;
                         }
-                        float tmp_cursor_idx = 0.f;
+                        float tmp_cursor_idx = m_x_offset;
                         for (int j = word_idx;j <= cursor_idx;j++) {
                             WrapCharPtr tmp_c = (*m_current_string)[j];
                             if (!tmp_c->info->is_whitespace)
@@ -173,7 +173,7 @@ namespace RichText {
                 for (int j = current_line_it->start;j < line_end_idx;j++) {
                     WrapCharPtr c = (*m_current_string)[j];
                     max_ascent = max(max_ascent, c->info->ascent);
-                    max_descent = max(max_descent, c->info->descent);
+                    max_descent = max(max_descent, -c->info->descent);
                 }
                 if (current_line_it == m_sublines.begin()) {
                     m_first_max_ascent = max_ascent;
