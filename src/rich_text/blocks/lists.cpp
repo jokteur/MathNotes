@@ -45,12 +45,13 @@ namespace RichText {
         return success;
     }
     bool LIWidget::hk_draw_secondary(DrawContext* ctx) {
-        int line_number = m_text_boundaries.front().line_number;
-        auto it = ctx->lines.find(line_number);
-        if (it != ctx->lines.end() && !m_is_selected && number.empty()) {
-            auto p1 = m_ext_dimensions.getPos() + ImGui::GetCursorScreenPos();
+        if (!m_is_selected && number.empty()) {
+            LineInfo line_info;
+            hk_get_line_info(m_text_boundaries.front().line_number, line_info);
+
+            auto p1 = m_int_dimensions.getPos() + ImGui::GetCursorScreenPos();
             float radius = emfloat{ 2.5 }.getFloat();
-            p1.y += it->second.height / 2.f;
+            p1.y += line_info.height / 2.f - radius / 2.f;
 
             if (list_level == 0) {
                 ctx->draw_list->get()->AddCircleFilled(

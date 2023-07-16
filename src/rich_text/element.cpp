@@ -304,6 +304,9 @@ namespace RichText {
     /* =======
      * Drawing
      * ======= */
+    void AbstractElement::hk_get_line_info(int line_number, LineInfo& line_info) {
+        line_info.position = m_int_dimensions.y;
+    }
     void AbstractElement::hk_draw_background(Draw::DrawList* draw_list) {
 
     }

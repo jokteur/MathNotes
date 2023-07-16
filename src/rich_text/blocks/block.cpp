@@ -243,6 +243,31 @@ namespace RichText {
 
         return ret;
     }
+    void AbstractBlock::hk_get_line_info(int line_number, LineInfo& line_info) {
+        if (m_pre_delimiters.find(line_number) != m_pre_delimiters.end()) {
+            const auto& line = m_pre_delimiters[line_number];
+            line_info.position = line.relative_y_pos + m_ext_dimensions.y;
+            line_info.height = line.sublines.front().height;
+            line_info.ascent = line.sublines.front().max_ascent;
+            line_info.descent = line.sublines.front().max_descent;
+        }
+        else if (m_text_column.find(line_number) != m_text_column.end()) {
+            const auto& line = m_text_column[line_number];
+            line_info.position = line.relative_y_pos + m_ext_dimensions.y;
+            line_info.height = line.sublines.front().height;
+            line_info.ascent = line.sublines.front().max_ascent;
+            line_info.descent = line.sublines.front().max_descent;
+        }
+        else {
+            for (auto ptr : m_childrens) {
+                if (ptr->m_text_boundaries.front().line_number <= line_number
+                    && ptr->m_text_boundaries.back().line_number >= line_number) {
+                    ptr->hk_get_line_info(line_number, line_info);
+                    break;
+                }
+            }
+        }
+    }
 
     /* =========
      * LeafBlock

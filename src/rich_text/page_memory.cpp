@@ -37,7 +37,7 @@ namespace RichText {
         m_current_line = line_number;
         if (line_number < 0)
             m_current_line = 0;
-        if (line_number > m_file->m_blocks.back()->line_end)
+        if (!empty() && line_number > m_file->m_blocks.back()->line_end)
             m_current_line = m_file->m_blocks.back()->line_end;
         // manage();
     }

@@ -42,10 +42,10 @@ namespace RichText {
     class TextCursor;
 
     struct LineInfo {
-        float position;
-        float height;
-        float ascent;
-        float descent;
+        float position = 0.f;
+        float height = 0.f;
+        float ascent = 0.f;
+        float descent = 0.f;
     };
 
     typedef std::unordered_map<int, LineInfo> LinesInfos;
@@ -116,9 +116,11 @@ namespace RichText {
         // void virtual hk_set_x_dim(DrawContext* context);
         void virtual hk_set_y_dim(DrawContext* context);
 
+
         // Draw hooks
         /* Implement this function if you want to draw visual elements
          * that are not part of fundamental widget construction and char drawing */
+        void virtual hk_get_line_info(int line_number, LineInfo& line_info);
         bool virtual hk_draw_secondary(DrawContext* context);
         void virtual hk_draw_background(Draw::DrawList* draw_list);
         void virtual hk_draw_show_boundaries(DrawContext* context);
