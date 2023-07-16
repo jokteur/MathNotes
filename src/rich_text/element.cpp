@@ -216,6 +216,7 @@ namespace RichText {
     bool AbstractElement::hk_build(DrawContext* ctx) {
         bool ret = true;
         float initial_y_pos = ctx->cursor_y_pos;
+        m_widget_dirty = ALL_DIRTY;
         hk_set_selected(ctx);
         if (m_widget_dirty) {
             int content_size = 0;
@@ -252,7 +253,6 @@ namespace RichText {
             for (const auto& cursor : *ctx->cursors) {
                 int start = cursor.getStartPosition();
                 int end = cursor.getEndPosition();
-
                 int i = 0;
                 for (const auto bounds : m_text_boundaries) {
                     if (start >= bounds.pre && start <= bounds.post || end >= bounds.pre && end <= bounds.post) {
