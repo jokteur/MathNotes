@@ -317,7 +317,7 @@ namespace RichText {
 
         pixels = roundf(pixels);
 
-        if (pixels > m_before_height) {
+        if (pixels > m_before_height && m_mem->getCurrentLine() > 0) {
             int lines_to_skip = pixels / m_line_height;
             m_mem->gotoLine(m_mem->getCurrentLine() - lines_to_skip);
         }
