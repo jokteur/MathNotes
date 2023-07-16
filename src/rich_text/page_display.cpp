@@ -88,16 +88,18 @@ namespace RichText {
         if (state == PageMemory::CHANGE_NO_SKIP) {
             set_and_check_width(&prev_info, width);
             auto prev_idx = m_mem->getCurrentBlockIdx();
-            prev_info.prev_top_block_idx = prev_idx;
-            prev_info.prev_top_block_ext_dimensions = m_mem->getElements()[prev_idx]->get().m_ext_dimensions;
-            prev_info.prev_top_block_shift = 0.f;
-            prev_info.event = true;
-            ctx->force_dirty_height = true;
-            ctx->cursor_y_pos = m_y_displacement;
-            TimeCounter::getInstance().startCounter("BuildAll (2nd)");
-            build(ctx, &prev_info);
-            TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
-            correct_displacement(&prev_info);
+            if (m_mem->isBlockInMemory(prev_idx)) {
+                prev_info.prev_top_block_idx = prev_idx;
+                prev_info.prev_top_block_ext_dimensions = m_mem->getElements()[prev_idx]->get().m_ext_dimensions;
+                prev_info.prev_top_block_shift = 0.f;
+                prev_info.event = true;
+                ctx->force_dirty_height = true;
+                ctx->cursor_y_pos = m_y_displacement;
+                TimeCounter::getInstance().startCounter("BuildAll (2nd)");
+                build(ctx, &prev_info);
+                TimeCounter::getInstance().stopCounter("BuildAll (2nd)");
+                correct_displacement(&prev_info);
+            }
         }
         else if (state == PageMemory::CHANGE_SKIP && m_mem->getCurrentBlock() != nullptr) {
             set_and_check_width(&prev_info, width);

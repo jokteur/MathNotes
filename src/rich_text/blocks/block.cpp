@@ -145,7 +145,7 @@ namespace RichText {
     bool AbstractBlock::hk_build_vlayout(DrawContext* ctx, int line_number) {
         bool ret = true;
         if (m_widget_dirty || ctx->force_dirty_height) {
-            float y_offset = 0.f;
+            ret = !ctx->force_dirty_height && !(m_widget_dirty & DIRTY_WIDTH);
             if (m_text_boundaries.front().line_number == line_number || line_number < 0) {
                 hk_set_y_origin(ctx);
             }
@@ -177,7 +177,7 @@ namespace RichText {
                     }
                 }
                 hk_set_y_dim(ctx);
-                if (ret && !(m_widget_dirty & DIRTY_WIDTH))
+                if (ret)
                     m_widget_dirty &= ~DIRTY_HEIGHT;
             }
             else {
@@ -202,7 +202,7 @@ namespace RichText {
                 }
                 if (m_text_boundaries.back().line_number == line_number) {
                     hk_set_y_dim(ctx);
-                    if (ret && !(m_widget_dirty & DIRTY_WIDTH))
+                    if (ret)
                         m_widget_dirty &= ~DIRTY_HEIGHT;
                 }
             }
@@ -268,7 +268,7 @@ namespace RichText {
     bool AbstractLeafBlock::hk_build_vlayout(DrawContext* ctx, int line_number) {
         bool ret = true;
         if (m_widget_dirty & DIRTY_HEIGHT || ctx->force_dirty_height) {
-            float y_offset = 0.f;
+            ret = !ctx->force_dirty_height && !(m_widget_dirty & DIRTY_WIDTH);
             if (line_number >= 0 && m_text_boundaries.front().line_number != line_number) {
                 return ret;
             }
@@ -285,7 +285,7 @@ namespace RichText {
                 line_info.descent = line.sublines.front().max_descent;
             }
             hk_set_y_dim(ctx);
-            if (ret && !(m_widget_dirty & DIRTY_WIDTH))
+            if (ret)
                 m_widget_dirty &= ~DIRTY_HEIGHT;
         }
         return ret;
@@ -349,7 +349,6 @@ namespace RichText {
      * =========== */
     bool HiddenSpace::hk_build_chars(DrawContext* ctx) {
         //ZoneScoped;
-        // ctx->cursor_y_pos += 1.f;
         if (m_widget_dirty) {
             m_text_column.clear();
 
@@ -366,8 +365,10 @@ namespace RichText {
             m_wrapper.setLineSpace(m_style.line_space, false);
             m_wrapper.setTextColumn(&m_text_column);
 
-            if (success)
-                m_widget_dirty = false;
+            if (success) {
+                m_widget_dirty &= ~DIRTY_CHARS;
+                m_widget_dirty &= ~DIRTY_WIDTH;
+            }
         }
         return m_widget_dirty;
     }
