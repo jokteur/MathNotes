@@ -146,9 +146,10 @@ namespace RichText {
         bool ret = true;
         if (m_widget_dirty || ctx->force_dirty_height) {
             ret = !ctx->force_dirty_height && !(m_widget_dirty & DIRTY_WIDTH);
-            if (m_text_boundaries.front().line_number == line_number || line_number < 0) {
+            int first_line_number = m_text_boundaries.front().line_number;
+            int last_line_number = m_text_boundaries.back().line_number;
+            if (first_line_number == line_number || line_number < 0)
                 hk_set_y_origin(ctx);
-            }
             if (line_number < 0) {
                 if (m_is_selected) {
                     for (auto& pair : m_pre_delimiters) {
@@ -175,7 +176,7 @@ namespace RichText {
                             ret &= ptr->hk_build_vlayout(ctx, bounds.line_number);
                         }
                         // Add height to empty blocks
-                        if (ctx->lines.find(bounds.line_number) == ctx->lines.end() && bounds.beg == bounds.pre) {
+                        if (ctx->lines.find(bounds.line_number) == ctx->lines.end() && bounds.beg == bounds.end) {
                             if (ctx->line_height > 0.f)
                                 ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
                             else
@@ -188,6 +189,8 @@ namespace RichText {
                     m_widget_dirty &= ~DIRTY_HEIGHT;
             }
             else {
+                if (line_number < first_line_number || line_number > last_line_number)
+                    return ret;
                 for (auto ptr : m_childrens) {
                     ret &= ptr->hk_build_vlayout(ctx, line_number);
                 }
@@ -208,7 +211,7 @@ namespace RichText {
                     }
                 }
                 // Add height to empty blocks
-                int current_text_bound_idx = line_number - m_text_boundaries.front().line_number;
+                int current_text_bound_idx = line_number - first_line_number;
                 const auto& bounds = m_text_boundaries[current_text_bound_idx];
                 if (ctx->lines.find(line_number) == ctx->lines.end() && bounds.beg == bounds.end) {
                     if (ctx->line_height > 0.f) {
@@ -221,7 +224,7 @@ namespace RichText {
                     else
                         ret = false;
                 }
-                if (m_text_boundaries.back().line_number == line_number) {
+                if (last_line_number == line_number) {
                     hk_set_y_dim(ctx);
                     if (ret)
                         m_widget_dirty &= ~DIRTY_HEIGHT;
@@ -298,6 +301,7 @@ namespace RichText {
             }
         }
     }
+
 
     /* =========
      * LeafBlock
