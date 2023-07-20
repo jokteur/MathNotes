@@ -17,6 +17,7 @@ namespace RichText {
     public:
         AbstractBlock() : AbstractElement() {
             m_category = C_BLOCK;
+            m_cursor_set = &AbstractElement::set_selected_pre_only;
         }
         WrapColumn m_pre_delimiters;
 
@@ -32,7 +33,6 @@ namespace RichText {
         void hk_draw_text_cursor(DrawContext* context) override;
         bool draw(DrawContext* ctx) override;
         void hk_debug_attributes() override;
-        void hk_set_selected(DrawContext* context) override;
         void hk_get_line_info(DrawContext* context, int line_number, LineInfo& line_info) override;
 
 
@@ -49,6 +49,7 @@ namespace RichText {
     public:
         AbstractLeafBlock() : AbstractBlock() {
             m_category = C_BLOCK;
+            m_cursor_set = &AbstractElement::set_selected_all;
         }
 
         bool hk_build_pre_delimiter_chars(DrawContext* context) override;
@@ -61,7 +62,6 @@ namespace RichText {
 
         // bool hk_draw_main(DrawContext* context) override;
         void hk_draw_text_cursor(DrawContext* context) override;
-        void hk_set_selected(DrawContext* context) override;
     };
 
     struct HiddenSpace : public AbstractLeafBlock {

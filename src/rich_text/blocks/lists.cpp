@@ -7,15 +7,11 @@
 namespace RichText {
     ULWidget::ULWidget() : AbstractBlock() {
         m_type = T_BLOCK_UL;
-    }
-    void ULWidget::hk_set_selected(DrawContext* ctx) {
-        set_selected_never(ctx);
+        m_cursor_set = &AbstractElement::set_selected_never;
     }
     OLWidget::OLWidget() : AbstractBlock() {
         m_type = T_BLOCK_OL;
-    }
-    void OLWidget::hk_set_selected(DrawContext* ctx) {
-        set_selected_never(ctx);
+        m_cursor_set = &AbstractElement::set_selected_never;
     }
 
     LIWidget::LIWidget() : AbstractBlock() {

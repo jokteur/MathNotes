@@ -120,6 +120,7 @@ namespace RichText {
 
     AbstractElement::AbstractElement() {
         count++;
+        m_cursor_set = &AbstractElement::set_selected_all;
     }
     AbstractElement::~AbstractElement() {
         for (auto ptr : m_childrens) {
@@ -175,7 +176,7 @@ namespace RichText {
 
             for (auto ptr : m_childrens) {
                 ctx->x_offset = child_x_offset;
-                ret &= !ptr->hk_build_hlayout(ctx);
+                ret &= ptr->hk_build_hlayout(ctx);
             }
 
             if (ret) {
@@ -217,14 +218,13 @@ namespace RichText {
     bool AbstractElement::hk_build(DrawContext* ctx) {
         bool ret = true;
         float initial_y_pos = ctx->cursor_y_pos;
-        hk_set_selected(ctx);
+        set_selected(ctx);
         if (m_widget_dirty) {
             int content_size = 0;
             for (const auto& bounds : m_text_boundaries) {
                 content_size += bounds.end - bounds.beg;
             }
             m_has_content = content_size > 0;
-            hk_set_selected(ctx);
             if (!hk_build_hlayout(ctx)) {
                 ctx->force_dirty_height = true;
                 ret = false;
@@ -234,7 +234,14 @@ namespace RichText {
         return ret;
     }
 
-    void AbstractElement::set_selected_check(bool is_selected) {
+    void inline AbstractElement::set_dirty_all() {
+        m_widget_dirty = ALL_DIRTY;
+        for (auto ptr : m_childrens) {
+            ptr->set_dirty_all();
+        }
+    }
+
+    void AbstractElement::set_selected_check(DrawContext* ctx, bool is_selected) {
         if (m_is_selected != is_selected) {
             m_is_selected = is_selected;
             m_widget_dirty = ALL_DIRTY;
@@ -243,6 +250,8 @@ namespace RichText {
                 ptr->m_widget_dirty = ALL_DIRTY;
                 ptr = ptr->m_parent;
             }
+            set_dirty_all();
+            ctx->force_dirty_height = true;
         }
     }
     void AbstractElement::set_selected_all(DrawContext* ctx) {
@@ -253,7 +262,8 @@ namespace RichText {
                 int end = cursor.getEndPosition();
                 int i = 0;
                 for (const auto bounds : m_text_boundaries) {
-                    if (start >= bounds.pre && start <= bounds.post || end >= bounds.pre && end <= bounds.post) {
+                    if (start >= bounds.pre && start <= bounds.post || end >= bounds.pre && end <= bounds.post
+                        || bounds.beg == bounds.end) {
                         is_selected = true;
                         break;
                     }
@@ -263,7 +273,7 @@ namespace RichText {
             }
         else
             is_selected = true;
-        set_selected_check(is_selected);
+        set_selected_check(ctx, is_selected);
     }
     void AbstractElement::set_selected_pre_only(DrawContext* ctx) {
         bool is_selected = false;
@@ -280,14 +290,21 @@ namespace RichText {
             if (is_selected)
                 break;
         }
-        set_selected_check(is_selected);
+        set_selected_check(ctx, is_selected);
     }
-    void AbstractElement::set_selected_never(DrawContext*) {
+    void AbstractElement::set_selected_never(DrawContext* ctx) {
         m_is_selected = false;
-        set_selected_check(false);
+        set_selected_check(ctx, false);
     }
-    void AbstractElement::hk_set_selected(DrawContext* ctx) {
-        set_selected_all(ctx);
+    void AbstractElement::set_selected_always(DrawContext* ctx) {
+        m_is_selected = true;
+        set_selected_check(ctx, false);
+    }
+    void AbstractElement::set_selected(DrawContext* ctx) {
+        for (auto ptr : m_childrens) {
+            ptr->set_selected(ctx);
+        }
+        (*this.*m_cursor_set)(ctx);
     }
     void AbstractElement::setWindowWidth(float width) {
         //ZoneScoped;

@@ -69,6 +69,8 @@ namespace RichText {
         // WrapColumn m_chars;
         WrapColumn m_text_column;
         float m_y_offset = 0.f;
+
+        void inline set_dirty_all();
     public:
         static int count;
         static int visible_count;
@@ -83,10 +85,12 @@ namespace RichText {
         AbstractElement();
         virtual ~AbstractElement();
 
-        void set_selected_check(bool is_selected);
+        void set_selected_check(DrawContext* context, bool is_selected);
         void set_selected_pre_only(DrawContext* context);
         void set_selected_all(DrawContext* context);
         void set_selected_never(DrawContext* context);
+        void set_selected_always(DrawContext* context);
+        void set_selected(DrawContext* context);
 
         // Informations about the tree structure
         std::vector<AbstractElementPtr> m_childrens;
@@ -96,7 +100,7 @@ namespace RichText {
         unsigned int m_widget_dirty = ALL_DIRTY;
         bool m_is_visible = false;
         bool m_has_content = true;
-        // bool m_no_y_update = false;
+        void (AbstractElement::* m_cursor_set)(DrawContext*);
 
         // Returns false if not succesfully build chars
         bool virtual add_chars(WrapColumn* wrap_chars);
@@ -107,7 +111,6 @@ namespace RichText {
         // Build hooks
         bool virtual hk_build_chars(DrawContext* context);
         bool virtual hk_build(DrawContext* context);
-        void virtual hk_set_selected(DrawContext* context);
 
         // New hooks for refactoring
         bool virtual hk_build_hlayout(DrawContext* context);
