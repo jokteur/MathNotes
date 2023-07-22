@@ -25,7 +25,7 @@ namespace RichText {
         // void place_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars, TextCursor& cursor);
 
         bool hk_build_hlayout(DrawContext* context) override;
-        bool hk_build_vlayout(DrawContext* context, int line_number = -1) override;
+        bool hk_build_vlayout(DrawContext* context, int line_number = -1, bool force = false) override;
 
         // bool hk_build_main(DrawContext* context) override;
         // bool hk_draw_main(DrawContext* context) override;
@@ -54,14 +54,11 @@ namespace RichText {
 
         bool hk_build_pre_delimiter_chars(DrawContext* context) override;
         bool hk_build_post_delimiter_chars(DrawContext* context) override;
-        // void hk_update_line_info(DrawContext* context) override;
-        // bool hk_build_main(DrawContext* context) override;
         bool hk_build_chars(DrawContext* context) override;
         bool hk_build_hlayout(DrawContext* context) override;
-        bool hk_build_vlayout(DrawContext* context, int line_number = -1) override;
+        bool hk_build_vlayout(DrawContext* context, int line_number = -1, bool force = false) override;
 
         // bool hk_draw_main(DrawContext* context) override;
-        // void hk_draw_text_cursor(DrawContext* context) override;
     };
 
     struct HiddenSpace : public AbstractLeafBlock {

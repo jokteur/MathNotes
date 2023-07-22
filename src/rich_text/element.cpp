@@ -186,7 +186,7 @@ namespace RichText {
         }
         return ret;
     }
-    bool AbstractElement::hk_build_vlayout(DrawContext* ctx, int line_number) {
+    bool AbstractElement::hk_build_vlayout(DrawContext* ctx, int line_number, bool force) {
         bool ret = true;
         if (m_widget_dirty & DIRTY_HEIGHT || ctx->force_dirty_height) {
             ret = !ctx->force_dirty_height && !(m_widget_dirty & DIRTY_WIDTH);
@@ -194,7 +194,7 @@ namespace RichText {
 
             float y_offset = ctx->cursor_y_pos;
             for (auto ptr : m_childrens) {
-                ret &= !ptr->hk_build_vlayout(ctx, line_number);
+                ret &= !ptr->hk_build_vlayout(ctx, line_number, true);
             }
             hk_set_y_dim(ctx);
 

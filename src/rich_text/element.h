@@ -114,7 +114,7 @@ namespace RichText {
 
         // New hooks for refactoring
         bool virtual hk_build_hlayout(DrawContext* context);
-        bool virtual hk_build_vlayout(DrawContext* context, int line_number = -1);
+        bool virtual hk_build_vlayout(DrawContext* context, int line_number = -1, bool force = false);
         void virtual hk_set_x_origin(DrawContext* context);
         void virtual hk_set_y_origin(DrawContext* context);
         // void virtual hk_set_x_dim(DrawContext* context);

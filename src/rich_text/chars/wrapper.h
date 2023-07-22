@@ -128,7 +128,6 @@ namespace RichText {
         void clear();
         void recalculate();
         void recalculate(WrapLine* line, float x_offset = 0.f);
-
         float getHeight() { return m_height; }
         float getFirstMaxAscent() { return m_first_max_ascent; }
         float getFirstMaxDescent() { return m_first_max_descent; }
