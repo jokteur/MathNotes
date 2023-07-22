@@ -20,8 +20,8 @@ namespace RichText {
             draw_list->SetCurrentChannel(1);
         }
     }
-    void AbstractBlock::set_pre_margins(DrawContext* ctx) {
-        if (m_is_selected) {
+    void AbstractBlock::set_x_margins(DrawContext* ctx) {
+        if (m_is_selected || m_style.always_show_pre) {
             for (auto& pair : m_pre_delimiters) {
                 ctx->x_offset.addOffset(pair.first, pair.second.width);
             }
@@ -45,53 +45,58 @@ namespace RichText {
         }
         return success;
     }
-    // void AbstractBlock::place_text_cursor(DrawContext* ctx, int line_number, int text_pos, float x_pos, const WrapString& chars, TextCursor& cursor) {
-        // auto& line_info = (*ctx->lines)[line_number];
-        /* Linear search, not ideal but as long as the user doesn't have
-         * 1MB of one continuous paragraph, it is fine
-         */
-         // float last_x_pos = 0.f;
-         // float y_pos = line_info.position;
-         // float height = line_info.height;
-         // bool found_next_char = false;
-         // for (auto ch : chars) {
-         //     auto info = ch->info;
-         //     if (ch->text_position > text_pos) {
-         //         x_pos += ch->calculated_position.x;
-         //         // height = info->ascent + info->descent;
-         //         y_pos = ch->calculated_position.y - (height - ch->info->dimensions.y);
-         //         found_next_char = true;
-         //         break;
-         //     }
-         //     last_x_pos = ch->calculated_position.x + info->advance;
-         //     // height = info->ascent + info->descent;
-         //     y_pos = ch->calculated_position.y - (height - ch->info->dimensions.y);
-         //     // height *= m_style.line_space;
-         // }
-         // if (!found_next_char) {
-         //     x_pos += last_x_pos;
-         // }
-         // cursor.draw(ctx, ImVec2(x_pos, y_pos + line_info.position), height);
-     // }
     void AbstractBlock::hk_draw_text_cursor(DrawContext* ctx) {
+        if (!m_style.draw_text_cursor)
+            return;
         for (auto& cursor : *ctx->cursors) {
             int text_pos = cursor.getTextPosition();
             for (const auto bounds : m_text_boundaries) {
-                if (text_pos >= bounds.pre && text_pos < bounds.beg) {
+                auto* text = &m_text_column;
+                if (text_pos >= bounds.pre && text_pos < bounds.post) {
+                    ImVec2 pos = m_ext_dimensions.getPos();
+                    float height = ctx->line_height;
                     if (m_pre_delimiters.find(bounds.line_number) != m_pre_delimiters.end()) {
-                        const auto line = m_pre_delimiters[bounds.line_number];
-                        if (line.sublines.empty())
-                            continue;
-                        auto subline = line.sublines.front();
-                        for (auto sub : line.sublines) {
-                            if (sub.start >= text_pos) {
-                                subline = sub;
-                                break;
-                            }
+                        if (text_pos >= bounds.beg) {
+                            break;
                         }
-                        // ImVec2 pos(subline.rel_y_pos, );
-                        // cursor.draw(ctx, );
+                        if (text_pos >= bounds.pre && text_pos < bounds.beg) {
+                            text = &m_pre_delimiters;
+                        }
                     }
+                    // if (text->find(bounds.line_number) != text->end()) {
+                    //     const auto& line = (*text)[bounds.line_number];
+                    //     if (line.sublines.empty())
+                    //         break;
+                    //     // Search for the line in which the char may be found
+                    //     auto subline = line.sublines.front();
+                    //     for (auto sub : line.sublines) {
+                    //         if (sub.start >= text_pos) {
+                    //             subline = sub;
+                    //             break;
+                    //         }
+                    //     }
+                    //     float last_x_pos = 0.f;
+                    //     pos.y += subline.rel_y_pos;
+                    //     height = subline.height;
+                    //     bool found_next_char = false;
+                    //     for (auto ch : line.chars) {
+                    //         auto info = ch->info;
+                    //         if (ch->text_position > text_pos) {
+                    //             pos.x += ch->calculated_position.x;
+                    //             pos.y += ch->calculated_position.y - (height - ch->info->dimensions.y);
+                    //             found_next_char = true;
+                    //             break;
+                    //         }
+                    //         last_x_pos = ch->calculated_position.x + info->advance;
+                    //         // height = info->ascent + info->descent;
+                    //         pos.y = ch->calculated_position.y - (height - ch->info->dimensions.y);
+                    //         // height *= m_style.line_space;
+                    //     }
+                    //     if (!found_next_char) {
+                    //         pos.x += last_x_pos;
+                    //     }
+                    // }
+                    cursor.draw(ctx, pos, height);
                 }
             }
         }
@@ -110,10 +115,10 @@ namespace RichText {
             /* There are two offset used in normal blocks:
              * - current_offset for delimiter
              * - child_offset for all block childrens.
-             *   These offsets are determined by the pre-delimiters (in set_pre_margins)
+             *   These offsets are determined by the pre-delimiters (in set_x_margins)
              *   or the margins of the block
              */
-            set_pre_margins(ctx);
+            set_x_margins(ctx);
 
             /* If true, this helps vertically align all the pre-delimiters */
             if (m_style.align_pre_indent && m_is_selected) {
@@ -147,39 +152,21 @@ namespace RichText {
             if (first_line_number == line_number || line_number < 0)
                 hk_set_y_origin(ctx);
             if (line_number < 0) {
-                // if (m_is_selected) {
                 for (auto& pair : m_pre_delimiters) {
                     const int current_line_number = pair.first;
                     for (auto ptr : m_childrens) {
                         ret &= ptr->hk_build_vlayout(ctx, current_line_number);
                     }
                     if (ctx->lines.find(current_line_number) != ctx->lines.end()) {
-                        // Relative position
                         pair.second.relative_y_pos = ctx->lines[current_line_number].position - m_int_dimensions.y;
                         if (!pair.second.sublines.empty())
                             pair.second.relative_y_pos += ctx->lines[current_line_number].ascent - pair.second.sublines.front().max_ascent;
                     }
                     else {
-                        // Relative position
                         pair.second.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
                         ctx->cursor_y_pos += pair.second.height;
                     }
                 }
-                // }
-                // else {
-                //     for (const auto bounds : m_text_boundaries) {
-                //         for (auto ptr : m_childrens) {
-                //             ret &= ptr->hk_build_vlayout(ctx, bounds.line_number);
-                //         }
-                //         // Add height to empty blocks
-                //         if (ctx->lines.find(bounds.line_number) == ctx->lines.end() && bounds.beg == bounds.end) {
-                //             if (ctx->line_height > 0.f)
-                //                 ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
-                //             else
-                //                 ret = false;
-                //         }
-                //     }
-                // }
                 hk_set_y_dim(ctx);
                 if (ret)
                     m_widget_dirty &= ~DIRTY_HEIGHT;
@@ -193,55 +180,24 @@ namespace RichText {
 
                 bool modified = false;
                 float before_pos = ctx->cursor_y_pos;
-                auto& line = m_pre_delimiters[line_number];
+                auto* line = &m_pre_delimiters[line_number];
                 if (ctx->lines.find(line_number) != ctx->lines.end()) {
-                    // Relative position
-                    line.relative_y_pos = ctx->lines[line_number].position - m_int_dimensions.y;
-                    if (!line.sublines.empty())
-                        line.relative_y_pos += ctx->lines[line_number].ascent - line.sublines.front().max_ascent;
+                    line->relative_y_pos = ctx->lines[line_number].position - m_int_dimensions.y;
+                    if (!line->sublines.empty())
+                        line->relative_y_pos += ctx->lines[line_number].ascent - line->sublines.front().max_ascent;
                 }
                 else {
-                    // Relative position
-                    // line.relative_y_pos = ctx->cursor_y_pos - m_int_dimensions.y;
                     ctx->lines[line_number];
-                    ctx->lines[line_number].position = line.relative_y_pos;
-                    ctx->lines[line_number].height = line.height;
-                    if (line.sublines.empty())
-                        ctx->lines[line_number].ascent = line.height;
+                    ctx->lines[line_number].position = ctx->cursor_y_pos;
+                    ctx->lines[line_number].height = line->height;
+                    if (line->sublines.empty())
+                        ctx->lines[line_number].ascent = line->height;
                     else {
-                        ctx->lines[line_number].ascent = line.sublines.front().max_ascent;
-                        ctx->lines[line_number].descent = line.sublines.front().max_descent;
+                        ctx->lines[line_number].ascent = line->sublines.front().max_ascent;
+                        ctx->lines[line_number].descent = line->sublines.front().max_descent;
                     }
-                    // ctx->lines[line_number].ascent = line;
-                    ctx->cursor_y_pos += line.height;
+                    ctx->cursor_y_pos += line->height;
                 }
-                // }
-                // // Add height to empty blocks
-                // else {
-                //     const auto& bounds = m_text_boundaries[line_number - first_line_number];
-                //     if (ctx->lines.find(line_number) == ctx->lines.end() && bounds.beg == bounds.end) {
-                //         if (ctx->line_height > 0.f) {
-                //             ctx->lines[line_number];
-                //             ctx->lines[line_number].position = ctx->cursor_y_pos;
-                //             ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
-                //             modified = true;
-                //         }
-                //         else
-                //             ret = false;
-                //     }
-                // }
-                // if (ctx->lines.find(line_number) == ctx->lines.end() && bounds.beg == bounds.end) {
-                //     if (ctx->line_height > 0.f) {
-                //         // ctx->lines[line_number];
-                //         // ctx->lines[line_number].position = ctx->cursor_y_pos;
-                //         // ctx->lines[line_number].height = ctx->line_height * m_style.line_space;
-                //         // ctx->lines[line_number].ascent = ctx->lines[line_number].height / 2.f;
-                //         ctx->cursor_y_pos += ctx->line_height * m_style.line_space;
-                //         modified = true;
-                //     }
-                //     else
-                //         ret = false;
-                // }
                 if (last_line_number == line_number) {
                     hk_set_y_dim(ctx);
                     // if (modified)
@@ -271,7 +227,7 @@ namespace RichText {
                 ret &= !p->draw(ctx->draw_list, ctx->boundaries, pos);
             }
         }
-        if (m_is_selected) {
+        if (m_is_selected || m_style.always_show_pre) {
             for (auto& pair : m_pre_delimiters) {
                 auto pos = m_int_dimensions.getPos() + ctx->draw_offset;
                 pos.x = 0.f;
@@ -296,7 +252,7 @@ namespace RichText {
         bool find_in_child = false;
         if (m_pre_delimiters.find(line_number) != m_pre_delimiters.end()) {
             const auto& line = m_pre_delimiters[line_number];
-            line_info.position = line.relative_y_pos + m_ext_dimensions.y;
+            line_info.position = line.relative_y_pos; // + m_ext_dimensions.y;
             if (!line.sublines.empty()) {
                 line_info.height = line.sublines.front().height;
                 line_info.ascent = line.sublines.front().max_ascent;
@@ -330,7 +286,6 @@ namespace RichText {
             }
         }
     }
-
 
     /* =========
      * LeafBlock
@@ -484,18 +439,18 @@ namespace RichText {
         bool success = true;
         return success;
     }
-    void AbstractLeafBlock::hk_draw_text_cursor(DrawContext* ctx) {
-        for (auto& cursor : *ctx->cursors) {
-            int text_pos = cursor.getTextPosition();
-            int i = 0;
-            for (const auto bounds : m_text_boundaries) {
-                if (text_pos >= bounds.pre && text_pos <= bounds.post) {
-                    float x_pos = ctx->x_offset.getOffset(bounds.line_number);
-                    // place_text_cursor(ctx, bounds.line_number, text_pos, x_pos, paragraph.getLines()[bounds.line_number].m_chars, cursor);
-                    break;
-                }
-                i++;
-            }
-        }
-    }
+    // void AbstractLeafBlock::hk_draw_text_cursor(DrawContext* ctx) {
+    //     for (auto& cursor : *ctx->cursors) {
+    //         int text_pos = cursor.getTextPosition();
+    //         int i = 0;
+    //         for (const auto bounds : m_text_boundaries) {
+    //             if (text_pos >= bounds.pre && text_pos <= bounds.post) {
+    //                 float x_pos = ctx->x_offset.getOffset(bounds.line_number);
+    //                 // place_text_cursor(ctx, bounds.line_number, text_pos, x_pos, paragraph.getLines()[bounds.line_number].m_chars, cursor);
+    //                 break;
+    //             }
+    //             i++;
+    //         }
+    //     }
+    // }
 }

@@ -20,34 +20,32 @@ namespace RichText {
     bool LIWidget::hk_build_pre_delimiter_chars(DrawContext* ctx) {
         //ZoneScoped;
         bool success = true;
-        if (m_is_selected)
-            success &= AbstractBlock::hk_build_pre_delimiter_chars(ctx);
-        else if (!number.empty()) {
+        if (!number.empty() && !m_is_selected) {
             m_pre_delimiters.clear();
             const auto bounds = m_text_boundaries.front();
             m_pre_delimiters[bounds.line_number] = WrapLine{};
+            m_style.always_show_pre = true;
             auto& line = m_pre_delimiters[bounds.line_number];
             auto style = m_style;
             style.set_font_color(Colors::darkslategray);
             success &= Utf8StrToImCharStr(m_ui_state, &line.chars, m_safe_string, bounds.line_number, bounds.pre, bounds.beg, style);
-
             WrapAlgorithm wrapper;
             wrapper.setWidth(4000.f, false);
             float x_offset = ctx->x_offset.getOffset(bounds.line_number);
             wrapper.recalculate(&line, x_offset);
         }
+        else
+            success &= AbstractBlock::hk_build_pre_delimiter_chars(ctx);
         return success;
     }
     bool LIWidget::hk_draw_secondary(DrawContext* ctx) {
         if (!m_is_selected && number.empty()) {
             LineInfo line_info;
             hk_get_line_info(ctx, m_text_boundaries.front().line_number, line_info);
-
             auto p1 = m_int_dimensions.getPos() + ImGui::GetCursorScreenPos();
             float radius = emfloat{ 2.5 }.getFloat();
-            p1.y += line_info.height / 2.f - radius;
+            p1.y += line_info.ascent / 2.f - radius;
             p1.x -= radius * 2.f;
-
             if (list_level == 0) {
                 ctx->draw_list->get()->AddCircleFilled(
                     p1, radius, Colors::black

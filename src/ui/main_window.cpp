@@ -87,7 +87,7 @@ void MainApp::AfterLoop() {
 void MainApp::FrameUpdate() {
     //ZoneScoped;
     using namespace RichText;
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
     /* ImGui configs */
     ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 

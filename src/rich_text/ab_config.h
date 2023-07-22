@@ -30,6 +30,8 @@ namespace RichText {
         NEW_STYLE_ELEMENT(v_paddings, EmVec2, EmVec2(0.f COMMA 0.f));
 
         NEW_STYLE_ELEMENT(align_pre_indent, bool, true);
+        NEW_STYLE_ELEMENT(always_show_pre, bool, false);
+        NEW_STYLE_ELEMENT(draw_text_cursor, bool, true);
 
         NEW_STYLE_ELEMENT(bg_color, Colors::color, Colors::transparent);
         /* Replace in special chars the space by a middle point */
