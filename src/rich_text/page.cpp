@@ -103,10 +103,13 @@ namespace RichText {
         manage_cursors();
 
         DrawContext ctx;
+        ctx.lines = m_lines_infos;
         ctx.cursors = &m_text_cursors;
 
         m_display.setMinScrollHeight(m_config.min_scroll_height);
         m_display.FrameUpdate(m_window_name, &ctx);
+
+        m_lines_infos = ctx.lines;
         ImGui::End();
         ImGui::PopStyleColor();
 

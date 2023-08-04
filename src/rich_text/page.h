@@ -33,6 +33,7 @@ namespace RichText {
         std::string m_window_name;
 
         std::vector<TextCursor> m_text_cursors;
+        LinesInfos m_lines_infos;
 
         PageMemory m_mem;
         PageDisplay m_display;

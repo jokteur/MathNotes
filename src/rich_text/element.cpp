@@ -252,6 +252,7 @@ namespace RichText {
             }
             set_dirty_all();
             ctx->force_dirty_height = true;
+            ctx->rebuild = true;
         }
     }
     void AbstractElement::set_selected_all(DrawContext* ctx) {

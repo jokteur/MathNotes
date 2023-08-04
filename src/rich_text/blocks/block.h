@@ -49,7 +49,7 @@ namespace RichText {
     public:
         AbstractLeafBlock() : AbstractBlock() {
             m_category = C_BLOCK;
-            m_cursor_set = &AbstractElement::set_selected_all;
+            // m_cursor_set = &AbstractElement::set_selected_all;
         }
 
         bool hk_build_pre_delimiter_chars(DrawContext* context) override;

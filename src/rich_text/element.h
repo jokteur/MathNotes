@@ -62,6 +62,7 @@ namespace RichText {
         ImVec2 draw_offset;
         float line_height = 0.f;
         bool force_dirty_height = false;
+        bool rebuild = false;
     };
 
     struct AbstractElement : public Drawable {
@@ -134,7 +135,6 @@ namespace RichText {
         void virtual hk_debug(const std::string& prefix = "");
         void virtual hk_debug_attributes();
 
-        void resetYOrigin();
         void displaceYOrigin(float displacement);
 
         Style m_style;

@@ -72,6 +72,13 @@ namespace RichText {
         build(ctx, &prev_info);
         TimeCounter::getInstance().stopCounter("BuildAll");
 
+        // if (ctx->rebuild) {
+        //     ctx->rebuild = false;
+        //     set_and_check_width(&prev_info, width);
+        //     ctx->cursor_y_pos = m_y_displacement;
+        //     build(ctx, &prev_info);
+        // }
+
         /* If the user has resized the window, the content may shift vertically
          * As explained above, if m_y_displacement != 0 and event, we need to reshift
          * the blocks to match the previously displayed content, AFTER the blocks have been rebuild */

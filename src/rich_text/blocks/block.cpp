@@ -193,6 +193,7 @@ namespace RichText {
                     if (!line->sublines.empty())
                         line->relative_y_pos += ctx->lines[line_number].ascent - line->sublines.front().max_ascent;
                 }
+
                 else {
                     ctx->lines[line_number];
                     ctx->lines[line_number].position = ctx->cursor_y_pos;
