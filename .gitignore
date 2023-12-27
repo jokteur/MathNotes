@@ -3,3 +3,7 @@ build
 traces
 todo.txt
 main.cpp
+
+# Added by cargo
+
+/target
