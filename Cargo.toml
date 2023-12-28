@@ -1,8 +1,16 @@
 [package]
-name = "MathNotes"
+name = "math-notes"
 version = "0.1.0"
 edition = "2021"
+include = ["src/"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+markdown = "1.0.0-alpha.16"
+# swc_core = { version = "0.86.0", features = [
+#   "ecma_ast",
+#   "ecma_visit",
+#   "ecma_parser",
+#   "common",
+# ] }
