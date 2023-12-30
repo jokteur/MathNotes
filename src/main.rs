@@ -25,8 +25,7 @@ fn main() {
 
     match result {
         Ok(node) => {
-            let nodes = calc_boundaries(&node, text);
-            println!("{:?}", nodes);
+            calc_boundaries(&node, text);
         }
         Err(error) => {
             println!("Error: {}", error);
