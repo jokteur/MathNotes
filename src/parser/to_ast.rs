@@ -4,11 +4,8 @@ use markdown::{
   to_mdast,
   Constructs,  ParseOptions,
 };
-use crate::parser::ast::NodeExt;
 
-use super::ast::RootExt;
-
-pub fn parse_mdx(value: &str, ) -> Result<NodeExt, String> {
+pub fn parse_mdx(value: &str, ) -> Result<Node, String> {
     let opts_with_mdx = ParseOptions{
         constructs: Constructs {
         math_flow: true,
@@ -28,14 +25,7 @@ pub fn parse_mdx(value: &str, ) -> Result<NodeExt, String> {
       mdx_esm_parse: None,
     };
 
-    let result = to_mdast(value, &opts_with_mdx);
-    if result.is_ok() {
-      let ast = result.unwrap();
-      Ok(convert_to_extended_ast(&ast))
-    }
-    else {
-      Err(result.err().unwrap())
-    }
+    to_mdast(value, &opts_with_mdx)
 }
 pub fn parse_nomdx(value: &str, ) -> Result<Node, String> {
     let opts_without_mdx = ParseOptions{
@@ -58,17 +48,4 @@ pub fn parse_nomdx(value: &str, ) -> Result<Node, String> {
     };
 
     to_mdast(value, &opts_without_mdx)
-}
-
-fn convert_to_extended_ast(node: &Node) -> NodeExt {
-  match node {
-    Node::Root(n) => {
-      let root_node = RootExt{data: n, boundaries: None};
-      println!("Root node: {:?}", root_node);
-      NodeExt::Root(root_node)
-    },
-    _ => unreachable!("Root node should be the first node in the AST")
-  }
-  // let root_node = RootExt{data: , boundaries: None};
-  // root_node
 }
