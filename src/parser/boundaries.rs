@@ -187,8 +187,8 @@ fn calc_boundaries_inner<'a>(
 
         // markdown-rs does not consider the last \n of a node to be part of the node
         if i + 1 == num_lines && post == *line_end - 1 {
-            end += 1;
-            post += 1;
+            // end += 1;
+            // post += 1;
         }
 
         node_ext.boundaries.push(Boundary {
@@ -276,24 +276,48 @@ pub fn print_boundaries(text: &String, ext_node: &ExtendedNode) {
         print!("{: <1$}", "", level * 2);
         println!("Node: {:?}", node_name(ext_node.node));
         let mut bound_it = ext_node.boundaries.iter();
-        for i in 0..text.len() {
-            let curr_bound = bound_it.clone().next();
-            if text.as_bytes()[i] == b'\n' {
-                new_text.push_str("\\n\n");
-            } else if curr_bound.is_some() {
-                let bound = curr_bound.unwrap();
-                if i < bound.pre {
-                    new_text.push('.');
-                } else if i >= bound.pre && i < bound.start || i >= bound.end && i < bound.post {
-                    new_text.push('x');
-                } else if i >= bound.start && i < bound.end {
-                    new_text.push('_');
+        let mut i = 0;
+        for bound in ext_node.boundaries.iter() {
+            while i < bound.pre {
+                if text.as_bytes()[i] == b'\n' {
+                    new_text.push('\n');
                 } else {
-                    bound_it.next();
+                    new_text.push('.');
                 }
+                i += 1;
+            }
+            while i < bound.start {
+                if text.as_bytes()[i] == b'\n' {
+                    new_text.push('\n');
+                } else {
+                    new_text.push('x');
+                }
+                i += 1;
+            }
+            while i < bound.end {
+                if text.as_bytes()[i] == b'\n' {
+                    new_text.push('\n');
+                } else {
+                    new_text.push('_');
+                }
+                i += 1;
+            }
+            while i < bound.post {
+                if text.as_bytes()[i] == b'\n' {
+                    new_text.push('\n');
+                } else {
+                    new_text.push('x');
+                }
+                i += 1;
+            }
+        }
+        while i < text.len() {
+            if text.as_bytes()[i] == b'\n' {
+                new_text.push('\n');
             } else {
                 new_text.push('.');
             }
+            i += 1;
         }
         // print!("{: <1$}", "", level * 2);
         println!("{}", new_text);
