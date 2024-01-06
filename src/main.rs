@@ -1,38 +1,19 @@
-mod parser;
-use markdown::{
-    // mdast::{MdxjsEsm, Node, Root},
-    to_mdast,
-    Constructs,
-    ParseOptions,
-};
-use parser::boundaries::{calc_boundaries, print_boundaries};
-use parser::to_ast::{parse_mdx, parse_nomdx};
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-fn print_node(node: &markdown::mdast::Node, level: usize) {
-    print!("{: <1$}", "", level);
-    println!("{:?}", node);
-    match node.children() {
-        Some(value) => value.iter().for_each(|child| print_node(child, level + 1)),
-        None => {}
-    }
-    ()
-}
+// When compiling natively:
+#[cfg(not(target_arch = "wasm32"))]
+fn main() -> eframe::Result<()> {
+    env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-fn main() {
-    let text = "\n- >> [ae *bc*\n  def](x.com)\n";
-    // let text = "- a\n     - b\n  - c\n     - d\n  e \n   - f";
-    // let text = " - a\n     - b\n   - c\n     - d";
-    println!("find: {}", text.find("\n").unwrap());
-    let result = parse_mdx(text);
-
-    match result {
-        Ok(node) => {
-            let result = calc_boundaries(&node, text);
-            let text = text.to_owned();
-            print_boundaries(&text, &result);
-        }
-        Err(error) => {
-            println!("Error: {}", error);
-        }
-    }
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([800.0, 600.0])
+            .with_min_inner_size([300.0, 220.0]),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "Math notes",
+        native_options,
+        Box::new(|cc| Box::new(math_notes::App::new(cc))),
+    )
 }
