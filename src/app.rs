@@ -1,4 +1,4 @@
-use egui::ScrollArea;
+use egui::{ScrollArea, TextBuffer, TextFormat};
 
 use crate::editor::TextEditor;
 
@@ -55,27 +55,74 @@ impl eframe::App for App {
             // The top panel is often a good place for a menu bar:
 
             egui::menu::bar(ui, |ui| {
-                // NOTE: no File->Quit on web pages!
-                let is_web = cfg!(target_arch = "wasm32");
-                if !is_web {
-                    ui.menu_button("File", |ui| {
-                        if ui.button("Quit").clicked() {
-                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                        }
-                    });
-                    ui.add_space(16.0);
-                }
+                ui.menu_button("File", |ui| {
+                    if ui.button("Quit").clicked() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                });
+                ui.add_space(16.0);
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
         });
+        use egui::text::LayoutJob;
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        let text = TO_BE_OR_NOT_TO_BE.as_str();
+
+        egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
             ui.heading("Text editor");
 
-            ScrollArea::vertical().show(ui, |ui| {
-                self.editor.ui(ui);
-            });
+            let pixels_per_point = ui.ctx().pixels_per_point();
+            let points_per_pixel = 1.0 / pixels_per_point;
+
+            egui::ScrollArea::vertical()
+                .auto_shrink(false)
+                .show(ui, |ui| {
+                    let extra_letter_spacing = points_per_pixel * 1.0 as f32;
+                    let line_height = None;
+
+                    let mut job = egui::text::LayoutJob::default();
+                    job.justify = true;
+                    job.append(
+                        &text,
+                        0.0,
+                        egui::TextFormat {
+                            extra_letter_spacing,
+                            line_height,
+                            ..Default::default()
+                        },
+                    );
+
+                    // let mut job = LayoutJob::single_section(
+                    //     text.to_owned(),
+                    //     egui::TextFormat {
+                    //         extra_letter_spacing,
+                    //         line_height,
+                    //         ..Default::default()
+                    //     },
+                    // );
+                    job.wrap = egui::text::TextWrapping {
+                        max_rows: usize::max_value(),
+                        break_anywhere: false,
+                        ..Default::default()
+                    };
+
+                    // NOTE: `Label` overrides some of the wrapping settings, e.g. wrap width
+                    ui.label("Hello world");
+                });
+
+            // ScrollArea::vertical().show(ui, |ui| {
+            //     self.editor.ui(ui);
+            // });
         });
     }
 }
+
+/// Excerpt from Dolores Ibárruri's farwel speech to the International Brigades:
+const TO_BE_OR_NOT_TO_BE: &str = "Mothers! Women!\n
+When the years pass by and the wounds of war are stanched; when the memory of the sad and bloody days dissipates in a present of liberty, of peace and of wellbeing; when the rancor have died out and pride in a free country is felt equally by all Spaniards, speak to your children. Tell them of these men of the International Brigades.\n\
+\n\
+Recount for them how, coming over seas and mountains, crossing frontiers bristling with bayonets, sought by raving dogs thirsting to tear their flesh, these men reached our country as crusaders for freedom, to fight and die for Spain’s liberty and independence threatened by German and Italian fascism. \
+They gave up everything — their loves, their countries, home and fortune, fathers, mothers, wives, brothers, sisters and children — and they came and said to us: “We are here. Your cause, Spain’s cause, is ours. It is the cause of all advanced and progressive mankind.”\n\
+\n\
+- Dolores Ibárruri, 1938";
