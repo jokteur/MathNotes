@@ -1,6 +1,7 @@
 use egui::{ScrollArea, TextBuffer, TextFormat};
 
-use crate::editor::TextEditor;
+use crate::editor::{ImageGlyph, TextEditor};
+use crate::latex::{load_font, render_image};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -15,6 +16,10 @@ pub struct App {
 
 impl Default for App {
     fn default() -> Self {
+        let font_file_path = "data/fonts/XITS_Math.otf";
+        let font_file = std::fs::read(font_file_path).unwrap();
+        let font = load_font(&font_file);
+        render_image("\\int_a^b x^2 dx", 16.0, 1.5, font);
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
