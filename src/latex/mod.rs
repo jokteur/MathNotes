@@ -1,3 +1,3 @@
 mod latex_render;
 
-pub use latex_render::{load_font, render_image};
+pub use latex_render::{load_font, render_image, LatexImage};

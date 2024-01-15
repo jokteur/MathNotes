@@ -7,3 +7,6 @@ main.cpp
 # Added by cargo
 
 /target
+
+# Temp out files
+out.svg

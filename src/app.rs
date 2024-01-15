@@ -1,7 +1,8 @@
 use egui::{ScrollArea, TextBuffer, TextFormat};
 
 use crate::editor::{ImageGlyph, TextEditor};
-use crate::latex::{load_font, render_image};
+use crate::latex::{self, LatexImage};
+use std::sync::Arc;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -10,21 +11,24 @@ pub struct App {
     label: String,
     editor: TextEditor,
 
-    #[serde(skip)] // This how you opt-out of serialization of a field
+    #[serde(skip)]
     value: f32,
+    #[serde(skip)]
+    image: LatexImage<'static>,
 }
 
 impl Default for App {
     fn default() -> Self {
         let font_file_path = "data/fonts/XITS_Math.otf";
         let font_file = std::fs::read(font_file_path).unwrap();
-        let font = load_font(&font_file);
-        render_image("\\int_a^b x^2 dx", 16.0, 1.5, font);
+        let font = latex::load_font(&font_file);
+        let image = latex::render_image("\\int_a^b x^2 dx", font, 16.0, 1.5);
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
             editor: TextEditor::default(),
+            image: image,
         }
     }
 }
@@ -76,6 +80,8 @@ impl eframe::App for App {
 
         egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
             ui.heading("Text editor");
+
+            ui.add(self.image.image.clone());
 
             let pixels_per_point = ui.ctx().pixels_per_point();
             let points_per_pixel = 1.0 / pixels_per_point;
