@@ -1,7 +1,8 @@
-use egui::{ScrollArea, TextBuffer, TextFormat};
+use egui::{ScrollArea, TextBuffer, TextFormat, Vec2};
 
 use crate::editor::{ImageGlyph, TextEditor};
 use crate::latex::{self, LatexImage};
+use egui_extras::{Size, StripBuilder};
 use std::sync::Arc;
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -60,6 +61,8 @@ impl eframe::App for App {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        egui_extras::install_image_loaders(ctx);
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
 
@@ -74,54 +77,29 @@ impl eframe::App for App {
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
         });
-        use egui::text::LayoutJob;
 
         let text = TO_BE_OR_NOT_TO_BE.as_str();
 
         egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
             ui.heading("Text editor");
 
-            ui.add(self.image.image.clone());
+            // ui.image("file://out.svg");
 
             let pixels_per_point = ui.ctx().pixels_per_point();
             let points_per_pixel = 1.0 / pixels_per_point;
 
-            egui::ScrollArea::vertical()
-                .auto_shrink(false)
-                .show(ui, |ui| {
-                    let extra_letter_spacing = points_per_pixel * 1.0 as f32;
-                    let line_height = None;
-
-                    let mut job = egui::text::LayoutJob::default();
-                    job.justify = true;
-                    job.append(
-                        &text,
-                        0.0,
-                        egui::TextFormat {
-                            extra_letter_spacing,
-                            line_height,
-                            ..Default::default()
-                        },
-                    );
-
-                    // let mut job = LayoutJob::single_section(
-                    //     text.to_owned(),
-                    //     egui::TextFormat {
-                    //         extra_letter_spacing,
-                    //         line_height,
-                    //         ..Default::default()
-                    //     },
-                    // );
-                    job.wrap = egui::text::TextWrapping {
-                        max_rows: usize::max_value(),
-                        break_anywhere: false,
-                        ..Default::default()
-                    };
-
-                    // NOTE: `Label` overrides some of the wrapping settings, e.g. wrap width
-                    ui.label("Hello world");
-                });
-
+            // StripBuilder::new(ui)
+            //     .size(Size::remainder())
+            //     .vertical(|mut strip| {
+            //         strip.cell(|ui| {
+            ui.add(
+                self.image
+                    .image
+                    .clone()
+                    .max_size(Vec2::new(self.image.width, self.image.height)),
+            );
+            // });
+            // });
             // ScrollArea::vertical().show(ui, |ui| {
             //     self.editor.ui(ui);
             // });
