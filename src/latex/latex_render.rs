@@ -1,3 +1,4 @@
+use crate::editor::ImageGlyph;
 use egui::widgets::Image;
 use rex::{
     cairo::CairoBackend,
@@ -108,6 +109,22 @@ impl LatexImage<'_> {
                 _ => {}
             }
         };
+    }
+
+    pub fn to_glyph(&self, ctx: &egui::Context) -> ImageGlyph {
+        // Intentionnally load image at 2x size to a bit of oversampling
+        let image_texture = self
+            .image
+            .load_for_size(ctx, egui::Vec2::new(2.0 * self.width, 2.0 * self.height))
+            .unwrap();
+
+        ImageGlyph {
+            texture_id: image_texture.texture_id(),
+            pos: egui::Pos2::new(0.0, 0.0),
+            ascent: self.ascent,
+            descent: self.height - self.ascent,
+            size: egui::Vec2::new(self.width, self.height),
+        }
     }
 }
 
