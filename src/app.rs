@@ -1,21 +1,22 @@
-use egui::{ScrollArea, TextBuffer, TextFormat, Vec2};
-
 use crate::editor::{ImageGlyph, TextEditor};
-use crate::latex::{self, LatexImage};
+use crate::latex::{self, LatexDefaultColor, LatexImage};
 use egui_extras::{Size, StripBuilder};
-use std::sync::Arc;
+use std::env;
+use std::fs;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct App {
     // Example stuff:
-    label: String,
     editor: TextEditor,
+    dark_mode: bool,
 
     #[serde(skip)]
-    value: f32,
-    #[serde(skip)]
     image: LatexImage<'static>,
+    #[serde(skip)]
+    error_on_load: Option<String>,
+    #[serde(skip)]
+    first_frame: bool,
 }
 
 impl Default for App {
@@ -23,13 +24,20 @@ impl Default for App {
         let font_file_path = "data/fonts/XITS_Math.otf";
         let font_file = std::fs::read(font_file_path).unwrap();
         let font = latex::load_font(&font_file);
-        let image = latex::render_image("\\int_a^b x^2 dx", font, 16.0, 2.0);
+        let image = latex::LatexImage::new(
+            "\\sigma = \\sqrt{ \\color{orange}\\frac{1}{N} \\sum_{i=1}^N (x_i - \\mu)^2 }",
+            font,
+            16.0,
+            2.0,
+            LatexDefaultColor::White,
+        );
+
         Self {
-            // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7,
             editor: TextEditor::default(),
+            dark_mode: false,
             image: image,
+            error_on_load: prepare_folders(),
+            first_frame: false,
         }
     }
 }
@@ -37,17 +45,40 @@ impl Default for App {
 impl App {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
+        // Load previous app state (if any)
         if let Some(storage) = cc.storage {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
-
         Default::default()
     }
+
+    /// Called once on the first frame.
+    pub fn first_frame(&mut self, ctx: &egui::Context) {
+        if self.first_frame {
+            return;
+        }
+        // Set light / dark mode
+        if self.dark_mode != ctx.style().visuals.dark_mode {
+            if self.dark_mode {
+                ctx.set_visuals(egui::Visuals::dark());
+            } else {
+                ctx.set_visuals(egui::Visuals::light());
+            }
+        }
+        self.first_frame = true;
+    }
+}
+
+fn prepare_folders() -> Option<String> {
+    // Not needed for now
+    // let _ = fs::remove_dir_all("tmp_mn");
+    // let res = fs::create_dir("tmp_mn");
+    // // let _ = env::set_current_dir("tmp_mn");
+    // match res {
+    //     Ok(_) => None,
+    //     Err(e) => Some(format!("Error creating tmp folder: {}", e.to_string())),
+    // }
+    None
 }
 
 impl eframe::App for App {
@@ -56,82 +87,41 @@ impl eframe::App for App {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
-    /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
-
         egui_extras::install_image_loaders(ctx);
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
+        self.first_frame(ctx);
 
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
-                });
-                ui.add_space(16.0);
-
-                egui::widgets::global_dark_light_mode_buttons(ui);
-            });
-        });
-
-        let text = TO_BE_OR_NOT_TO_BE.as_str();
-
-        egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
-            // ui.heading("Text editor");
-
-            // ui.image("file://out.svg");
-
-            let pixels_per_point = ui.ctx().pixels_per_point();
-            let points_per_pixel = 1.0 / pixels_per_point;
-
-            // StripBuilder::new(ui)
-            //     .size(Size::remainder())
-            //     .vertical(|mut strip| {
-            //         strip.cell(|ui| {
-            let options = self.image.image.image_options();
-            // println!("width: {}, {}", self.image.width, self.image.height);
-            let rect = egui::Rect::from_min_size(
-                egui::Pos2::new(300.0, 30.0),
-                egui::Vec2::new(self.image.width, self.image.height),
-            );
-            let image_texture = self.image.image.load_for_size(
-                ctx,
-                egui::Vec2::new(2. * self.image.width, 2. * self.image.height),
-            );
-            if image_texture.is_err() {
-                println!("{}", image_texture.err().unwrap());
-            } else {
-                let image_options = self.image.image.image_options();
-                match image_texture.unwrap().texture_id() {
-                    Some(texture_id) => {
-                        ui.painter()
-                            .image(texture_id, rect, image_options.uv, image_options.tint);
-                    }
-                    _ => {}
+        if self.error_on_load.is_some() {
+            egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
+                ui.label(self.error_on_load.as_ref().unwrap());
+                if ui.button("Quit").clicked() {
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
-            }
+            });
+        } else {
+            egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+                egui::menu::bar(ui, |ui| {
+                    ui.menu_button("File", |ui| {
+                        if ui.button("Quit").clicked() {
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        }
+                    });
+                    ui.add_space(16.0);
 
-            // ui.image("file://ferris.svg");
+                    egui::widgets::global_dark_light_mode_switch(ui);
+                });
+            });
 
-            // self.image.image.paint_at(ui, rect);
-            // });
-            // });
-            // ScrollArea::vertical().show(ui, |ui| {
-            //     self.editor.ui(ui);
-            // });
-        });
+            egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
+                let pos = egui::Pos2::new(0.0, 30.0);
+                let tint = if ctx.style().visuals.dark_mode {
+                    egui::Color32::from_rgb(240, 240, 240)
+                } else {
+                    egui::Color32::from_rgb(50, 50, 50)
+                };
+                self.image.draw_at(ui, ctx, pos, tint);
+            });
+        }
     }
 }
-
-/// Excerpt from Dolores Ibárruri's farwel speech to the International Brigades:
-const TO_BE_OR_NOT_TO_BE: &str = "Mothers! Women!\n
-When the years pass by and the wounds of war are stanched; when the memory of the sad and bloody days dissipates in a present of liberty, of peace and of wellbeing; when the rancor have died out and pride in a free country is felt equally by all Spaniards, speak to your children. Tell them of these men of the International Brigades.\n\
-\n\
-Recount for them how, coming over seas and mountains, crossing frontiers bristling with bayonets, sought by raving dogs thirsting to tear their flesh, these men reached our country as crusaders for freedom, to fight and die for Spain’s liberty and independence threatened by German and Italian fascism. \
-They gave up everything — their loves, their countries, home and fortune, fathers, mothers, wives, brothers, sisters and children — and they came and said to us: “We are here. Your cause, Spain’s cause, is ours. It is the cause of all advanced and progressive mankind.”\n\
-\n\
-- Dolores Ibárruri, 1938";

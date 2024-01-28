@@ -24,13 +24,17 @@ rex = { git = "https://github.com/KenyC/ReX", features = [
 ] }
 ttf-parser = "0.20.0"
 cairo-rs = { version = "0.18.5", features = ["svg", "png"] }
+sha2 = "0.10.8"
+
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.10"
 
+
 [build-dependencies]
 # Utilities
 copy_to_output = "2.2.0"
+
 
 [profile.release]
 opt-level = 2 # fast and small wasm
