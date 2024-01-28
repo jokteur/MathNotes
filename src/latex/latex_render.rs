@@ -53,7 +53,7 @@ pub fn render_image<'a>(
     LatexImage {
         image,
         width: dims.width as f32,
-        height: (dims.height + dims.depth) as f32,
+        height: (dims.height + dims.depth.abs()) as f32,
         ascent: layout.height.to_unitless() as f32,
     }
 }

@@ -12,7 +12,7 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        "Math notes",
+        "Test app",
         native_options,
         Box::new(|cc| Box::new(math_notes::App::new(cc))),
     )

@@ -23,7 +23,7 @@ impl Default for App {
         let font_file_path = "data/fonts/XITS_Math.otf";
         let font_file = std::fs::read(font_file_path).unwrap();
         let font = latex::load_font(&font_file);
-        let image = latex::render_image("\\int_a^b x^2 dx", font, 16.0, 1.5);
+        let image = latex::render_image("\\int_a^b x^2 dx", font, 16.0, 2.0);
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
@@ -81,7 +81,7 @@ impl eframe::App for App {
         let text = TO_BE_OR_NOT_TO_BE.as_str();
 
         egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
-            ui.heading("Text editor");
+            // ui.heading("Text editor");
 
             // ui.image("file://out.svg");
 
@@ -92,12 +92,32 @@ impl eframe::App for App {
             //     .size(Size::remainder())
             //     .vertical(|mut strip| {
             //         strip.cell(|ui| {
-            ui.add(
-                self.image
-                    .image
-                    .clone()
-                    .max_size(Vec2::new(self.image.width, self.image.height)),
+            let options = self.image.image.image_options();
+            // println!("width: {}, {}", self.image.width, self.image.height);
+            let rect = egui::Rect::from_min_size(
+                egui::Pos2::new(300.0, 30.0),
+                egui::Vec2::new(self.image.width, self.image.height),
             );
+            let image_texture = self.image.image.load_for_size(
+                ctx,
+                egui::Vec2::new(2. * self.image.width, 2. * self.image.height),
+            );
+            if image_texture.is_err() {
+                println!("{}", image_texture.err().unwrap());
+            } else {
+                let image_options = self.image.image.image_options();
+                match image_texture.unwrap().texture_id() {
+                    Some(texture_id) => {
+                        ui.painter()
+                            .image(texture_id, rect, image_options.uv, image_options.tint);
+                    }
+                    _ => {}
+                }
+            }
+
+            // ui.image("file://ferris.svg");
+
+            // self.image.image.paint_at(ui, rect);
             // });
             // });
             // ScrollArea::vertical().show(ui, |ui| {
