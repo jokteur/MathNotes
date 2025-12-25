@@ -1,0 +1,9 @@
+First come, first serve: *abc _def* ghi_
+
+Nested spans: [**abc**](example.com)
+
+No link inside link rule: [ [nested](a.com) ](example.com)
+
+Confusing latex $$ *fake strong* {=fake highlight=} $$
+
+Latex with attribute $$ f(x) = x^2 $$ {{no-enum}}

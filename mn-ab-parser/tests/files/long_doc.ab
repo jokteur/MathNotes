@@ -1,0 +1,336 @@
+This document is indented as a lengthy benchmarking tool.
+
+# Inline and basics
+
+## Basic
+- Italic: _italic_ or {_italic_} (the second is more explicit 
+  and covers edge cases, like part{_italic_})
+- Strong: *strong* or {*strong*}
+- Verbatime / code: `` `verbatim` ``{{lang:AB}}
+- Highlight: {=highlighted=}
+- Underline: {+underlined+}
+- Delete: {-deleted-}
+
+## Escaping characters
+Characters can be escaped using `\`. 
+E.g. `\*not strong` will not produce a strong inline.
+E.g. `\a` will just escape a, even if not needed in this context.
+
+## Attributes
+Generally, attributes can be specified with `{{}}`. These can have different behaviors depending on the context.
+
+## Horizontal rule
+Horizontal rule separation (with and without white-spaces before and after), more than two consecutive '-':
+`---`
+
+-----------------
+
+# Attributes
+
+Most blocks and span can possess attributes, written like `{{myattribute}}`. Attributes 
+with values can be written like `{{attr:value}}` or `{{attr=value}}`. It is up to the block
+or span to use these attributes or not. Multiple attributes are separated by commas `,`.
+
+# References
+
+## Labels and refs
+
+It is possible to labelize items and make reference to them. To labelize anything,
+simply use the attribute `{{l:my label}}` right after the object.
+
+### Refs
+
+To make references, one uses the syntax [[my label]] (like wiki links in Markdown).
+To make references to another document, one can use [[document#label]]. If there is 
+a document with the same name as a label in current document and one wishes to use the
+current label, it is possible to solve the problem by specifying [[#current label]]
+(# alone designates current document)
+
+
+### Automatic enumeration
+Some things that can be automatically enumerated:
+
+- Chapters and headers
+- Figures
+- Tables
+- Block code
+- Drawings
+- Citations
+
+When ones wants to override the editor enumeration preferences, one can use the attribute
+`{enum}` or `{noenum}`.
+
+### Definitions
+
+A paragraph *starting* with the following regex ^\[.*\]: is considered as a definition.
+We can have footnotes, links, images and citation definitions.
+
+Definitions cannot be part of another block, e.g.
+
+>[def]: this won't be a definition
+
+If one wants a definition on multiple lines, use four 4-space indentation:
+
+[my def]: paragraph
+
+    a second paragraph
+
+### Bibliography and citation
+It is possible to add a bibliography element and make reference to it by simply putting
+in a new line:
+
+I want to make a citation [[c:my citation]]
+
+[c:my citation]: Foo bar, Markup languages proceedings, Volume 2, p.45, 2022
+
+If the citation is in another document, one can use the `#` notation:
+
+I want to make a citation [[document#c:my citation]]
+
+### Footnotes
+It is also possible to do standard footnotes:
+
+I want a footnote [[fn:foot]].
+
+[fn:foot]: A note.
+
+-----------------
+
+# Links
+
+https://example.com
+A link inside [text](example.com).
+Another link which is defined [later][link]
+
+[link]: https://example.com
+
+-----------------
+
+# Media
+
+![image.png]
+![Image with title](image.png)
+![Image defined later][image]
+
+[image]: image.png
+
+-----------------
+
+# Headers
+
+Header is a # followed by a space, with the number of # indicating the level (1-6)
+```AB
+# Simple header {l:with label}
+```
+
+## Second-level header
+## with a second line
+
+# Header
+## Sub-header
+
+-----------------
+
+# Blocks
+
+If there are more than 4 whitespaces, then everything that follows (the line) is counted as a paragraph,
+except if we are in the case of a sub-list and list items.
+
+-----------------
+
+# Lists
+
+Must be a list marker, preceeded by an optional space, and followed by a mandatory space.
+To be still part of an item, one must align with the first char of the item.
+You can have only one blank line in between.
+
+- Item 1
+
+  Still in item 1
+- Item 2
+
+
+## List-markers
+
+- bullet
++ bullet
+* bullet
+
+x. ordered
+x) ordered
+(x) ordered
+
+x can be one of the following:
+1   decimal-enumerated     (limited to 999999999)
+a   lower alpha-enumerated (limited to zzz)
+A   upper alpha-enumerated (limited to ZZZ)
+i   lower roman-enumerated (limited to mmmcmxcix, i.e. 3999)
+I   upper roman-enumerated (limited to MMMCMXCIX, i.e. 3999)
+
+Different type of markers in list interrupt current lists and create new lists.
+
+- item
+1. item
+i. item
+
+creates three different lists with each one list item.
+
+### Ambiguous cases
+
+If one needs to start a paragraph with a list marker, one can simply escape the first char.
+
+\I. wanted to start a simple paragraph and not a list.
+
+If another alpha-enumerated item is in the list, and the list is not interrupted in between the two
+items, then it is automatically alpha-enumerated.
+
+Example:
+i. Item
+j. Item
+produces an alpha-enumerated list.
+
+To decide between ambiguous cases (alpha or roman?), if no other list items allow for the arbitration,
+then the lowest decimal equivalent enumeration wins.
+
+Example:
+i. Item
+
+In this case, in roman `i` corresponds to 1 and in alpha `i` corresponds to 9, 
+so the list is roman-enumerated.
+
+
+### Tasks
+List markers can be followed by [ ], [x] or [v], thus creating tasks (empty, failed, succeeded)
+
+## Sub-list
+Lists can have lists in them (and any other blocks), which are called sublists. It is not possible
+to start with sublists.
+Sub-lists must have 4 spaces (or one tab) of indentation compared to the 
+parent list item, i.e. a sub-list must be preceeded by 4 spaces, a sub-sub-list by 8 spaces, etc.
+
+- Item 1
+    a) Sub-list item
+    b) Sub-list item
+        i. Sub-sub-list item
+    c) Sub-list item
+- Item 2
+
+It is not possible to begin with a sub-list, except if it is interrupted by a blockquote:
+- - Not valid, the second dash is interpreted as text
+
+- > - Okay
+
+-----------------
+
+# Block quotes
+
+Block Quotes:
+
+> First level
+>> Second level
+
+Block quotes do not allow lazy line continuation as in Markdown.
+
+## Mixing block quotes and list items
+
+> - Item 1
+>   > Start blockquote
+>   > continue blockquote
+> i. > - Valid list in blockquote in list in blockquote
+
+-----------------
+
+# Paragraphs
+
+To separate paragraphs, one must insert blank lines (can be with withespace).
+Paragraph have the least precedence, so they can be interrupted by any other block.
+
+My first paragraph
+
+My second paragraph
+with a second line.
+# Interrupted by a header
+
+-----------------
+
+# Code blocks
+
+Three or more consecutive backticks can start a code block, with markup information on the first line.
+The closing consecutive backticks can't contain any chars except withespace beyond the line. \\ escape
+chars do not work in code blocks.
+
+```html
+<p>html code</p>
+```
+
+````
+```html
+<p>html code</p>
+```a               # Won't close the backticks
+````
+
+Code blocks are interrupted by the end of parents
+````AB
+> ```
+> code block
+Previous code block is interrupted by this paragraph
+````
+
+-----------------
+
+# Latex Math
+
+Latex maths can be produced with two consecutive $. Depending on the context, the
+equation will be *inline* or *display*. Inline equations always fit on one line,
+and display equations are defined by being either on multiple lines or by being
+defined apart.
+
+A paragraph can contain inline equations like $$f(x) = x^2$$ or display equations: $$f(x) = \\
+x^3$$.
+
+A display equation can be defined also like this:
+
+$$g(x) = \sin(x)$$
+
+$$\int \cos(x)dx$$ is not display but inline.
+
+Escaping rules:
+
+$$
+I write \$$
+$$
+
+-----------------
+
+# Tables
+
+TODO
+
+-----------------
+
+# Special Blocks
+
+A special block starts with three consecutive `:` followed by a name and optional attributes.
+Whitespaces are ignored for the name.
+The block is finished with three consecutive `:` or an interruption of a parents block.
+
+::: name-of-block
+    content
+
+Special blocks can be inside quotes and list. A special block inside a quote or list not
+closed will be closed when the parent block is closed. Special blocks cannot be nested.
+
+Here are special blocks used by MathNotes:
+
+## Figures
+
+::: figure {ncols=2,nrows=3,center}
+    ![title of my image](image.png) any text written here is ignored
+    ![other image](image.png)
+
+    Any text written here is taken as legend
+
+One image per line. 
+
+It is possible to specify number of cols with the attribute ncols.
+Keywords center, left, right will align the images.

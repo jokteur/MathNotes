@@ -32,7 +32,7 @@ pub trait Parser {
     fn enter_span(
         &mut self,
         s_type: SpanType,
-        bounds: &Boundaries,
+        bounds: &Vec<Boundaries>,
         attributes: &Attributes,
         detail: &SpanDetail,
     ) -> bool;

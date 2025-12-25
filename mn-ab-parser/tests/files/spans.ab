@@ -1,0 +1,19 @@
+Strong: *abc* or {*abc*}
+
+Italic: _def_ or {_def_}
+
+Verbatim: `ghi`
+
+Highlight: {=jkl=}
+
+Underline: {+mno+}
+
+Delete: {-pqr-}
+
+Link: [stu](example.com) or [stu][defined] or https://example.com:
+
+Reference: [[ref]] or ![[inserted]]
+
+Media: ![image.png] ![title](image.png) ![title][defined later]
+
+Latex: $$f(x) = x^2$$

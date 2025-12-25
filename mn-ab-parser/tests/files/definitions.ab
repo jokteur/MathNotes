@@ -1,0 +1,9 @@
+This is a [^footnote] and a citation.
+
+[^footnote]: as many
+    paragraphs
+
+    as needed
+
+[c:cite21]: Jon Smith & al., Review of things, 2023
+abc
