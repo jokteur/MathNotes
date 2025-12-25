@@ -1,44 +1,29 @@
-[package]
-name = "math-notes"
-version = "0.1.0"
+[workspace]
+resolver = "2"
+members = [
+    "mn-ab-parser",
+    # "crates/math",
+    # "crates/code_logic",
+    # "crates/ui",
+]
+
+[workspace.package]
+version = "0.0.1"
 edition = "2021"
-include = ["src/"]
-build = "build.rs"
+authors = ["Joachim Koerfer"]
+license = "MIT"
+publish = false
 
-[dependencies]
-markdown = "1.0.0-alpha.16"
-# egui stuff
-egui = "0.25.0"
-eframe = { version = "0.25.0", default-features = false, features = [
-    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
-    "default_fonts", # Embed the default egui fonts.
-    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
-    "persistence",   # Enable restoring app state when restarting the app.
-] }
-egui_extras = { version = "*", features = ["all_loaders"] }
-serde = { version = "1", features = ["derive"] }
-# LaTex
-rex = { git = "https://github.com/KenyC/ReX", features = [
-    "ttfparser-fontparser",
-    "cairo-renderer",
-] }
-ttf-parser = "0.20.0"
-cairo-rs = { version = "0.18.5", features = ["svg", "png"] }
-sha2 = "0.10.8"
+[workspace.dependencies]
+# Serialization
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.228"
 
+# GUI Ecosystem
+eframe = "0.33.2"
+egui = "0.33.2"
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-env_logger = "0.10"
-
-
-[build-dependencies]
-# Utilities
-copy_to_output = "2.2.0"
-
-
-[profile.release]
-opt-level = 2 # fast and small wasm
-
-# Optimize all dependencies even in debug builds:
-[profile.dev.package."*"]
-opt-level = 2
+# Intra-workspace dependencies
+# parser = { path = "mn-ab-parser" }
+# math = { path = "crates/math" }
+# code_logic = { path = "crates/code_logic" }

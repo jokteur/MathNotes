@@ -1,0 +1,7 @@
+[package]
+name = "mn-ab-parser"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true }
