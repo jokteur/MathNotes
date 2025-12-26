@@ -11,6 +11,17 @@ pub struct Boundaries {
     pub end: Offset,
     pub post: Offset,
 }
+impl Default for Boundaries {
+    fn default() -> Self {
+        Self {
+            line_number: 0,
+            pre: 0,
+            beg: 0,
+            end: 0,
+            post: 0,
+        }
+    }
+}
 
 // A block represents a structural element in the document (e.g., paragraph, list, code block).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -76,7 +87,7 @@ pub enum BlockDetail {
     Ol {
         pre_marker: char,
         post_marker: char,
-        is_numeric: bool,
+        lower_case: bool,
         ol_type: OlType,
     },
     Ul {

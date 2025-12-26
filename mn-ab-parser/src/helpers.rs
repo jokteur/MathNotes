@@ -112,6 +112,18 @@ pub fn alpha_to_decimal(s: &str) -> i32 {
     res
 }
 
+/// Verifies if a str can be converted into a positive number
+pub fn verify_positive_number(s: &str) -> bool {
+    if s.is_empty() { return false; }
+    if s.len() == 1 && s.chars().next().unwrap().is_ascii_digit() { return true; }
+    for (i, c) in s.chars().enumerate() {
+        if !c.is_ascii_digit() || (i == 0 && c == '0') {
+            return false;
+        }
+    }
+    true
+}
+
 #[derive(PartialEq, PartialOrd, Clone, Copy)]
 enum State {
     Unit,

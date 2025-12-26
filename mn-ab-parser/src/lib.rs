@@ -3,6 +3,7 @@ mod internal;
 mod blocks;
 mod helpers;
 mod spans;
+mod commons;
 
 
 pub use definitions::{
@@ -25,9 +26,9 @@ pub trait Parser {
         bounds: &Vec<Boundaries>,
         attributes: &Attributes,
         detail: &BlockDetail,
-    ) -> bool;
+    ) -> Result<(), String>;
 
-    fn leave_block(&mut self, b_type: BlockType) -> bool;
+    fn leave_block(&mut self, b_type: BlockType) -> Result<(), String>;
 
     fn enter_span(
         &mut self,
@@ -35,15 +36,15 @@ pub trait Parser {
         bounds: &Vec<Boundaries>,
         attributes: &Attributes,
         detail: &SpanDetail,
-    ) -> bool;
+    ) -> Result<(), String>;
 
-    fn leave_span(&mut self, s_type: SpanType) -> bool;
+    fn leave_span(&mut self, s_type: SpanType) -> Result<(), String>;
 
-    fn text(&mut self, t_type: TextType, bounds: &Vec<Boundaries>) -> bool;
+    fn text(&mut self, t_type: TextType, bounds: &Vec<Boundaries>) -> Result<(), String>;
 }
 
-pub fn parser<P: Parser>(text: &str, offset: Offset, parser: &mut P) {
-    let mut ctx = Context::new(text, offset);
+pub fn parser<P: Parser>(text: &str, parser: &mut P) {
+    let mut ctx = Context::new(text);
 
     ctx.line_number_begin.push(0);
     for (i, c) in text.chars().enumerate() {

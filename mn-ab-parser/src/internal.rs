@@ -10,6 +10,17 @@ pub struct RepeatedMarker {
     pub allow_chars_before_closing: bool,
     pub allow_attribute: bool,
 }
+impl Default for RepeatedMarker {
+    fn default() -> Self {
+        Self {
+            marker: '\0',
+            count: 0,
+            allow_greater_number: false,
+            allow_chars_before_closing: false,
+            allow_attribute: true,
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Container {
@@ -23,22 +34,22 @@ pub struct Container {
     pub closed: bool,
     pub erase_block: bool,
     pub repeated_marker: Option<RepeatedMarker>,
+    pub last_non_empty_child_line: Option<usize>,
     pub indent: usize,
-    // flag?
+    pub flag: u32,
 }
 
 pub struct Context<'a> {
     pub text: &'a str,
-    pub offset: Offset,
     pub nodes: Vec<Container>,
     pub current_container: ContainerId,
     pub above_container: Option<ContainerId>,
-    pub offset_to_line_number: Vec<usize>,
     pub line_number_begin: Vec<usize>, // Contains the starting offset of each line
+    node_count: usize,
 }
 
 impl<'a> Context<'a> {
-    pub fn new(text: &'a str, offset: Offset) -> Self {
+    pub fn new(text: &'a str) -> Self {
         let root = Container {
             id: 0,
             b_type: BlockType::Doc,
@@ -50,42 +61,19 @@ impl<'a> Context<'a> {
             closed: false,
             erase_block: false,
             repeated_marker: None,
+            last_non_empty_child_line: None,
             indent: 0,
+            flag: 0,
         };
 
         Self {
             text,
-            offset,
             nodes: vec![root],
             current_container: 0,
             above_container: None,
-            offset_to_line_number: vec![],
             line_number_begin: vec![],
+            node_count: 0,
         }
-    }
-
-    pub fn add_container(&mut self, b_type: BlockType, bounds: Boundaries, detail: BlockDetail) -> ContainerId {
-        let new_id = self.nodes.len(); ///todo: correct?
-        let parent_id = self.current_container;
-
-        let new_node = Container {
-            id: new_id,
-            b_type,
-            children: vec![],
-            parent: Some(parent_id),
-            content_boundaries: vec![bounds],
-            detail,
-            attributes: Attributes::new(),
-            closed: false,
-            erase_block: false,
-            repeated_marker: None,
-            indent: 0,
-        };
-
-        self.nodes.push(new_node);
-        self.nodes[parent_id].children.push(new_id);
-        self.current_container = new_id;
-        return new_id;
     }
 
     pub fn close_current(&mut self) {
@@ -93,6 +81,53 @@ impl<'a> Context<'a> {
             self.nodes[self.current_container].closed = true;
             self.current_container = parent;
         }
+    }
+
+    pub fn request_id(&mut self) -> ContainerId {
+        let new_id = self.node_count + 1;
+        self.node_count += 1;
+        new_id
+    }
+
+    pub fn get_node(&self, id: ContainerId) -> &Container {
+        &self.nodes[id]
+    }
+    pub fn get_node_mut(&mut self, id: ContainerId) -> &mut Container {
+        &mut self.nodes[id]
+    }
+
+    pub fn find_line_number(&self, offset: Offset) -> usize {
+        match self.line_number_begin.binary_search(&offset) {
+            Ok(line) => line,
+            Err(line) => line - 1,
+        }
+    }
+    pub fn find_next_line_offset(&self, offset: Offset) -> usize {
+        let current_line = self.find_line_number(offset);
+        if current_line + 1 >= self.line_number_begin.len() {
+            self.text.len()
+        } else {
+            self.line_number_begin[current_line + 1] - 1
+        }
+    }
+    pub fn select_last_child_container(&mut self) {
+        if self.above_container.is_some() {
+            let above_id = self.above_container.unwrap();
+            if let Some(&last_child_id) = self.nodes[above_id].children.last() {
+                self.above_container = Some(last_child_id);
+                let node = &self.nodes[last_child_id];
+                if node.b_type == BlockType::Ul || node.b_type == BlockType::Ol {
+                    self.above_container = node.children.last().copied();
+                }
+                self.current_container = self.above_container.unwrap();
+            }
+            else {
+                self.above_container = None;
+            }
+        }
+    }
+    pub fn char_at(&self, offset: Offset) -> char {
+        self.text.chars().nth(offset).unwrap()
     }
 
 }
