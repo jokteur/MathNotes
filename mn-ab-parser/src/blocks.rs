@@ -630,7 +630,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
         seg.no_content_after = true;
     }
 
-    //println!("Analysed segment: {:?} ", seg);
+    // println!("Analysed segment: {:?} ", seg);
 
     (seg, this_segment_end)
 }
@@ -693,8 +693,8 @@ pub fn add_container(
         parent.last_non_empty_child_line = Some(seg.line_number);
     }
 
-    //println!("Added container: {:?} with id {}", new_node, new_id);
-    //println!(
+    // println!("Added container: {:?} with id {}", new_node, new_id);
+    // println!(
     //     "Current container: {:?}, Above: {:?}",
     //     ctx.current_container, ctx.above_container
     // );
@@ -1061,9 +1061,8 @@ fn process_segment<P: crate::Parser>(
         /* Headers can be empty, e.g. `##`
          * In this case, the mandatory space after is not taken into account
          * When there is the mandatory space, b_beg should begin one char after */
-        let mut beg = seg.b_bounds.beg;
-        if beg < seg.end {
-            beg += 1;
+        if seg.b_bounds.beg < seg.end {
+            seg.b_bounds.beg += 1;
         }
 
         let b = Boundaries {
@@ -1223,7 +1222,7 @@ pub fn parse_blocks<P: crate::Parser>(ctx: &mut Context, parser: &mut P) -> Resu
             ctx.current_container = ctx.above_container.unwrap();
             off += 1;
         }
-        //println!(
+        // println!(
         //     "Endofloop: off={}, above={:?}, current={:?}",
         //     off, ctx.above_container, ctx.current_container
         // );

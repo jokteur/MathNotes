@@ -668,7 +668,7 @@ fn create_text<P: crate::Parser>(
         current_b = b_it.next().unwrap();
         start = current_b.beg;
     }
-
+    
     let last_line = ctx.find_line_number(end);
     let mut diff = last_line as isize - current_b.line_number as isize;
     if diff > 0 {
@@ -683,6 +683,7 @@ fn create_text<P: crate::Parser>(
             if diff <= 1 {
                 break;
             }
+            start = b.beg;
             bounds.push(Boundaries {
                 line_number: b.line_number,
                 pre: start,
@@ -690,7 +691,6 @@ fn create_text<P: crate::Parser>(
                 end: b.end,
                 post: b.end,
             });
-            start = b.beg;
             diff = last_line as isize - b.line_number as isize;
         }
         if let Some(b) = b_it.next()

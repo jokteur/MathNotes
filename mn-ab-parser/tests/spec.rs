@@ -24,19 +24,6 @@ impl TestParser {
         "  ".repeat(self.level)
     }
 
-    fn format_bounds(&self, bounds: &Vec<Boundaries>) -> String {
-        let mut out = String::new();
-        for b in bounds {
-            write!(
-                out,
-                " {{{}: {}, {}, {}, {}}} ",
-                b.line_number, b.pre, b.beg, b.end, b.post
-            )
-            .unwrap();
-        }
-        out
-    }
-
     fn print_attrs(&mut self, attributes: &Attributes) {
         // We must sort keys to match output.
         let sorted: BTreeMap<_, _> = attributes.iter().collect();
@@ -47,29 +34,33 @@ impl TestParser {
             }
         }
     }
-}
 
-impl Parser for TestParser {
-    fn enter_block(
+    fn is_block_child(&self, b_type: BlockType) -> bool {
+        matches!(
+            b_type,
+            BlockType::P | BlockType::H
+                | BlockType::Hr
+                | BlockType::Code
+                | BlockType::Math
+                | BlockType::Td
+                | BlockType::Th
+                | BlockType::Hidden
+        )
+    }
+
+    fn print_block_html_enter(
         &mut self,
         b_type: BlockType,
         bounds: &Vec<Boundaries>,
         attributes: &Attributes,
         detail: &BlockDetail,
-    ) -> Result<(), String> {
-        // --- AST GENERATION ---
-        write!(self.ast, "{}{}", self.indent(), block_to_name(b_type)).unwrap();
-        write!(self.ast, "{}", self.format_bounds(bounds)).unwrap();
-        writeln!(self.ast).unwrap();
-        
-        print!("{}{}", self.indent(), block_to_name(b_type));
-        print!("{}", self.format_bounds(bounds));
-        println!();
-
+    ) {
         if b_type != BlockType::Doc {
             writeln!(self.html).unwrap();
         }
-        write!(self.html, "{}<{}", self.indent(), block_to_html(b_type)).unwrap();
+
+        write!(self.html, "{}", self.indent()).unwrap();
+        write!(self.html, "<{}", block_to_html(b_type)).unwrap();
 
         match detail {
             BlockDetail::Div { name } => write!(self.html, " class=\"{}\"", name).unwrap(),
@@ -86,83 +77,54 @@ impl Parser for TestParser {
         }
 
         if b_type == BlockType::Hidden {
-            if let Some(first) = bounds.first() {
-                let s = &self.txt[first.beg..first.end];
-                write!(self.html, "{}", s).unwrap();
+            if let Some(bound) = bounds.first() {
+                for i in bound.beg..bound.end {
+                    write!(self.html, "{}", self.txt.chars().nth(i).unwrap_or(' ')).unwrap();
+                }
             }
         }
-
-        self.level += 1;
-        Ok(())
     }
 
-    fn leave_block(&mut self, b_type: BlockType) -> Result<(), String> {
-        self.level -= 1;
-        let is_child = matches!(
-            b_type,
-            BlockType::Li
-                | BlockType::Ul
-                | BlockType::Ol
-                | BlockType::Quote
-                | BlockType::Def
-                | BlockType::Div
-        );
+    fn print_block_ast(
+        &mut self,
+        b_type: BlockType,
+        bounds: &Vec<Boundaries>,
+        _attributes: &Attributes,
+        _detail: &BlockDetail,
+    ) {
+        write!(self.ast, "{}", self.indent()).unwrap();
+        write!(self.ast, "{}", block_to_name(b_type)).unwrap();
+        for bound in bounds {
+            write!(
+                self.ast,
+                " {{{}: {}, {}, {}, {}}} ",
+                bound.line_number, bound.pre, bound.beg, bound.end, bound.post
+            )
+            .unwrap();
+        }
+        writeln!(self.ast).unwrap();
+    }
 
-        if !is_child {
+    fn print_block_html_close(&mut self, b_type: BlockType) {
+        if !self.is_block_child(b_type) {
             writeln!(self.html).unwrap();
             write!(self.html, "{}", self.indent()).unwrap();
-            writeln!(self.html, "</{}>", block_to_html(b_type)).unwrap();
+            write!(self.html, "</{}>", block_to_html(b_type)).unwrap();
         } else if b_type != BlockType::Hr {
             write!(self.html, "</{}>", block_to_html(b_type)).unwrap();
         }
-        Ok(())
     }
 
-    fn text(&mut self, t_type: TextType, bounds: &Vec<Boundaries>) -> Result<(), String> {
-        // --- AST ---
-        let name = match t_type {
-            TextType::Code => "TEXT_CODE",
-            TextType::Math => "TEXT_LATEX",
-            TextType::Normal => "TEXT;",
-        };
-        write!(self.ast, "{}{}", self.indent(), name).unwrap();
-        write!(self.ast, "{}", self.format_bounds(bounds)).unwrap();
-        writeln!(self.ast).unwrap();
-        print!("{}{}", self.indent(), name);
-        print!("{}", self.format_bounds(bounds));
-        println!();
-
-        // --- HTML ---
-        for (i, bound) in bounds.iter().enumerate() {
-            if i > 0 {
-                match t_type {
-                    TextType::Math => write!(self.html, " ").unwrap(),
-                    TextType::Code => writeln!(self.html).unwrap(),
-                    _ => write!(self.html, "<br />").unwrap(),
-                }
-            }
-            let len = self.txt.len();
-            let beg = bound.beg.min(len);
-            let end = bound.end.min(len);
-            if beg < end {
-                let s = &self.txt[beg..end];
-                write!(self.html, "{}", s).unwrap();
-            }
-        }
-        Ok(())
-    }
-
-    fn enter_span(
+    fn print_span_html_enter(
         &mut self,
-        s: SpanType,
-        b: &Vec<Boundaries>,
-        a: &Attributes,
-        d: &SpanDetail,
-    ) -> Result<(), String> {
-        // --- HTML --- (inline, no indentation/newline like C++)
-        write!(self.html, "<{}", span_to_html(s)).unwrap();
+        s_type: SpanType,
+        _bounds: &Vec<Boundaries>,
+        attributes: &Attributes,
+        detail: &SpanDetail,
+    ) {
+        write!(self.html, "<{}", span_to_html(s_type)).unwrap();
 
-        match d {
+        match detail {
             SpanDetail::Url { href } => {
                 write!(self.html, " href=\"{}\"", href).unwrap();
             }
@@ -175,31 +137,116 @@ impl Parser for TestParser {
             SpanDetail::None => {}
         }
 
-        self.print_attrs(a);
+        self.print_attrs(attributes);
 
-        if matches!(s, SpanType::Img | SpanType::Ref) {
+        if matches!(s_type, SpanType::Img | SpanType::Ref) {
             write!(self.html, "/>").unwrap();
         } else {
             write!(self.html, ">").unwrap();
         }
+    }
 
-        // --- AST ---
-        write!(self.ast, "{}{}", self.indent(), span_to_name(s)).unwrap();
-        write!(self.ast, "{}", self.format_bounds(b)).unwrap();
+    fn print_span_ast(
+        &mut self,
+        s_type: SpanType,
+        bounds: &Vec<Boundaries>,
+        _attributes: &Attributes,
+        _detail: &SpanDetail,
+    ) {
+        write!(self.ast, "{}", self.indent()).unwrap();
+        write!(self.ast, "{}", span_to_name(s_type)).unwrap();
+        for bound in bounds {
+            write!(
+                self.ast,
+                " {{{}: {}, {}, {}, {}}} ",
+                bound.line_number, bound.pre, bound.beg, bound.end, bound.post
+            )
+            .unwrap();
+        }
         writeln!(self.ast).unwrap();
-        print!("{}{}", self.indent(), span_to_name(s));
-        print!("{}", self.format_bounds(b));
-        println!();
+    }
 
+    fn print_span_html_close(&mut self, s_type: SpanType) {
+        if !matches!(s_type, SpanType::Img | SpanType::Ref) {
+            write!(self.html, "</{}>", span_to_html(s_type)).unwrap();
+        }
+    }
+
+    fn print_text_ast(&mut self, t_type: TextType, bounds: &Vec<Boundaries>) {
+        write!(self.ast, "{}", self.indent()).unwrap();
+        let name = text_to_name(t_type);
+        write!(self.ast, "{}", name).unwrap();
+        for bound in bounds {
+            write!(
+                self.ast,
+                " {{{}: {}, {}, {}, {}}} ",
+                bound.line_number, bound.pre, bound.beg, bound.end, bound.post
+            )
+            .unwrap();
+        }
+        writeln!(self.ast).unwrap();
+    }
+}
+
+impl Parser for TestParser {
+    fn enter_block(
+        &mut self,
+        b_type: BlockType,
+        bounds: &Vec<Boundaries>,
+        attributes: &Attributes,
+        detail: &BlockDetail,
+    ) -> Result<(), String> {
+        self.print_block_html_enter(b_type, bounds, attributes, detail);
+        self.print_block_ast(b_type, bounds, attributes, detail);
         self.level += 1;
         Ok(())
     }
 
-    fn leave_span(&mut self, s: SpanType) -> Result<(), String> {
+    fn leave_block(&mut self, b_type: BlockType) -> Result<(), String> {
         self.level -= 1;
-        if !matches!(s, SpanType::Img | SpanType::Ref) {
-            write!(self.html, "</{}>", span_to_html(s)).unwrap();
+        self.print_block_html_close(b_type);
+        Ok(())
+    }
+
+    fn text(&mut self, t_type: TextType, bounds: &Vec<Boundaries>) -> Result<(), String> {
+        self.print_text_ast(t_type, bounds);
+        
+        for (j, bound) in bounds.iter().enumerate() {
+            if t_type == TextType::Math {
+                if j > 0 {
+                    write!(self.html, " ").unwrap();
+                }
+            } else if t_type == TextType::Code {
+                if j > 0 {
+                    writeln!(self.html).unwrap();
+                }
+            } else if j > 0 {
+                write!(self.html, "<br />").unwrap();
+            }
+            
+            for i in bound.beg..bound.end {
+                write!(self.html, "{}", self.txt.chars().nth(i).unwrap_or(' ')).unwrap();
+            }
         }
+        Ok(())
+    }
+
+    fn enter_span(
+        &mut self,
+        s_type: SpanType,
+        bounds: &Vec<Boundaries>,
+        attributes: &Attributes,
+        detail: &SpanDetail,
+    ) -> Result<(), String> {
+        self.print_span_html_enter(s_type, bounds, attributes, detail);
+        self.print_span_ast(s_type, bounds, attributes, detail);
+        self.level += 1;
+        Ok(())
+    }
+
+    fn leave_span(&mut self, s_type: SpanType) -> Result<(), String> {
+        self.level -= 1;
+        self.print_span_html_close(s_type);
         Ok(())
     }
 }
@@ -291,6 +338,6 @@ fn test_specs() {
     }
 
     if !failures.is_empty() {
-        panic!("{} tests failed.", failures.len());
+        assert!(false, "{} tests failed.", failures.len());
     }
 }
