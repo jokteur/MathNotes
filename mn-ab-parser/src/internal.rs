@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::definitions::{Offset, BlockType, BlockDetail, Boundaries, Attributes};
 
 pub type ContainerId = usize;
@@ -39,6 +41,7 @@ pub struct Container {
     pub flag: u32,
 }
 
+
 pub struct Context<'a> {
     pub text: &'a str,
     pub nodes: Vec<Container>,
@@ -72,7 +75,7 @@ impl<'a> Context<'a> {
             current_container: 0,
             above_container: None,
             line_number_begin: vec![],
-            node_count: 0,
+            node_count: 1,
         }
     }
 
@@ -84,7 +87,7 @@ impl<'a> Context<'a> {
     }
 
     pub fn request_id(&mut self) -> ContainerId {
-        let new_id = self.node_count + 1;
+        let new_id = self.node_count;
         self.node_count += 1;
         new_id
     }
@@ -117,7 +120,9 @@ impl<'a> Context<'a> {
                 self.above_container = Some(last_child_id);
                 let node = &self.nodes[last_child_id];
                 if node.b_type == BlockType::Ul || node.b_type == BlockType::Ol {
-                    self.above_container = node.children.last().copied();
+                    if let Some(&child) = node.children.last() {
+                        self.above_container = Some(child);
+                    }
                 }
                 self.current_container = self.above_container.unwrap();
             }

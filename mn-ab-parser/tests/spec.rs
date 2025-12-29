@@ -61,6 +61,10 @@ impl Parser for TestParser {
         write!(self.ast, "{}{}", self.indent(), block_to_name(b_type)).unwrap();
         write!(self.ast, "{}", self.format_bounds(bounds)).unwrap();
         writeln!(self.ast).unwrap();
+        
+        print!("{}{}", self.indent(), block_to_name(b_type));
+        print!("{}", self.format_bounds(bounds));
+        println!();
 
         if b_type != BlockType::Doc {
             writeln!(self.html).unwrap();
@@ -124,6 +128,9 @@ impl Parser for TestParser {
         write!(self.ast, "{}{}", self.indent(), name).unwrap();
         write!(self.ast, "{}", self.format_bounds(bounds)).unwrap();
         writeln!(self.ast).unwrap();
+        print!("{}{}", self.indent(), name);
+        print!("{}", self.format_bounds(bounds));
+        println!();
 
         // --- HTML ---
         for (i, bound) in bounds.iter().enumerate() {
@@ -134,25 +141,65 @@ impl Parser for TestParser {
                     _ => write!(self.html, "<br />").unwrap(),
                 }
             }
-            let s = &self.txt[bound.beg..bound.end];
-            write!(self.html, "{}", s).unwrap();
+            let len = self.txt.len();
+            let beg = bound.beg.min(len);
+            let end = bound.end.min(len);
+            if beg < end {
+                let s = &self.txt[beg..end];
+                write!(self.html, "{}", s).unwrap();
+            }
         }
         Ok(())
     }
 
     fn enter_span(
         &mut self,
-        _s: SpanType,
-        _b: &Vec<Boundaries>,
-        _a: &Attributes,
-        _d: &SpanDetail,
+        s: SpanType,
+        b: &Vec<Boundaries>,
+        a: &Attributes,
+        d: &SpanDetail,
     ) -> Result<(), String> {
+        // --- HTML --- (inline, no indentation/newline like C++)
+        write!(self.html, "<{}", span_to_html(s)).unwrap();
+
+        match d {
+            SpanDetail::Url { href } => {
+                write!(self.html, " href=\"{}\"", href).unwrap();
+            }
+            SpanDetail::Img { src, alt } => {
+                write!(self.html, " src=\"{}\" alt=\"{}\"", src, alt).unwrap();
+            }
+            SpanDetail::Ref { name } => {
+                write!(self.html, " name=\"{}\"", name).unwrap();
+            }
+            SpanDetail::None => {}
+        }
+
+        self.print_attrs(a);
+
+        if matches!(s, SpanType::Img | SpanType::Ref) {
+            write!(self.html, "/>").unwrap();
+        } else {
+            write!(self.html, ">").unwrap();
+        }
+
+        // --- AST ---
+        write!(self.ast, "{}{}", self.indent(), span_to_name(s)).unwrap();
+        write!(self.ast, "{}", self.format_bounds(b)).unwrap();
+        writeln!(self.ast).unwrap();
+        print!("{}{}", self.indent(), span_to_name(s));
+        print!("{}", self.format_bounds(b));
+        println!();
+
         self.level += 1;
         Ok(())
     }
 
-    fn leave_span(&mut self, _s: SpanType) -> Result<(), String> {
+    fn leave_span(&mut self, s: SpanType) -> Result<(), String> {
         self.level -= 1;
+        if !matches!(s, SpanType::Img | SpanType::Ref) {
+            write!(self.html, "</{}>", span_to_html(s)).unwrap();
+        }
         Ok(())
     }
 }

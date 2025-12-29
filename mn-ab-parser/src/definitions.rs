@@ -3,7 +3,7 @@ use std::collections::HashMap;
 pub type Offset = usize;
 pub type Attributes = HashMap<String, String>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq,Copy)]
 pub struct Boundaries {
     pub line_number: Offset,
     pub pre: Offset,
@@ -126,6 +126,7 @@ pub enum SpanType {
     Code,
     Math,
     Ref,
+    Empty,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -207,6 +208,7 @@ pub fn span_to_name(s: SpanType) -> &'static str {
         SpanType::Code => "S_CODE",
         SpanType::Math => "S_MATH",
         SpanType::Ref => "S_REF",
+        SpanType::Empty => "S_EMPTY",
     }
 }
 
@@ -222,6 +224,7 @@ pub fn span_to_html(s: SpanType) -> &'static str {
         SpanType::Code => "code",
         SpanType::Math => "math",
         SpanType::Ref => "ref",
+        SpanType::Empty => "empty",
     }
 }
 

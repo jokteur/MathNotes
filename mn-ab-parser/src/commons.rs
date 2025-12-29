@@ -5,6 +5,14 @@ use crate::internal::Context;
 pub fn is_whitespace_not_eol(c: char) -> bool {
     c.is_whitespace() && c != '\n'
 }
+#[inline]
+pub fn check_ws_or_end(ctx: &Context, off: Offset) -> bool {
+    if off >= ctx.text.len() {
+        return true;
+    }
+    let ch = ctx.char_at(off);
+    ch.is_whitespace()
+}
 
 /// Parse attributes in the form of {{key1:value1,key2:value2,key3}}
 pub fn parse_attributes(ctx: &Context, off: &mut Offset) -> Attributes {

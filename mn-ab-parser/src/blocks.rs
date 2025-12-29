@@ -2,6 +2,7 @@ use crate::commons::*;
 use crate::definitions::*;
 use crate::helpers::*;
 use crate::internal::*;
+use crate::spans::parse_spans;
 
 pub const LIST_OPENER: u32 = 0x1;
 pub const CODE_OPENER: u32 = 0x2;
@@ -68,14 +69,6 @@ fn check_ws_before(seg: &SegmentInfo, off: Offset) -> bool {
     seg.first_non_blank >= off
 }
 #[inline]
-fn check_ws_or_end(ctx: &Context, off: Offset) -> bool {
-    if off >= ctx.text.len() {
-        return true;
-    }
-    let ch = ctx.char_at(off);
-    ch.is_whitespace()
-}
-#[inline]
 fn check_space_after(ctx: &Context, off: Offset) -> bool {
     if off >= ctx.text.len() {
         return true;
@@ -104,7 +97,7 @@ fn analyse_make_ul(ctx: &Context, off: usize, end: &mut usize, seg: &mut Segment
     seg.li_pre_marker = ctx.char_at(off);
 }
 #[inline]
-fn get_allowed_ws(flag: u32) -> usize {
+fn get_allowed_ws(flag: u32) -> isize {
     if (flag & (QUOTE_OPENER | DEFINITION_OPENER)) != 0 {
         1
     } else {
@@ -258,7 +251,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
         NONE,
         PARTIAL,
         FULL,
-    };
+    }
     let mut b_solved = Solved::NONE;
 
     while off < seg.end {
@@ -320,9 +313,11 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
         if !ch.is_whitespace() && seg.blank_line {
             seg.blank_line = false;
             seg.first_non_blank = off;
-            seg.acc.clear();
-            seg.acc.push(ch);
+            acc.clear();
+            acc.push(ch);
         }
+
+        let ws_diff = whitespace_counter as isize - total_indent as isize;
 
         if ch == ' ' {
             whitespace_counter += 1;
@@ -348,7 +343,8 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
                     repeated_marker.allow_chars_before_closing,
                     repeated_marker.allow_attribute,
                 );
-                if num.is_some() {
+                if num.is_some() && num.unwrap() > 0 {
+                    //TODO
                     seg.close_block = true;
                     seg.flags = above_container.and_then(|id| Some(ctx.get_node(id).flag)).unwrap_or(0);
                     seg.b_bounds.end = off_before;
@@ -362,7 +358,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
                 && count > 0
                 && count < 7
                 && check_ws_or_end(ctx, off + count)
-                && (whitespace_counter - total_indent < 3)
+                && (ws_diff < 3)
             {
                 seg.flags = H_OPENER;
                 seg.b_bounds.pre = seg.start;
@@ -375,7 +371,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
                 break;
             }
         } else if ch == '>' {
-            if check_ws_before(&seg, off) && (whitespace_counter - total_indent < get_allowed_ws(QUOTE_OPENER)) {
+            if check_ws_before(&seg, off) && (ws_diff < get_allowed_ws(QUOTE_OPENER)) {
                 seg.b_bounds.pre = seg.start;
                 seg.b_bounds.beg = off + 1;
                 seg.flags = QUOTE_OPENER;
@@ -392,7 +388,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
                 break;
             }
         } else if ch == '*' {
-            if check_ws_before(&seg, off) && check_ws_or_end(ctx, off) && (seg.flags & LIST_OPENER) == 0 {
+            if check_ws_before(&seg, off) && check_ws_or_end(ctx, off + 1) && (seg.flags & LIST_OPENER) == 0 {
                 analyse_make_ul(ctx, off, &mut this_segment_end, &mut seg, whitespace_counter);
                 break;
             } else {
@@ -412,7 +408,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
             } else if check_ws_before(&seg, off)
                 && (off + 1 >= ctx.text.len() || ctx.char_at(off + 1).is_whitespace())
                 && ((seg.flags & LIST_OPENER) == 0)
-                && (whitespace_counter - total_indent < get_allowed_ws(LIST_OPENER))
+                && (ws_diff < get_allowed_ws(LIST_OPENER))
             {
                 analyse_make_ul(ctx, off, &mut this_segment_end, &mut seg, whitespace_counter);
                 break;
@@ -424,7 +420,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
             if check_ws_before(&seg, off)
                 && (off + 1 >= ctx.text.len() || ctx.char_at(off + 1).is_whitespace())
                 && (seg.flags & LIST_OPENER) == 0
-                && (whitespace_counter - total_indent < get_allowed_ws(LIST_OPENER))
+                && (ws_diff < get_allowed_ws(LIST_OPENER))
             {
                 analyse_make_ul(ctx, off, &mut this_segment_end, &mut seg, whitespace_counter);
                 break;
@@ -462,14 +458,24 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
                 seg.flags = LIST_OPENER;
                 b_solved = Solved::PARTIAL;
                 seg.li_post_marker = ch;
-                seg.acc = str_marker.to_string();
+                acc = str_marker.to_string();
                 break;
             } else {
                 analyse_make_p(seg.start, &mut this_segment_end, &mut seg);
                 break;
             }
         } else if ch == '[' {
-            if whitespace_counter - total_indent >= get_allowed_ws(DEFINITION_OPENER) {
+            let mut is_parent_root = false;
+            if let Some(above_id) = above_container {
+                let above = ctx.get_node(above_id);
+                if let Some(parent_id) = above.parent {
+                    let parent = ctx.get_node(parent_id);
+                    if parent.b_type == BlockType::Doc {
+                        is_parent_root = true;
+                    }
+                }
+            }
+            if ws_diff >= get_allowed_ws(DEFINITION_OPENER) || (above_container.is_some() && !is_parent_root) {
                 analyse_make_p(seg.start, &mut this_segment_end, &mut seg);
                 break;
             }
@@ -495,10 +501,10 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
         } else if ch == ':' {
             let before_off = off;
             let count = count_marks(ctx, off, ':');
-            let mut off_temp = off + count;
-            skip_whitespace(ctx, &mut off_temp);
+            off += count;
+            skip_whitespace(ctx, &mut off);
 
-            if check_ws_before(&seg, before_off) && count == 3 && off_temp < seg.end {
+            if check_ws_before(&seg, before_off) && count == 3 && off < seg.end {
                 seg.flags = DIV_OPENER;
                 seg.b_bounds.pre = seg.start;
                 seg.b_bounds.beg = seg.end;
@@ -520,11 +526,10 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
         } else if ch == '$' {
             let tmp_off = off;
             let count = count_marks(ctx, off, '$');
-            // Check closing
-            let mut off_temp = off;
-            let mut dummy_acc = String::new();
-            advance_until(ctx, &mut off_temp, &mut dummy_acc, '$');
-            let closing = check_for_closing_delimiters(ctx, &mut off_temp, &mut seg, '$', 2, false, true, true);
+            off += count;
+            // Try to advance until the end of the line to see if the block is already closed
+            advance_until(ctx, &mut off, &mut acc, '$');
+            let closing = check_for_closing_delimiters(ctx, &mut off, &mut seg, '$', 2, false, true, true);
 
             if check_ws_before(&seg, tmp_off) && count == 2 && closing.is_some() {
                 seg.flags = MATH_OPENER;
@@ -533,7 +538,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
                 seg.b_bounds.post = seg.end;
                 if closing.unwrap() > 0 {
                     seg.close_block = true;
-                    seg.b_bounds.end = off_temp - closing.unwrap() as usize;
+                    seg.b_bounds.end = off - closing.unwrap() as usize;
                 }
                 off += 1;
                 break;
@@ -543,10 +548,7 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
             }
         } else if ch == '`' {
             let count = count_marks(ctx, off, '`');
-            if check_ws_before(&seg, off)
-                && count > 2
-                && (whitespace_counter - total_indent < get_allowed_ws(CODE_OPENER))
-            {
+            if check_ws_before(&seg, off) && count > 2 && (ws_diff < get_allowed_ws(CODE_OPENER)) {
                 seg.flags = CODE_OPENER;
                 seg.b_bounds.beg = seg.end;
                 seg.b_bounds.end = seg.end;
@@ -566,10 +568,12 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
         off += 1;
     }
 
-    if (!seg.blank_line && seg.flags == 0) {
+    if !seg.blank_line && seg.flags == 0 {
         analyse_make_p(seg.start, &mut this_segment_end, &mut seg);
     }
-    if whitespace_counter < local_indent && seg.first_non_blank - seg.start > get_allowed_ws(seg.flags) {
+    if whitespace_counter < local_indent
+        && seg.first_non_blank as isize - seg.start as isize > get_allowed_ws(seg.flags)
+    {
         analyse_make_p(seg.start, &mut this_segment_end, &mut seg);
     }
     // Some blank lines can be transformed into boundaries of indented blocks (LI, DEF)
@@ -626,6 +630,8 @@ fn analyse_segment(ctx: &mut Context, off: Offset) -> (SegmentInfo, Offset) {
         seg.no_content_after = true;
     }
 
+    //println!("Analysed segment: {:?} ", seg);
+
     (seg, this_segment_end)
 }
 
@@ -641,10 +647,13 @@ fn enter_block<P: crate::Parser>(parser: &mut P, ctx: &Context, container: &Cont
 
     for &child_id in &container.children {
         let child = ctx.get_node(child_id);
+        if child.b_type == BlockType::Empty {
+            continue;
+        }
         enter_block(parser, ctx, child)?;
     }
     if is_leaf_block(container.b_type) {
-        // Parse segments
+        parse_spans(parser, ctx, container)?;
     }
     parser.leave_block(container.b_type)?;
     Ok(())
@@ -668,13 +677,13 @@ pub fn add_container(
         parent: Some(parent_id),
         content_boundaries: bounds,
         detail,
-        attributes: Attributes::new(),
+        attributes: seg.attributes.clone(),
         closed: false,
         erase_block: false,
         repeated_marker: None,
         last_non_empty_child_line: None,
-        indent: 0,
-        flag: 0,
+        indent: seg.indent,
+        flag: seg.flags,
     };
     if b_type == BlockType::Empty {
         new_node.closed = true;
@@ -683,6 +692,12 @@ pub fn add_container(
         let parent = ctx.get_node_mut(parent_id);
         parent.last_non_empty_child_line = Some(seg.line_number);
     }
+
+    //println!("Added container: {:?} with id {}", new_node, new_id);
+    //println!(
+    //     "Current container: {:?}, Above: {:?}",
+    //     ctx.current_container, ctx.above_container
+    // );
 
     ctx.nodes.push(new_node);
     ctx.get_node_mut(parent_id).children.push(new_id);
@@ -916,9 +931,14 @@ fn make_list_item(ctx: &mut Context, seg: &SegmentInfo, off: Offset) -> bool {
 /// Once a segment of a line has been analysed by the analyse_segment
 /// function, we need to decide were to place the block in the AST.
 /// This process is context dependent.
-fn process_segment<P: crate::Parser>(ctx: &mut Context, parser: &mut P, off: &Offset, seg: &mut SegmentInfo) -> bool {
+fn process_segment<P: crate::Parser>(
+    ctx: &mut Context,
+    parser: &mut P,
+    off: &Offset,
+    seg: &mut SegmentInfo,
+) -> Result<(), String> {
     if seg.skip_segment {
-        return true;
+        return Ok(());
     }
 
     /* Above container is the critical part to take decisions on how the place
@@ -974,8 +994,7 @@ fn process_segment<P: crate::Parser>(ctx: &mut Context, parser: &mut P, off: &Of
 
                 let parent = node_parent.unwrap();
                 if ctx.get_node(parent).b_type == BlockType::Doc && !seg.blank_line {
-                    // Send previous blocks (flush logic)
-                    send_previous_blocks(ctx, parser);
+                    send_previous_blocks(ctx, parser)?;
                 }
             }
         }
@@ -1050,7 +1069,7 @@ fn process_segment<P: crate::Parser>(ctx: &mut Context, parser: &mut P, off: &Of
         let b = Boundaries {
             line_number: seg.line_number,
             pre: seg.b_bounds.pre,
-            beg,
+            beg: seg.b_bounds.beg,
             end: seg.end,
             post: seg.end,
         };
@@ -1179,15 +1198,10 @@ fn process_segment<P: crate::Parser>(ctx: &mut Context, parser: &mut P, off: &Of
         }
     }
 
-    true
+    Ok(())
 }
 
 pub fn parse_blocks<P: crate::Parser>(ctx: &mut Context, parser: &mut P) -> Result<(), String> {
-    let current_segment = SegmentInfo::default();
-    // Add root container
-    ctx.current_container = 0;
-    add_container(ctx, BlockType::Doc, vec![], &current_segment, BlockDetail::None);
-
     let root_b_type = ctx.get_node(0).b_type;
     let root_content_boundaries = ctx.get_node(0).content_boundaries.clone();
     let root_attributes = ctx.get_node(0).attributes.clone();
@@ -1201,16 +1215,20 @@ pub fn parse_blocks<P: crate::Parser>(ctx: &mut Context, parser: &mut P) -> Resu
         ctx.select_last_child_container();
         let (mut seg, end) = analyse_segment(ctx, off);
         off = end;
-        if !process_segment(ctx, parser, &mut off, &mut seg) {
-            return Err("Error processing segment".to_string());
-        }
+        process_segment(ctx, parser, &mut off, &mut seg)?;
+
         // We arrived at the end of a line
         if off >= seg.end {
-            ctx.above_container = Some(ctx.nodes.len() - 1);
+            ctx.above_container = Some(0);
             ctx.current_container = ctx.above_container.unwrap();
             off += 1;
         }
+        //println!(
+        //     "Endofloop: off={}, above={:?}, current={:?}",
+        //     off, ctx.above_container, ctx.current_container
+        // );
     }
+    send_previous_blocks(ctx, parser)?;
     parser.leave_block(root_b_type)?;
 
     Ok(())
